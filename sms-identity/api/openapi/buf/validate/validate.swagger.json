@@ -1,0 +1,45 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "buf/validate/validate.proto",
+    "description": "[Protovalidate](https://protovalidate.com/) is the semantic validation library for Protobuf.\r\nIt provides standard annotations to validate common rules on messages and fields, as well as the ability to use [CEL](https://cel.dev) to write custom rules.\r\nIt's the next generation of [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate).\r\n\r\nThis package provides the options, messages, and enums that power Protovalidate.\r\nApply its options to messages, fields, and oneofs in your Protobuf schemas to add validation rules:\r\n\r\n```proto\r\nmessage User {\r\n  string id = 1 [(buf.validate.field).string.uuid = true];\r\n  string first_name = 2 [(buf.validate.field).string.max_len = 64];\r\n  string last_name = 3 [(buf.validate.field).string.max_len = 64];\r\n\r\n  option (buf.validate.message).cel = {\r\n    id: \"first_name_requires_last_name\"\r\n    message: \"last_name must be present if first_name is present\"\r\n    expression: \"!has(this.first_name) || has(this.last_name)\"\r\n  };\r\n}\r\n```\r\n\r\nThese rules are enforced at runtime by language-specific libraries.\r\nSee the [developer quickstart](https://protovalidate.com/quickstart/) to get started, or go directly to the runtime library for your language:\r\n[Go](https://github.com/bufbuild/protovalidate-go),\r\n[JavaScript/TypeScript](https://github.com/bufbuild/protovalidate-es),\r\n[Java](https://github.com/bufbuild/protovalidate-java),\r\n[Python](https://github.com/bufbuild/protovalidate-python),\r\nor [C++](https://github.com/bufbuild/protovalidate-cc).",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

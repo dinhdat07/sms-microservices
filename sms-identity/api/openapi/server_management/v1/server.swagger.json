@@ -1,0 +1,464 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "server_management/v1/server.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ServerManagementService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/servers": {
+      "get": {
+        "operationId": "ServerManagementService_ViewServers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ViewServersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "filterStatus",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sortDirection",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "createdFrom",
+            "description": "format YYYY-MM-DD",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "createdTo",
+            "description": "format YYYY-MM-DD",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerManagementService"
+        ]
+      },
+      "post": {
+        "operationId": "ServerManagementService_CreateServer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateServerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateServerRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ServerManagementService"
+        ]
+      }
+    },
+    "/api/v1/servers/export": {
+      "get": {
+        "operationId": "ServerManagementService_ExportServers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ExportServersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "filterStatus",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filterName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sortDirection",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "createdFrom",
+            "description": "format YYYY-MM-DD",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "createdTo",
+            "description": "format YYYY-MM-DD",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerManagementService"
+        ]
+      }
+    },
+    "/api/v1/servers/import": {
+      "post": {
+        "operationId": "ServerManagementService_ImportServers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ImportServersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ImportServersRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ServerManagementService"
+        ]
+      }
+    },
+    "/api/v1/servers/{serverId}": {
+      "delete": {
+        "operationId": "ServerManagementService_DeleteServer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteServerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerManagementService"
+        ]
+      },
+      "put": {
+        "operationId": "ServerManagementService_UpdateServer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateServerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ServerManagementServiceUpdateServerBody"
+            }
+          }
+        ],
+        "tags": [
+          "ServerManagementService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ServerManagementServiceUpdateServerBody": {
+      "type": "object",
+      "properties": {
+        "serverName": {
+          "type": "string"
+        },
+        "ipv4": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CreateServerRequest": {
+      "type": "object",
+      "properties": {
+        "serverName": {
+          "type": "string"
+        },
+        "ipv4": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CreateServerResponse": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1DeleteServerResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1ExportServersResponse": {
+      "type": "object",
+      "properties": {
+        "fileContent": {
+          "type": "string",
+          "format": "byte"
+        },
+        "filename": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ImportServersRequest": {
+      "type": "object",
+      "properties": {
+        "fileContent": {
+          "type": "string",
+          "format": "byte"
+        },
+        "filename": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ImportServersResponse": {
+      "type": "object",
+      "properties": {
+        "successCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "successfulServers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "failCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "failedServers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1Server": {
+      "type": "object",
+      "properties": {
+        "serverId": {
+          "type": "string"
+        },
+        "serverName": {
+          "type": "string"
+        },
+        "ipv4": {
+          "type": "string"
+        },
+        "currentStatus": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UpdateServerResponse": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1ViewServersResponse": {
+      "type": "object",
+      "properties": {
+        "totalCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "servers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Server"
+          }
+        }
+      }
+    }
+  }
+}

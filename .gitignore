@@ -1,0 +1,27 @@
+# Environments
+.env
+.env.*
+
+# Binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Logs
+logs/
+*.log
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Go
+vendor/
+coverage.out
+
+# Docker
+.docker/

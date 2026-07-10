@@ -1,0 +1,191 @@
+services:
+  # ============================================
+  # Traefik API Gateway
+  # ============================================
+  traefik:
+    image: traefik:v3.0
+    container_name: sms_traefik
+    restart: unless-stopped
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080" # Traefik Dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - default
+
+  # ============================================
+  # SMS Identity Service
+  # ============================================
+  sms-identity:
+    build:
+      context: ./sms-identity
+      dockerfile: Dockerfile
+    container_name: sms_identity
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - ENV=development
+      - DB_URL=postgresql://postgres:postgres@postgres:5432/sms?sslmode=disable
+      - REDIS_ENABLED=true
+      - REDIS_ADDR=redis:6379
+      - HTTP_PORT=8000
+      - GRPC_PORT=50051
+    labels:
+      - "traefik.enable=true"
+      # Route for Authentication APIs
+      - "traefik.http.routers.identity.rule=PathPrefix(`/api/v1/auth/`)"
+      - "traefik.http.routers.identity.entrypoints=web"
+      - "traefik.http.services.identity.loadbalancer.server.port=8000"
+      # Define ForwardAuth Middleware
+      - "traefik.http.middlewares.sms-auth.forwardauth.address=http://sms_identity:8000/verify"
+      - "traefik.http.middlewares.sms-auth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.sms-auth.forwardauth.authResponseHeaders=X-User-Id,X-User-Role,X-User-Email,X-User-Name"
+    networks:
+      - default
+
+  # ============================================
+  # PostgreSQL — Single Source of Truth
+  # ============================================
+  postgres:
+    image: postgres:15
+    container_name: sms_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sms
+    ports:
+      - "15432:5432"
+    volumes:
+      - sms_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Redis — Cache & Distributed Lock
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: sms_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Elasticsearch — Time-Series Observation Store
+  # ============================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.4
+    container_name: sms_elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - sms_es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q 'green|yellow'"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  # ============================================
+  # MailHog — Email testing (SMTP + Web UI)
+  # ============================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: sms_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI (http://localhost:8025)
+
+  # ============================================
+  # Server Simulator — Virtual IPs + nftables
+  # ============================================
+  simulator:
+    build:
+      context: .
+      dockerfile: cmd/simulator/Dockerfile
+    container_name: sms_simulator
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      SIMULATOR_IP_COUNT: "10000"
+      SIMULATOR_SUBNET: "10.1"
+      SIMULATOR_AUTO_FLAP_ENABLED: "true"
+      SIMULATOR_FLAP_INTERVAL: "60s"
+      SIMULATOR_FLAP_PERCENT: "5"
+    networks:
+      - default
+
+  # ============================================
+  # Monitoring Worker — runs in Docker network so ICMP can reach simulator IPs
+  # ============================================
+  monitoring-worker:
+    build:
+      context: .
+      dockerfile: cmd/monitoring-worker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      simulator:
+        condition: service_started
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/sms?sslmode=disable
+      REDIS_ENABLED: "true"
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: "0"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_SERVER_INDEX: sms_observation_logs
+      ICMP_PRIVILEGED: "true"
+      MONITORING_FAILURE_THRESHOLD: "2"
+      MONITORING_WORKER_CONCURRENCY: "500"
+      MONITORING_WORKER_PING_TIMEOUT: 3s
+      MONITORING_WORKER_TICK_INTERVAL: 30s
+      MONITORING_WORKER_LOCK_KEY: lock:monitoring_worker
+      MONITORING_WORKER_LOCK_EXPIRATION: 25s
+      SIMULATOR_HOST: simulator
+      SIMULATOR_SUBNET: 10.1.0.0/16
+      LOG_LEVEL: info
+      LOG_FORMAT: text
+    networks:
+      - default
+
+volumes:
+  sms_postgres_data:
+  sms_es_data:
