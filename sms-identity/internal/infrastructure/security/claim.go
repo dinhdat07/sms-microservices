@@ -2,7 +2,7 @@ package security
 
 import (
 	"github.com/golang-jwt/jwt/v5"
-	"sms-identity/internal/modules/identity/domain"
+	"sms-identity/internal/domain"
 )
 
 type claims struct {

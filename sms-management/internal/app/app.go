@@ -6,13 +6,13 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
-	"sms-management/internal/modules/server_management/handler/grpcserver"
-	resthandler "sms-management/internal/modules/server_management/handler/rest"
-	"sms-management/internal/modules/server_management/repository/impl"
-	"sms-management/internal/modules/server_management/service"
-	"sms-management/internal/shared/config"
-	"sms-management/internal/shared/database"
-	"sms-management/internal/shared/logger"
+	"sms-management/internal/handler/grpcserver"
+	resthandler "sms-management/internal/handler/rest"
+	"sms-management/internal/repository/impl"
+	"sms-management/internal/service"
+	"sms-management/internal/config"
+	"sms-management/internal/infrastructure/database"
+	"sms-management/internal/infrastructure/logger"
 	infraRedis "sms-management/internal/infrastructure/redis"
 )
 

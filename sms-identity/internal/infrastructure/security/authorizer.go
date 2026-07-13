@@ -2,7 +2,7 @@ package security
 
 import (
 	"context"
-	"sms-identity/internal/modules/identity/domain"
+	"sms-identity/internal/domain"
 )
 
 type Authorizer struct {

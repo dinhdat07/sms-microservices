@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sms-identity/internal/shared/logger"
+	"sms-identity/internal/infrastructure/logger"
 	"sms-identity/internal/app"
 )
 

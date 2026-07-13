@@ -1,6 +1,6 @@
 package security
 
-import "sms-identity/internal/modules/identity/domain"
+import "sms-identity/internal/domain"
 
 type Principal struct {
 	UserID      string `json:"user_id"`

@@ -6,14 +6,14 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
-	authgrpc "sms-identity/internal/modules/identity/handler/grpcserver"
-	authrepo "sms-identity/internal/modules/identity/repository/impl"
-	authsvc "sms-identity/internal/modules/identity/service"
-	"sms-identity/internal/shared/config"
-	"sms-identity/internal/shared/database"
-	"sms-identity/internal/shared/logger"
+	authgrpc "sms-identity/internal/handler/grpcserver"
+	authrepo "sms-identity/internal/repository/impl"
+	authsvc "sms-identity/internal/service"
+	"sms-identity/internal/config"
+	"sms-identity/internal/infrastructure/database"
+	"sms-identity/internal/infrastructure/logger"
 	"sms-identity/internal/infrastructure/security"
-	"sms-identity/internal/modules/identity/handler"
+	"sms-identity/internal/handler"
 )
 
 type App struct {

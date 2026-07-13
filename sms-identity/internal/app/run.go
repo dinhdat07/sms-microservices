@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	authv1 "sms-identity/gen/go/auth/v1"
-	"sms-identity/internal/shared/logger"
+	"sms-identity/internal/infrastructure/logger"
 )
 
 func (a *App) Run() error {

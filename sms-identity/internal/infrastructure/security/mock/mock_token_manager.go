@@ -3,7 +3,7 @@
 package mock
 
 import (
-	domain "sms-identity/internal/modules/identity/domain"
+	domain "sms-identity/internal/domain"
 
 	mock "github.com/stretchr/testify/mock"
 

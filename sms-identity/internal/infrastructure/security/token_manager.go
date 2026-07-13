@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"sms-identity/internal/modules/identity/domain"
+	"sms-identity/internal/domain"
 )
 
 type TokenManager interface {

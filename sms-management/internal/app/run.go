@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	servermanagementv1 "sms-management/gen/go/server_management/v1"
-	"sms-management/internal/shared/logger"
+	"sms-management/internal/infrastructure/logger"
 )
 
 func (a *App) Run() error {
