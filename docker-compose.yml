@@ -54,6 +54,38 @@ services:
       - default
 
   # ============================================
+  # SMS Management Service
+  # ============================================
+  sms-management:
+    build:
+      context: ./sms-management
+      dockerfile: Dockerfile
+    container_name: sms_management
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - ENV=development
+      - DB_URL=postgresql://postgres:postgres@postgres:5432/sms?sslmode=disable
+      - REDIS_ENABLED=true
+      - REDIS_ADDR=redis:6379
+      - HTTP_PORT=8001
+      - GRPC_PORT=50052
+    labels:
+      - "traefik.enable=true"
+      # Route for Management APIs
+      - "traefik.http.routers.management.rule=PathPrefix(`/api/v1/servers`)"
+      - "traefik.http.routers.management.entrypoints=web"
+      - "traefik.http.services.management.loadbalancer.server.port=8001"
+      # Apply ForwardAuth Middleware (from sms-identity)
+      - "traefik.http.routers.management.middlewares=sms-auth@docker"
+    networks:
+      - default
+
+  # ============================================
   # PostgreSQL — Single Source of Truth
   # ============================================
   postgres:
