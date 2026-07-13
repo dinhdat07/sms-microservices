@@ -2,10 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"sms-management/internal/infrastructure/logger"
 
-	"sms-management/internal/infrastructure/redis"
 	"sms-management/internal/domain"
 	"sms-management/internal/repository"
 )
@@ -44,14 +43,14 @@ type ServerService interface {
 }
 
 type serverService struct {
-	repo  repository.ServerRepository
-	cache redis.CacheManager
+	repo       repository.ServerRepository
+	outboxRepo repository.OutboxRepository
 }
 
-func NewServerService(repo repository.ServerRepository, cache redis.CacheManager) ServerService {
+func NewServerService(repo repository.ServerRepository, outboxRepo repository.OutboxRepository) ServerService {
 	return &serverService{
-		repo:  repo,
-		cache: cache,
+		repo:       repo,
+		outboxRepo: outboxRepo,
 	}
 }
 
@@ -77,16 +76,18 @@ func (s *serverService) CreateServer(ctx context.Context, input CreateServerInpu
 		IPv4:       input.IPv4,
 	}
 
-	err = s.repo.Create(ctx, server)
+	err = s.repo.ExecuteInTx(ctx, func(txCtx context.Context) error {
+		if err := s.repo.Create(txCtx, server); err != nil {
+			return err
+		}
+		
+		payload, _ := json.Marshal(server)
+		event := domain.NewOutboxEvent("Server", server.ServerID, domain.EventServerCreated, payload)
+		return s.outboxRepo.Create(txCtx, event)
+	})
+	
 	if err != nil {
 		return nil, err
-	}
-
-	// Dual-Write to Redis
-	if s.cache != nil {
-		if err := s.cache.Upsert(ctx, server.ServerID, server.IPv4, string(server.CurrentStatus), 0); err != nil {
-			logger.Log.Sugar().Errorf("[WARNING] DB Create succeeded but Redis sync failed for ServerID %s: %v", server.ServerID, err)
-		}
 	}
 
 	return server, nil
@@ -126,16 +127,18 @@ func (s *serverService) UpdateServer(ctx context.Context, id string, input Updat
 		server.IPv4 = input.IPv4
 	}
 
-	err = s.repo.Update(ctx, server)
+	err = s.repo.ExecuteInTx(ctx, func(txCtx context.Context) error {
+		if err := s.repo.Update(txCtx, server); err != nil {
+			return err
+		}
+		
+		payload, _ := json.Marshal(server)
+		event := domain.NewOutboxEvent("Server", server.ServerID, domain.EventServerUpdated, payload)
+		return s.outboxRepo.Create(txCtx, event)
+	})
+
 	if err != nil {
 		return nil, err
-	}
-
-	// Dual-Write to Redis
-	if s.cache != nil {
-		if err := s.cache.Upsert(ctx, server.ServerID, server.IPv4, string(server.CurrentStatus), server.ConsecutiveFailures); err != nil {
-			logger.Log.Sugar().Errorf("[WARNING] DB Update succeeded but Redis sync failed for ServerID %s: %v", server.ServerID, err)
-		}
 	}
 
 	return server, nil
@@ -153,19 +156,21 @@ func (s *serverService) DeleteServer(ctx context.Context, id string) error {
 		return ErrServerNotFound
 	}
 
-	err = s.repo.Delete(ctx, id)
+	err = s.repo.ExecuteInTx(ctx, func(txCtx context.Context) error {
+		if err := s.repo.Delete(txCtx, id); err != nil {
+			return err
+		}
+		
+		payload := []byte(`{"server_id":"` + id + `"}`)
+		event := domain.NewOutboxEvent("Server", id, domain.EventServerDeleted, payload)
+		return s.outboxRepo.Create(txCtx, event)
+	})
+
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return ErrServerNotFound
 		}
 		return err
-	}
-
-	// Dual-Write to Redis
-	if s.cache != nil {
-		if err := s.cache.Delete(ctx, id); err != nil {
-			logger.Log.Sugar().Errorf("[WARNING] DB Delete succeeded but Redis sync failed for ServerID %s: %v", id, err)
-		}
 	}
 
 	return nil

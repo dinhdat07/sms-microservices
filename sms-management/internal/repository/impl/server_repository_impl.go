@@ -154,3 +154,10 @@ func (r *GormServerRepository) Search(ctx context.Context, filter repository.Ser
 
 	return servers, int32(total), nil
 }
+
+func (r *GormServerRepository) ExecuteInTx(ctx context.Context, fn func(txCtx context.Context) error) error {
+	return r.getDB(ctx).Transaction(func(tx *gorm.DB) error {
+		txCtx := context.WithValue(ctx, txKey{}, tx)
+		return fn(txCtx)
+	})
+}

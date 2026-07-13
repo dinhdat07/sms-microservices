@@ -6,14 +6,15 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
+	"sms-management/internal/config"
+	"sms-management/internal/domain"
 	"sms-management/internal/handler/grpcserver"
 	resthandler "sms-management/internal/handler/rest"
-	"sms-management/internal/repository/impl"
-	"sms-management/internal/service"
-	"sms-management/internal/config"
 	"sms-management/internal/infrastructure/database"
 	"sms-management/internal/infrastructure/logger"
-	infraRedis "sms-management/internal/infrastructure/redis"
+	"sms-management/internal/repository/impl"
+	"sms-management/internal/service"
+	"sms-management/internal/worker"
 )
 
 type App struct {
@@ -22,6 +23,7 @@ type App struct {
 	RedisClient      redis.UniversalClient
 	ServerHandler    *grpcserver.ServerManagementServer
 	RESTImportExport *resthandler.ImportExportHandler
+	OutboxRelay      *worker.OutboxRelay
 }
 
 func New() (*App, error) {
@@ -40,7 +42,13 @@ func New() (*App, error) {
 		return nil, err
 	}
 
-	// 3. Init Redis
+	// 3. AutoMigrate schemas
+	if err := db.AutoMigrate(&domain.Server{}, &domain.OutboxEvent{}); err != nil {
+		logger.Log.Sugar().Errorf("Failed to run AutoMigrate: %v", err)
+		return nil, err
+	}
+
+	// 4. Init Redis
 	redisCfg, err := config.LoadRedisConfig()
 	if err != nil {
 		logger.Log.Sugar().Errorf("Failed to load redis config: %v", err)
@@ -54,11 +62,13 @@ func New() (*App, error) {
 
 	// 4. Init Management Services
 	serverRepo := impl.NewGormServerRepository(db)
-	serverCache := infraRedis.NewServerCache(redisClient)
-	serverSvc := service.NewServerService(serverRepo, serverCache)
-	
+	outboxRepo := impl.NewGormOutboxRepository(db)
+	serverSvc := service.NewServerService(serverRepo, outboxRepo)
+
 	serverHandler := grpcserver.NewServerManagementServer(serverSvc)
 	restImportExport := resthandler.NewImportExportHandler(serverSvc)
+
+	outboxRelay := worker.NewOutboxRelay(outboxRepo, redisClient, cfg.Outbox)
 
 	return &App{
 		Config:           cfg,
@@ -66,5 +76,6 @@ func New() (*App, error) {
 		RedisClient:      redisClient,
 		ServerHandler:    serverHandler,
 		RESTImportExport: restImportExport,
+		OutboxRelay:      outboxRelay,
 	}, nil
 }

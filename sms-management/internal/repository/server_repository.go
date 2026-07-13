@@ -31,4 +31,6 @@ type ServerRepository interface {
 
 	BatchCreate(ctx context.Context, servers []*domain.Server) error
 	Search(ctx context.Context, filter ServerListFilter) ([]*domain.Server, int32, error)
+
+	ExecuteInTx(ctx context.Context, fn func(txCtx context.Context) error) error
 }

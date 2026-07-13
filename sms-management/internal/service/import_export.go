@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"encoding/json"
 	"fmt"
 	"net"
-	"sms-management/internal/infrastructure/logger"
 	"strings"
 	"time"
 
-	"sms-management/internal/infrastructure/redis"
 	"sms-management/internal/domain"
 	"sms-management/internal/repository"
 
@@ -114,24 +113,25 @@ func (s *serverService) ImportServers(ctx context.Context, fileBytes []byte) (*I
 		}
 
 		if len(validServers) > 0 {
-			if err := s.repo.BatchCreate(ctx, validServers); err != nil {
-				return fmt.Errorf("batch create failed: %w", err)
-			}
-
-			// Dual-Write to Redis using Pipeline
-			if s.cache != nil {
-				var cacheItems []redis.CacheUpsertItem
+			err := s.repo.ExecuteInTx(ctx, func(txCtx context.Context) error {
+				if err := s.repo.BatchCreate(txCtx, validServers); err != nil {
+					return fmt.Errorf("batch create failed: %w", err)
+				}
+				
+				var events []*domain.OutboxEvent
 				for _, srv := range validServers {
-					cacheItems = append(cacheItems, redis.CacheUpsertItem{
-						ID:         srv.ServerID,
-						IPv4:       srv.IPv4,
-						Status:     string(srv.CurrentStatus),
-						RetryCount: 0,
-					})
+					payload, _ := json.Marshal(srv)
+					events = append(events, domain.NewOutboxEvent("Server", srv.ServerID, domain.EventServerCreated, payload))
 				}
-				if err := s.cache.BatchUpsert(ctx, cacheItems); err != nil {
-					logger.Log.Sugar().Errorf("[WARNING] DB Import succeeded but Redis sync failed: %v", err)
+				
+				if err := s.outboxRepo.BatchCreate(txCtx, events); err != nil {
+					return fmt.Errorf("failed to create outbox events: %w", err)
 				}
+				return nil
+			})
+			
+			if err != nil {
+				return err
 			}
 		}
 
@@ -216,8 +216,8 @@ func generateServerExcel(servers []*domain.Server) ([]byte, error) {
 
 	// Create header style
 	headerStyle, err := f.NewStyle(&excelize.Style{
-		Font: &excelize.Font{Bold: true, Color: "FFFFFF"},
-		Fill: excelize.Fill{Type: "pattern", Color: []string{"#0b4884"}, Pattern: 1},
+		Font:      &excelize.Font{Bold: true, Color: "FFFFFF"},
+		Fill:      excelize.Fill{Type: "pattern", Color: []string{"#0b4884"}, Pattern: 1},
 		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
 	})
 	if err != nil {

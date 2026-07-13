@@ -29,6 +29,12 @@ type ReportingConfig struct {
 	JobQueueSize int
 }
 
+type OutboxConfig struct {
+	StreamName string
+	BatchSize  int
+	IntervalMs int // in milliseconds
+}
+
 type Config struct {
 	GRPCPort string
 	HTTPPort string
@@ -46,6 +52,7 @@ type Config struct {
 	Logger    LoggerConfig
 	SMTP      SMTPConfig
 	Reporting ReportingConfig
+	Outbox    OutboxConfig
 }
 
 func Load() (*Config, error) {
@@ -92,6 +99,16 @@ func Load() (*Config, error) {
 	if err != nil {
 		logCompress = true
 	}
+	
+	outboxBatchSize, err := GetEnvInt("OUTBOX_BATCH_SIZE", 500)
+	if err != nil {
+		outboxBatchSize = 500
+	}
+	
+	outboxIntervalMs, err := GetEnvInt("OUTBOX_INTERVAL_MS", 2000)
+	if err != nil {
+		outboxIntervalMs = 2000
+	}
 
 	cfg := &Config{
 		GRPCPort:      GetEnvDefault("GRPC_PORT", "50051"),
@@ -126,6 +143,11 @@ func Load() (*Config, error) {
 		Reporting: ReportingConfig{
 			WorkerCount:  workerCount,
 			JobQueueSize: jobQueueSize,
+		},
+		Outbox: OutboxConfig{
+			StreamName: GetEnvDefault("OUTBOX_STREAM_NAME", "sms.events.server"),
+			BatchSize:  outboxBatchSize,
+			IntervalMs: outboxIntervalMs,
 		},
 	}
 

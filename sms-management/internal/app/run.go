@@ -24,6 +24,11 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
+	// Start Outbox Relay Worker
+	if a.OutboxRelay != nil {
+		a.OutboxRelay.Start()
+	}
+
 	grpcSrv := grpc.NewServer()
 	servermanagementv1.RegisterServerManagementServiceServer(grpcSrv, a.ServerHandler)
 
@@ -73,6 +78,9 @@ func (a *App) Run() error {
 	<-quit
 
 	logger.Log.Sugar().Info("Shutting down servers...")
+	if a.OutboxRelay != nil {
+		a.OutboxRelay.Stop()
+	}
 	grpcSrv.GracefulStop()
 	httpSrv.Shutdown(ctx)
 	logger.Log.Sugar().Info("Shutdown complete")
