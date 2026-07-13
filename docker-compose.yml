@@ -180,7 +180,7 @@ services:
   # ============================================
   # Monitoring Worker — runs in Docker network so ICMP can reach simulator IPs
   # ============================================
-  monitoring-worker:
+  sms-monitoring-worker:
     build:
       context: .
       dockerfile: cmd/monitoring-worker/Dockerfile
