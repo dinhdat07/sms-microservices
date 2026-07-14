@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package server_management.v1;
+
+option go_package = "server-management-service/gen/go/server_management/v1;server_managementv1";
+
+import "google/api/annotations.proto";
+import "buf/validate/validate.proto";
+
+service ServerManagementService {
+  rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/servers"
+      body: "*"
+    };
+  }
+
+  rpc UpdateServer(UpdateServerRequest) returns (UpdateServerResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/servers/{server_id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteServer(DeleteServerRequest) returns (DeleteServerResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/servers/{server_id}"
+    };
+  }
+
+  rpc ViewServers(ViewServersRequest) returns (ViewServersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/servers"
+    };
+  }
+
+  rpc ImportServers(ImportServersRequest) returns (ImportServersResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/servers/import"
+      body: "*"
+    };
+  }
+
+  rpc ExportServers(ExportServersRequest) returns (ExportServersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/servers/export"
+    };
+  }
+}
+
+message Server {
+  string server_id = 1;
+  string server_name = 2;
+  string ipv4 = 3;
+  string current_status = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message CreateServerRequest {
+  string server_name = 1 [(buf.validate.field).string.min_len = 1, (buf.validate.field).string.max_len = 255];
+  string ipv4 = 2 [(buf.validate.field).string.ipv4 = true];
+}
+
+message CreateServerResponse {
+  Server server = 1;
+}
+
+message UpdateServerRequest {
+  string server_id = 1 [(buf.validate.field).string.uuid = true];
+  string server_name = 2 [(buf.validate.field).string.min_len = 1, (buf.validate.field).string.max_len = 255];
+  string ipv4 = 3 [(buf.validate.field).string.ipv4 = true];
+}
+
+message UpdateServerResponse {
+  Server server = 1;
+}
+
+message DeleteServerRequest {
+  string server_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message DeleteServerResponse {
+  bool success = 1;
+}
+
+message ViewServersRequest {
+  int32 page = 1 [(buf.validate.field).int32.gte = 1];
+  int32 limit = 2 [(buf.validate.field).int32.gte = 1, (buf.validate.field).int32.lte = 100];
+  string filter_status = 3 [(buf.validate.field).string = {
+    in: ["ONLINE", "OFFLINE", ""]
+  }];
+  string filter_name = 4;
+  string sort_by = 5 [(buf.validate.field).string = {
+    in: ["server_name", "created_at", "ipv4", "current_status", "updated_at", ""]
+  }];
+  string sort_direction = 6 [(buf.validate.field).string = {
+    in: ["asc", "desc", ""]
+  }];
+  string created_from = 7; // format YYYY-MM-DD
+  string created_to = 8;   // format YYYY-MM-DD
+}
+
+message ViewServersResponse {
+  int32 total_count = 1;
+  repeated Server servers = 2;
+}
+
+message ImportServersRequest {
+  bytes file_content = 1; 
+  string filename = 2;
+}
+
+message ImportServersResponse {
+  int32 success_count = 1;
+  repeated string successful_servers = 2;
+  int32 fail_count = 3;
+  repeated string failed_servers = 4;
+}
+
+message ExportServersRequest {
+  int32 page = 1 [(buf.validate.field).int32.gte = 1];
+  int32 limit = 2 [(buf.validate.field).int32.gte = 1];
+  string filter_status = 3 [(buf.validate.field).string = {
+    in: ["ONLINE", "OFFLINE", ""]
+  }];
+  string filter_name = 4;
+  string sort_by = 5 [(buf.validate.field).string = {
+    in: ["server_name", "created_at", "ipv4", "current_status", "updated_at", ""]
+  }];
+  string sort_direction = 6 [(buf.validate.field).string = {
+    in: ["asc", "desc", ""]
+  }];
+  string created_from = 7; // format YYYY-MM-DD
+  string created_to = 8;   // format YYYY-MM-DD
+}
+
+message ExportServersResponse {
+  bytes file_content = 1;
+  string filename = 2;
+}

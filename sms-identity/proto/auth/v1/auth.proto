@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package portal.auth.v1;
+
+option go_package = "portal-system/gen/go/auth/v1;authv1";
+
+import "google/api/annotations.proto";
+import "buf/validate/validate.proto";
+
+
+service AuthService {
+
+
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/login"
+      body: "*"
+    };
+  }
+
+  rpc RefreshToken(RefreshRequest) returns (RefreshResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/refresh"
+      body: "*"
+    };
+  }
+
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/logout"
+      body: "*"
+    };
+  }
+
+  rpc LogoutAll(LogoutAllRequest) returns (LogoutAllResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/logout-all"
+      body: "*"
+    };
+  }
+}
+
+
+
+message LoginRequest {
+  string identifier = 1 [
+    (buf.validate.field).string = {
+      min_len: 3,
+      max_len: 255
+    }
+  ];
+
+  string password = 2 [
+    (buf.validate.field).string = {
+      min_len: 1,
+      max_len: 255
+    }
+  ];
+}
+
+message RefreshRequest {
+  string refresh_token = 1 [
+    (buf.validate.field).string = {
+      min_len: 1
+    }
+  ];
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {
+  string message = 1;
+}
+
+message LogoutAllRequest {}
+
+message LogoutAllResponse {
+  string message = 1;
+}
+
+message RefreshResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  string token_type = 3;
+  int64 expires_in = 4;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  string token_type = 3;
+  int64 expires_in = 4;
+}

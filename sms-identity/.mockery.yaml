@@ -1,0 +1,16 @@
+with-expecter: true
+issue-845-fix: true
+
+packages:
+  sms-identity/internal/repository:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-identity/internal/service:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"

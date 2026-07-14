@@ -29,6 +29,14 @@ type ReportingConfig struct {
 	JobQueueSize int
 }
 
+type ConsumerConfig struct {
+	Name               string
+	ServerStream       string
+	ServerGroup        string
+	ServerStatusStream string
+	ServerStatusGroup  string
+}
+
 type Config struct {
 	GRPCPort string
 	HTTPPort string
@@ -39,6 +47,7 @@ type Config struct {
 	Logger    LoggerConfig
 	SMTP      SMTPConfig
 	Reporting ReportingConfig
+	Consumer  ConsumerConfig
 }
 
 func Load() (*Config, error) {
@@ -106,6 +115,13 @@ func Load() (*Config, error) {
 		Reporting: ReportingConfig{
 			WorkerCount:  workerCount,
 			JobQueueSize: jobQueueSize,
+		},
+		Consumer: ConsumerConfig{
+			Name:               GetEnvDefault("CONSUMER_NAME", "reporting_worker"),
+			ServerStream:       GetEnvDefault("CONSUMER_SERVER_STREAM", "sms.events.server"),
+			ServerGroup:        GetEnvDefault("CONSUMER_SERVER_GROUP", "reporting_server_group"),
+			ServerStatusStream: GetEnvDefault("CONSUMER_STATUS_STREAM", "sms.events.server_status"),
+			ServerStatusGroup:  GetEnvDefault("CONSUMER_STATUS_GROUP", "reporting_status_group"),
 		},
 	}
 

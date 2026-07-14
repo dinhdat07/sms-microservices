@@ -3,9 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"net"
-	"os"
-	"os/signal"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -93,8 +90,7 @@ func NewApp() (*App, error) {
 
 	// Initialize Event Consumer
 	subscriber := messagebroker.NewRedisSubscriber(redisClient)
-	eventStream := consumer.NewEventConsumer(subscriber, repo)
-	go eventStream.Start(context.Background())
+	eventStream := consumer.NewEventConsumer(subscriber, repo, cfg.Consumer)
 
 	return &App{
 		cfg:         cfg,
@@ -102,45 +98,4 @@ func NewApp() (*App, error) {
 		worker:      worker,
 		eventStream: eventStream,
 	}, nil
-}
-
-func (a *App) Run() error {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Start Worker
-	a.worker.Start(ctx)
-
-	// Start Consumer
-	a.eventStream.Start(ctx)
-
-	// Start gRPC Server
-	errChan := make(chan error, 1)
-	go func() {
-		lis, err := net.Listen("tcp", ":"+a.cfg.GRPCPort)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to listen on port %s: %w", a.cfg.GRPCPort, err)
-			return
-		}
-		logger.Log.Sugar().Infof("gRPC server listening on port %s", a.cfg.GRPCPort)
-		if err := a.grpcServer.Serve(lis); err != nil {
-			errChan <- fmt.Errorf("grpc server error: %w", err)
-		}
-	}()
-
-	// Handle graceful shutdown
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, os.Kill)
-
-	select {
-	case err := <-errChan:
-		return err
-	case <-sigChan:
-		logger.Log.Info("Shutting down Reporting Service...")
-		cancel()
-		a.grpcServer.GracefulStop()
-		a.worker.Stop()
-	}
-
-	return nil
 }

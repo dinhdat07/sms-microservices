@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	authv1 "sms-identity/gen/go/auth/v1"
-	reportingv1 "sms-identity/gen/go/reporting/v1"
-	server_managementv1 "sms-identity/gen/go/server_management/v1"
 	"sms-identity/internal/infrastructure/security"
 
 	"google.golang.org/grpc"
@@ -22,13 +20,6 @@ func stateChangingMethods() map[string]bool {
 		authv1.AuthService_Login_FullMethodName:     true,
 		authv1.AuthService_Logout_FullMethodName:    true,
 		authv1.AuthService_LogoutAll_FullMethodName: true,
-		// Server Management
-		server_managementv1.ServerManagementService_CreateServer_FullMethodName:  true,
-		server_managementv1.ServerManagementService_UpdateServer_FullMethodName:  true,
-		server_managementv1.ServerManagementService_DeleteServer_FullMethodName:  true,
-		server_managementv1.ServerManagementService_ImportServers_FullMethodName: true,
-		// Reporting
-		reportingv1.ReportingService_RequestReport_FullMethodName: true,
 	}
 }
 

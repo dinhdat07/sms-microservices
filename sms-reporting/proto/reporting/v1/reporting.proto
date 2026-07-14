@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package reporting.v1;
+
+option go_package = "server-management-service/gen/go/reporting/v1;reportingv1";
+
+import "google/api/annotations.proto";
+import "buf/validate/validate.proto";
+
+service ReportingService {
+  rpc RequestReport(RequestReportRequest) returns (RequestReportResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/servers/report"
+      body: "*"
+    };
+  }
+}
+
+message RequestReportRequest {
+  string start_date = 1; // format YYYY-MM-DD
+  string end_date = 2;   // format YYYY-MM-DD
+  string target_email = 3 [(buf.validate.field).string.email = true];
+}
+
+message RequestReportResponse {
+  string status = 1;
+  int32 code = 2;
+  string message = 3;
+}

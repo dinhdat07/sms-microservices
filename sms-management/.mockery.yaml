@@ -1,0 +1,28 @@
+with-expecter: true
+issue-845-fix: true
+
+packages:
+  sms-management/internal/repository:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-management/internal/service:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-management/internal/infrastructure/elasticsearch:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-management/internal/infrastructure/messagebroker:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"

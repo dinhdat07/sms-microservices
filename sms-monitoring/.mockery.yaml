@@ -1,0 +1,40 @@
+with-expecter: true
+issue-845-fix: true
+
+packages:
+  sms-monitoring/internal/repository:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-monitoring/internal/domain:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-monitoring/internal/service:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-monitoring/internal/worker:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-monitoring/internal/infrastructure/elasticsearch:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-monitoring/internal/infrastructure/messagebroker:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"

@@ -218,6 +218,50 @@ services:
     networks:
       - default
 
+  # ============================================
+  # SMS Reporting Service
+  # ============================================
+  sms-reporting:
+    build:
+      context: ./sms-reporting
+      dockerfile: Dockerfile
+    container_name: sms_reporting
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    environment:
+      - ENV=development
+      - DB_URL=postgresql://postgres:postgres@postgres:5432/sms?sslmode=disable
+      - REDIS_ENABLED=true
+      - REDIS_ADDR=redis:6379
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_SERVER_INDEX=sms_observation_logs
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_USE_AUTH=false
+      - SMTP_USE_TLS=false
+      - SMTP_FROM=reports@sms.local
+      - HTTP_PORT=8002
+      - GRPC_PORT=50053
+      - CONSUMER_NAME=reporting_worker
+    labels:
+      - "traefik.enable=true"
+      # Route for Reporting APIs
+      - "traefik.http.routers.reporting.rule=PathPrefix(`/api/v1/reporting`)"
+      - "traefik.http.routers.reporting.entrypoints=web"
+      - "traefik.http.services.reporting.loadbalancer.server.port=8002"
+      # Apply ForwardAuth Middleware (from sms-identity)
+      - "traefik.http.routers.reporting.middlewares=sms-auth@docker"
+    networks:
+      - default
+
 volumes:
   sms_postgres_data:
   sms_es_data:

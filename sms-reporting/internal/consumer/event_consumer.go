@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"sms-reporting/internal/config"
 	"sms-reporting/internal/domain"
 	"sms-reporting/internal/infrastructure/logger"
 	"sms-reporting/internal/infrastructure/messagebroker"
@@ -19,12 +20,14 @@ type EventConsumer interface {
 type eventConsumerImpl struct {
 	subscriber messagebroker.Subscriber
 	repo       repository.ReportingRepository
+	cfg        config.ConsumerConfig
 }
 
-func NewEventConsumer(subscriber messagebroker.Subscriber, repo repository.ReportingRepository) EventConsumer {
+func NewEventConsumer(subscriber messagebroker.Subscriber, repo repository.ReportingRepository, cfg config.ConsumerConfig) EventConsumer {
 	return &eventConsumerImpl{
 		subscriber: subscriber,
 		repo:       repo,
+		cfg:        cfg,
 	}
 }
 
@@ -34,10 +37,10 @@ func (c *eventConsumerImpl) Start(ctx context.Context) {
 		return
 	}
 
-	logger.Log.Info("[EventConsumer] Starting message broker subscriber")
+	logger.Log.Info("[EventConsumer] Starting message broker subscriber", zap.String("consumer", c.cfg.Name))
 
-	go c.subscriber.Subscribe(ctx, "sms.events.server", "reporting_server_group", "consumer_1", c.handleServerEvent)
-	go c.subscriber.Subscribe(ctx, "sms.events.server_status", "reporting_status_group", "consumer_1", c.handleStatusEvent)
+	go c.subscriber.Subscribe(ctx, c.cfg.ServerStream, c.cfg.ServerGroup, c.cfg.Name, c.handleServerEvent)
+	go c.subscriber.Subscribe(ctx, c.cfg.ServerStatusStream, c.cfg.ServerStatusGroup, c.cfg.Name, c.handleStatusEvent)
 }
 
 func (c *eventConsumerImpl) handleServerEvent(ctx context.Context, msg messagebroker.Message) error {
