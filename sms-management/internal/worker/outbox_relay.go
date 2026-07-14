@@ -7,28 +7,27 @@ import (
 	"sms-management/internal/config"
 	"sms-management/internal/domain"
 	"sms-management/internal/infrastructure/logger"
+	"sms-management/internal/infrastructure/messagebroker"
 	"sms-management/internal/repository"
-
-	"github.com/redis/go-redis/v9"
 )
 
 type OutboxRelay struct {
-	repo        repository.OutboxRepository
-	redisClient redis.UniversalClient
-	streamName  string
-	batchSize   int
-	interval    time.Duration
-	stopCh      chan struct{}
+	repo       repository.OutboxRepository
+	publisher  messagebroker.Publisher
+	streamName string
+	batchSize  int
+	interval   time.Duration
+	stopCh     chan struct{}
 }
 
-func NewOutboxRelay(repo repository.OutboxRepository, redisClient redis.UniversalClient, cfg config.OutboxConfig) *OutboxRelay {
+func NewOutboxRelay(repo repository.OutboxRepository, publisher messagebroker.Publisher, cfg config.OutboxConfig) *OutboxRelay {
 	return &OutboxRelay{
-		repo:        repo,
-		redisClient: redisClient,
-		streamName:  cfg.StreamName,
-		batchSize:   cfg.BatchSize,
-		interval:    time.Duration(cfg.IntervalMs) * time.Millisecond,
-		stopCh:      make(chan struct{}),
+		repo:       repo,
+		publisher:  publisher,
+		streamName: cfg.StreamName,
+		batchSize:  cfg.BatchSize,
+		interval:   time.Duration(cfg.IntervalMs) * time.Millisecond,
+		stopCh:     make(chan struct{}),
 	}
 }
 
@@ -68,26 +67,10 @@ func (r *OutboxRelay) processOutboxEvents() {
 		return
 	}
 
-	// Use Redis Pipeline for batch publishing
-	ctx := context.Background()
-	pipe := r.redisClient.Pipeline()
-
-	for _, event := range events {
-		pipe.XAdd(ctx, &redis.XAddArgs{
-			Stream: r.streamName,
-			Values: map[string]interface{}{
-				"aggregate_type": event.AggregateType,
-				"aggregate_id":   event.AggregateID,
-				"event_type":     string(event.EventType),
-				"payload":        string(event.Payload),
-			},
-		})
-	}
-
-	// Execute pipeline
-	_, err = pipe.Exec(ctx)
+	// Publish via generic interface
+	err = r.publisher.PublishOutboxBatch(context.Background(), r.streamName, events)
 	if err != nil {
-		logger.Log.Sugar().Errorf("Failed to publish outbox events to Redis Streams: %v", err)
+		logger.Log.Sugar().Errorf("Failed to publish outbox events: %v", err)
 		return
 	}
 

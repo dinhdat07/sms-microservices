@@ -2,14 +2,15 @@ package service
 
 import (
 	"context"
-
 	"encoding/json"
 
 	serverDomain "sms-monitoring/internal/domain"
 	"sms-monitoring/internal/infrastructure/elasticsearch"
+	"sms-monitoring/internal/infrastructure/logger"
+	"sms-monitoring/internal/infrastructure/messagebroker"
 	"sms-monitoring/internal/repository"
 
-	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 type MonitoringService interface {
@@ -17,15 +18,15 @@ type MonitoringService interface {
 }
 
 type monitoringServiceImpl struct {
-	rdb              redis.UniversalClient
+	publisher        messagebroker.Publisher
 	stateStore       repository.ServerStateStore
 	esLogger         elasticsearch.ObservationLogger
 	failureThreshold int
 }
 
-func NewMonitoringService(rdb redis.UniversalClient, stateStore repository.ServerStateStore, esLogger elasticsearch.ObservationLogger, failureThreshold int) MonitoringService {
+func NewMonitoringService(publisher messagebroker.Publisher, stateStore repository.ServerStateStore, esLogger elasticsearch.ObservationLogger, failureThreshold int) MonitoringService {
 	return &monitoringServiceImpl{
-		rdb:              rdb,
+		publisher:        publisher,
 		stateStore:       stateStore,
 		esLogger:         esLogger,
 		failureThreshold: failureThreshold,
@@ -88,7 +89,7 @@ func (s *monitoringServiceImpl) Evaluate(ctx context.Context, serverID string, i
 		return err
 	}
 
-	// Publish Event to Redis Stream ONLY if state actually changes
+	// Publish Event via Publisher ONLY if state actually changes
 	if statusChanged {
 		payload, _ := json.Marshal(map[string]interface{}{
 			"id":          serverID,
@@ -96,15 +97,14 @@ func (s *monitoringServiceImpl) Evaluate(ctx context.Context, serverID string, i
 			"retry_count": retryCount,
 		})
 
-		// use []interface instead of map[string] for fixed order
-		s.rdb.XAdd(ctx, &redis.XAddArgs{
-			Stream: "sms.events.server_status",
-			Values: []interface{}{
-				"server_id", serverID,
-				"event_type", "ServerStatusChanged",
-				"payload", string(payload),
-			},
+		err = s.publisher.Publish(ctx, "sms.events.server_status", []interface{}{
+			"server_id", serverID,
+			"event_type", "ServerStatusChanged",
+			"payload", string(payload),
 		})
+		if err != nil {
+			logger.Log.Error("Failed to publish server status event", zap.Error(err))
+		}
 	}
 
 	return nil

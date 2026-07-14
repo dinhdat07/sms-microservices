@@ -6,15 +6,17 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
+	"sms-monitoring/internal/config"
+	"sms-monitoring/internal/infrastructure/database"
 	"sms-monitoring/internal/infrastructure/elasticsearch"
+	"sms-monitoring/internal/infrastructure/logger"
+	"sms-monitoring/internal/infrastructure/messagebroker"
 	"sms-monitoring/internal/repository/impl"
 	"sms-monitoring/internal/service"
 	"sms-monitoring/internal/worker"
-	"sms-monitoring/internal/config"
-	"sms-monitoring/internal/infrastructure/database"
-	"sms-monitoring/internal/infrastructure/logger"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -57,10 +59,11 @@ func NewApp() (*App, error) {
 	esLogger := elasticsearch.NewObservationLogger(esClient, esCfg.ServerIndex, config.LoadObservationLoggerConfig())
 
 	// Initialize Dependencies
-	
+
 	stateStore := impl.NewRedisServerStateStore(redisClient)
 	threshold, _ := config.GetEnvInt("MONITORING_FAILURE_THRESHOLD", 2)
-	monService := service.NewMonitoringService(redisClient, stateStore, esLogger, threshold)
+	publisher := messagebroker.NewRedisPublisher(redisClient)
+	monService := service.NewMonitoringService(publisher, stateStore, esLogger, threshold)
 
 	// Unprivileged ping for non-root environments (Set to true if running as root on Linux)
 	privilegedStr := os.Getenv("ICMP_PRIVILEGED")
@@ -95,10 +98,11 @@ func (a *App) Run() error {
 
 	// Handle OS signals
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, os.Kill)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
 	// Start Stream Consumer
-	streamConsumer := worker.NewStreamConsumer(a.RedisClient)
+	subscriber := messagebroker.NewRedisSubscriber(a.RedisClient)
+	streamConsumer := worker.NewStreamConsumer(subscriber, a.RedisClient)
 	go streamConsumer.Start(ctx)
 
 	// Start Scheduler

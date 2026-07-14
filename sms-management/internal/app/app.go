@@ -12,6 +12,7 @@ import (
 	resthandler "sms-management/internal/handler/rest"
 	"sms-management/internal/infrastructure/database"
 	"sms-management/internal/infrastructure/logger"
+	"sms-management/internal/infrastructure/messagebroker"
 	"sms-management/internal/repository/impl"
 	"sms-management/internal/service"
 	"sms-management/internal/worker"
@@ -68,7 +69,11 @@ func New() (*App, error) {
 	serverHandler := grpcserver.NewServerManagementServer(serverSvc)
 	restImportExport := resthandler.NewImportExportHandler(serverSvc)
 
-	outboxRelay := worker.NewOutboxRelay(outboxRepo, redisClient, cfg.Outbox)
+	// Initialize Publisher
+	publisher := messagebroker.NewRedisPublisher(redisClient)
+
+	// Initialize Outbox Worker
+	outboxRelay := worker.NewOutboxRelay(outboxRepo, publisher, cfg.Outbox)
 
 	return &App{
 		Config:           cfg,

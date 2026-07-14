@@ -3,13 +3,12 @@ package consumer
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"sms-reporting/internal/domain"
 	"sms-reporting/internal/infrastructure/logger"
+	"sms-reporting/internal/infrastructure/messagebroker"
 	"sms-reporting/internal/repository"
 
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -18,88 +17,30 @@ type EventConsumer interface {
 }
 
 type eventConsumerImpl struct {
-	rdb  redis.UniversalClient
-	repo repository.ReportingRepository
+	subscriber messagebroker.Subscriber
+	repo       repository.ReportingRepository
 }
 
-func NewEventConsumer(rdb redis.UniversalClient, repo repository.ReportingRepository) EventConsumer {
+func NewEventConsumer(subscriber messagebroker.Subscriber, repo repository.ReportingRepository) EventConsumer {
 	return &eventConsumerImpl{
-		rdb:  rdb,
-		repo: repo,
+		subscriber: subscriber,
+		repo:       repo,
 	}
 }
 
 func (c *eventConsumerImpl) Start(ctx context.Context) {
-	if c.rdb == nil {
-		logger.Log.Warn("[EventConsumer] Redis not configured, skipping consumer.")
+	if c.subscriber == nil {
+		logger.Log.Warn("[EventConsumer] Subscriber not configured, skipping consumer.")
 		return
 	}
 
-	logger.Log.Info("[EventConsumer] Starting Redis stream consumer")
+	logger.Log.Info("[EventConsumer] Starting message broker subscriber")
 
-	// Create Consumer Group for Server Events
-	c.createConsumerGroup(ctx, "sms.events.server", "reporting_server_group")
-	
-	// Create Consumer Group for Status Events
-	c.createConsumerGroup(ctx, "sms.events.server_status", "reporting_status_group")
-
-	go c.consumeStream(ctx, "sms.events.server", "reporting_server_group", "consumer_1", c.handleServerEvent)
-	go c.consumeStream(ctx, "sms.events.server_status", "reporting_status_group", "consumer_1", c.handleStatusEvent)
+	go c.subscriber.Subscribe(ctx, "sms.events.server", "reporting_server_group", "consumer_1", c.handleServerEvent)
+	go c.subscriber.Subscribe(ctx, "sms.events.server_status", "reporting_status_group", "consumer_1", c.handleStatusEvent)
 }
 
-func (c *eventConsumerImpl) createConsumerGroup(ctx context.Context, stream string, group string) {
-	err := c.rdb.XGroupCreateMkStream(ctx, stream, group, "0").Err()
-	if err != nil {
-		if err.Error() == "BUSYGROUP Consumer Group name already exists" {
-			// ignore
-		} else {
-			logger.Log.Error("Failed to create consumer group", zap.String("stream", stream), zap.Error(err))
-		}
-	}
-}
-
-func (c *eventConsumerImpl) consumeStream(ctx context.Context, stream, group, consumer string, handler func(context.Context, redis.XMessage) error) {
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Log.Info("Stopping consumer", zap.String("stream", stream))
-			return
-		default:
-			// Read events
-			res, err := c.rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
-				Group:    group,
-				Consumer: consumer,
-				Streams:  []string{stream, ">"},
-				Count:    10,
-				Block:    5 * time.Second,
-			}).Result()
-
-			if err != nil {
-				if err == redis.Nil {
-					// Timeout, just continue
-					continue
-				}
-				logger.Log.Error("Error reading from stream", zap.String("stream", stream), zap.Error(err))
-				time.Sleep(2 * time.Second)
-				continue
-			}
-
-			for _, xStream := range res {
-				for _, msg := range xStream.Messages {
-					err := handler(ctx, msg)
-					if err != nil {
-						logger.Log.Error("Failed to handle message", zap.String("id", msg.ID), zap.Error(err))
-						// We don't ACK if error, let it go to Pending/DLQ in future
-					} else {
-						c.rdb.XAck(ctx, stream, group, msg.ID)
-					}
-				}
-			}
-		}
-	}
-}
-
-func (c *eventConsumerImpl) handleServerEvent(ctx context.Context, msg redis.XMessage) error {
+func (c *eventConsumerImpl) handleServerEvent(ctx context.Context, msg messagebroker.Message) error {
 	eventType, ok := msg.Values["event_type"].(string)
 	if !ok {
 		return nil
@@ -118,38 +59,45 @@ func (c *eventConsumerImpl) handleServerEvent(ctx context.Context, msg redis.XMe
 			IP   string `json:"ip"`
 		}
 		if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
+			logger.Log.Error("[EventConsumer] Failed to unmarshal Server event payload", zap.Error(err))
 			return err
 		}
 
-		logger.Log.Info("Received ServerAdded/Updated event, upserting local DB", zap.String("server_id", payload.ID))
-		return c.repo.UpsertReportingServer(ctx, &domain.ReportingServer{
+		server := &domain.ReportingServer{
 			ServerID: payload.ID,
 			Name:     payload.Name,
 			IPv4:     payload.IP,
-		})
+			Status:   "ONLINE", // Default status for new servers
+		}
+		err := c.repo.UpsertReportingServer(ctx, server)
+		if err != nil {
+			logger.Log.Error("[EventConsumer] Failed to upsert reporting server", zap.Error(err))
+			return err
+		}
+		logger.Log.Info("[EventConsumer] Processed Server event", zap.String("eventType", eventType), zap.String("serverID", payload.ID))
 
 	case "ServerDeleted":
 		var payload struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
+			logger.Log.Error("[EventConsumer] Failed to unmarshal ServerDeleted payload", zap.Error(err))
 			return err
 		}
-		
-		logger.Log.Info("Received ServerDeleted event, removing from local DB", zap.String("server_id", payload.ID))
-		return c.repo.DeleteReportingServer(ctx, payload.ID)
+
+		err := c.repo.DeleteReportingServer(ctx, payload.ID)
+		if err != nil {
+			logger.Log.Error("[EventConsumer] Failed to delete reporting server", zap.Error(err))
+			return err
+		}
+		logger.Log.Info("[EventConsumer] Processed ServerDeleted event", zap.String("serverID", payload.ID))
 	}
 
 	return nil
 }
 
-func (c *eventConsumerImpl) handleStatusEvent(ctx context.Context, msg redis.XMessage) error {
+func (c *eventConsumerImpl) handleStatusEvent(ctx context.Context, msg messagebroker.Message) error {
 	eventType, ok := msg.Values["event_type"].(string)
-	if !ok || eventType != "ServerStatusChanged" {
-		return nil
-	}
-
-	serverID, ok := msg.Values["server_id"].(string)
 	if !ok {
 		return nil
 	}
@@ -159,13 +107,23 @@ func (c *eventConsumerImpl) handleStatusEvent(ctx context.Context, msg redis.XMe
 		return nil
 	}
 
-	var payload struct {
-		Status string `json:"status"`
-	}
-	if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
-		return err
+	if eventType == "ServerStatusChanged" {
+		var payload struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		}
+		if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
+			logger.Log.Error("[EventConsumer] Failed to unmarshal ServerStatusChanged payload", zap.Error(err))
+			return err
+		}
+
+		err := c.repo.UpdateReportingServerStatus(ctx, payload.ID, payload.Status)
+		if err != nil {
+			logger.Log.Error("[EventConsumer] Failed to update reporting server status", zap.Error(err))
+			return err
+		}
+		logger.Log.Info("[EventConsumer] Processed ServerStatusChanged event", zap.String("serverID", payload.ID), zap.String("status", payload.Status))
 	}
 
-	logger.Log.Info("Received ServerStatusChanged event, updating local DB", zap.String("server_id", serverID), zap.String("status", payload.Status))
-	return c.repo.UpdateReportingServerStatus(ctx, serverID, payload.Status)
+	return nil
 }
