@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine AS builder
+FROM golang:1.26.2-alpine AS builder
 
 WORKDIR /app
 
@@ -14,13 +14,18 @@ COPY . .
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/bin/server ./cmd/server/main.go
 
-FROM alpine:latest
-WORKDIR /app
-COPY --from=builder /app/bin/server /app/server
-COPY --from=builder /app/.env /app/.env
+# Create logs dir in builder so we can copy it with correct permissions
+RUN mkdir -p /app/logs
 
-# Create logs directory
-RUN mkdir -p logs
+FROM gcr.io/distroless/static-debian12:nonroot
+
+WORKDIR /app
+
+# Copy the binary and logs dir with nonroot ownership
+COPY --chown=nonroot:nonroot --from=builder /app/bin/server /app/server
+COPY --chown=nonroot:nonroot --from=builder /app/logs /app/logs
+
+USER nonroot:nonroot
 
 EXPOSE 8080 50051
 

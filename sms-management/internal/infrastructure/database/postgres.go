@@ -1,6 +1,7 @@
 package database
 
 import (
+	"sms-management/internal/domain"
 	"sms-management/internal/infrastructure/logger"
 	"sync"
 	"time"
@@ -8,6 +9,19 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+// AutoMigrate creates schemas and runs auto migration
+func AutoMigrate(db *gorm.DB) error {
+	if err := db.Exec("CREATE SCHEMA IF NOT EXISTS management_schema").Error; err != nil {
+		logger.Log.Sugar().Errorf("Failed to create schema management_schema: %v", err)
+		return err
+	}
+	if err := db.AutoMigrate(&domain.Server{}, &domain.OutboxEvent{}); err != nil {
+		logger.Log.Sugar().Errorf("Failed to run AutoMigrate: %v", err)
+		return err
+	}
+	return nil
+}
 
 var (
 	dbInstance *gorm.DB

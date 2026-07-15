@@ -3,19 +3,28 @@ services:
   # Traefik API Gateway
   # ============================================
   traefik:
-    image: traefik:v3.0
+    image: traefik:latest
     container_name: sms_traefik
+    user: root
     restart: unless-stopped
     command:
+      - "--log.level=DEBUG"
       - "--api.insecure=true"
       - "--providers.docker=true"
+      - "--providers.docker.endpoint=tcp://host.docker.internal:2375"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
     ports:
       - "80:80"
       - "8080:8080" # Traefik Dashboard
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    environment:
+      - DOCKER_API_VERSION=1.44
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - http_proxy=
+      - https_proxy=
+      - NO_PROXY=localhost,127.0.0.1
+      - no_proxy=localhost,127.0.0.1
     networks:
       - default
 
@@ -138,7 +147,7 @@ services:
     volumes:
       - sms_es_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q 'green|yellow'"]
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q -E 'green|yellow'"]
       interval: 10s
       timeout: 10s
       retries: 10
@@ -159,12 +168,11 @@ services:
   # ============================================
   simulator:
     build:
-      context: .
-      dockerfile: cmd/simulator/Dockerfile
+      context: ./sms-simulator
     container_name: sms_simulator
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8081:8080"
     cap_add:
       - NET_ADMIN
       - NET_RAW
@@ -182,8 +190,8 @@ services:
   # ============================================
   sms-monitoring-worker:
     build:
-      context: .
-      dockerfile: cmd/monitoring-worker/Dockerfile
+      context: ./sms-monitoring
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:

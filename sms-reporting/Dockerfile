@@ -1,4 +1,4 @@
-FROM golang:alpine AS builder
+FROM golang:1.26.2-alpine AS builder
 
 WORKDIR /app
 
@@ -13,15 +13,17 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o reporting-service ./cmd/reporting/main.go
 
 # Final stage
-FROM alpine:latest
+FROM gcr.io/distroless/static-debian12:nonroot
 
 WORKDIR /app
 
 # Copy the binary from builder
-COPY --from=builder /app/reporting-service .
+COPY --chown=nonroot:nonroot --from=builder /app/reporting-service .
 
 # Copy email templates
-COPY --from=builder /app/internal/service/templates ./internal/service/templates
+COPY --chown=nonroot:nonroot --from=builder /app/internal/service/templates ./internal/service/templates
+
+USER nonroot:nonroot
 
 # Expose ports (HTTP API and gRPC)
 EXPOSE 8002 50053

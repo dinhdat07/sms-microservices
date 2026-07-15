@@ -15,6 +15,7 @@ import (
 
 	authv1 "sms-identity/gen/go/auth/v1"
 	"sms-identity/internal/infrastructure/logger"
+	"sms-identity/internal/infrastructure/middlewares"
 )
 
 func (a *App) Run() error {
@@ -24,7 +25,9 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(
+		grpc.UnaryInterceptor(middlewares.CSRFInterceptor(a.CSRFManager)),
+	)
 	authv1.RegisterAuthServiceServer(grpcSrv, a.AuthHandler)
 
 	go func() {

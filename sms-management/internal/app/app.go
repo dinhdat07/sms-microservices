@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 
 	"sms-management/internal/config"
-	"sms-management/internal/domain"
 	"sms-management/internal/handler/grpcserver"
 	resthandler "sms-management/internal/handler/rest"
 	"sms-management/internal/infrastructure/database"
@@ -44,8 +43,7 @@ func New() (*App, error) {
 	}
 
 	// 3. AutoMigrate schemas
-	if err := db.AutoMigrate(&domain.Server{}, &domain.OutboxEvent{}); err != nil {
-		logger.Log.Sugar().Errorf("Failed to run AutoMigrate: %v", err)
+	if err := database.AutoMigrate(db); err != nil {
 		return nil, err
 	}
 

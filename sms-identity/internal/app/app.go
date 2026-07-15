@@ -6,14 +6,14 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
-	authgrpc "sms-identity/internal/handler/grpcserver"
-	authrepo "sms-identity/internal/repository/impl"
-	authsvc "sms-identity/internal/service"
 	"sms-identity/internal/config"
+	"sms-identity/internal/handler"
+	authgrpc "sms-identity/internal/handler/grpcserver"
 	"sms-identity/internal/infrastructure/database"
 	"sms-identity/internal/infrastructure/logger"
 	"sms-identity/internal/infrastructure/security"
-	"sms-identity/internal/handler"
+	authrepo "sms-identity/internal/repository/impl"
+	authsvc "sms-identity/internal/service"
 )
 
 type App struct {
@@ -22,6 +22,7 @@ type App struct {
 	RedisClient        redis.UniversalClient
 	AuthHandler        *authgrpc.AuthServer
 	ForwardAuthHandler *handler.ForwardAuthHandler
+	CSRFManager        *security.CSRFManager
 }
 
 func New() (*App, error) {
@@ -40,7 +41,10 @@ func New() (*App, error) {
 		return nil, err
 	}
 
-	// 3. Init Redis
+	// 3. AutoMigrate schemas
+	if err := database.AutoMigrate(db); err != nil {
+		return nil, err
+	}
 	redisCfg, err := config.LoadRedisConfig()
 	if err != nil {
 		logger.Log.Sugar().Errorf("Failed to load redis config: %v", err)
@@ -63,7 +67,8 @@ func New() (*App, error) {
 	authServer := authgrpc.NewAuthServer(authService)
 
 	authenticator := security.NewAuthenticator(cfg.JWTSecret, redisClient)
-	forwardAuthHandler := handler.NewForwardAuthHandler(authenticator)
+	csrfManager := security.NewCSRFManager()
+	forwardAuthHandler := handler.NewForwardAuthHandler(authenticator, csrfManager)
 
 	return &App{
 		Config:             cfg,
@@ -71,5 +76,6 @@ func New() (*App, error) {
 		RedisClient:        redisClient,
 		AuthHandler:        authServer,
 		ForwardAuthHandler: forwardAuthHandler,
+		CSRFManager:        csrfManager,
 	}, nil
 }

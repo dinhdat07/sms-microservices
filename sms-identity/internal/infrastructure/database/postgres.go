@@ -1,6 +1,7 @@
 package database
 
 import (
+	"sms-identity/internal/domain"
 	"sms-identity/internal/infrastructure/logger"
 	"sync"
 	"time"
@@ -8,6 +9,19 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+// AutoMigrate creates schemas and runs auto migration
+func AutoMigrate(db *gorm.DB) error {
+	if err := db.Exec("CREATE SCHEMA IF NOT EXISTS auth_schema").Error; err != nil {
+		logger.Log.Sugar().Errorf("Failed to create auth_schema: %v", err)
+		return err
+	}
+	if err := db.AutoMigrate(&domain.User{}, &domain.AuthSession{}, &domain.RefreshToken{}); err != nil {
+		logger.Log.Sugar().Errorf("Failed to run AutoMigrate: %v", err)
+		return err
+	}
+	return nil
+}
 
 var (
 	dbInstance *gorm.DB
