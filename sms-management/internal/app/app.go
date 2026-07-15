@@ -24,6 +24,7 @@ type App struct {
 	ServerHandler    *grpcserver.ServerManagementServer
 	RESTImportExport *resthandler.ImportExportHandler
 	OutboxRelay      *worker.OutboxRelay
+	StatusConsumer   *worker.StatusConsumer
 }
 
 func New() (*App, error) {
@@ -73,6 +74,10 @@ func New() (*App, error) {
 	// Initialize Outbox Worker
 	outboxRelay := worker.NewOutboxRelay(outboxRepo, publisher, cfg.Outbox)
 
+	// Initialize Status Consumer (listens for status changes from sms-monitoring)
+	subscriber := messagebroker.NewRedisSubscriber(redisClient)
+	statusConsumer := worker.NewStatusConsumer(subscriber, serverRepo)
+
 	return &App{
 		Config:           cfg,
 		DB:               db,
@@ -80,5 +85,6 @@ func New() (*App, error) {
 		ServerHandler:    serverHandler,
 		RESTImportExport: restImportExport,
 		OutboxRelay:      outboxRelay,
+		StatusConsumer:   statusConsumer,
 	}, nil
 }

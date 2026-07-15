@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -116,15 +115,14 @@ func run() error {
 				UpdatedAt:     time.Now(),
 			})
 
-			// Add to Redis pipeline
-			cacheItem := CacheItem{
-				ID:         id,
-				IPv4:       ip,
-				Status:     "ONLINE",
-				RetryCount: 0,
-			}
-			cacheJSON, _ := json.Marshal(cacheItem)
-			redisPipeline.Set(ctx, "server:"+ip, cacheJSON, 0)
+			// Add to Redis pipeline (New Schema: Hash for info, Set for all IDs)
+			redisKey := fmt.Sprintf("server:info:%s", id)
+			redisPipeline.HSet(ctx, redisKey, map[string]interface{}{
+				"ipv4":        ip,
+				"status":      "ONLINE",
+				"retry_count": 0,
+			})
+			redisPipeline.SAdd(ctx, "server:all_ids", id)
 
 			octet4++
 			if octet4 > 254 {

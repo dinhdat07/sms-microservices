@@ -29,6 +29,11 @@ func (a *App) Run() error {
 		a.OutboxRelay.Start()
 	}
 
+	// Start Status Consumer (listens for monitoring status changes)
+	if a.StatusConsumer != nil {
+		a.StatusConsumer.Start(context.Background())
+	}
+
 	grpcSrv := grpc.NewServer()
 	servermanagementv1.RegisterServerManagementServiceServer(grpcSrv, a.ServerHandler)
 
