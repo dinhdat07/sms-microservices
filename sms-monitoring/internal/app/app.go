@@ -65,6 +65,9 @@ func NewApp() (*App, error) {
 	publisher := messagebroker.NewRedisPublisher(redisClient)
 	monService := service.NewMonitoringService(publisher, stateStore, esLogger, threshold)
 
+	tickInterval, _ := config.GetEnvDuration("MONITORING_WORKER_TICK_INTERVAL", 30*time.Second)
+	logger.Log.Info(fmt.Sprintf("Monitoring Worker started. Scanning every %s with failure threshold %d", tickInterval.String(), threshold))
+
 	// Unprivileged ping for non-root environments (Set to true if running as root on Linux)
 	privilegedStr := os.Getenv("ICMP_PRIVILEGED")
 	privileged, _ := strconv.ParseBool(privilegedStr)

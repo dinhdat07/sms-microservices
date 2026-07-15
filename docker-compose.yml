@@ -49,6 +49,8 @@ services:
       - REDIS_ADDR=redis:6379
       - HTTP_PORT=8000
       - GRPC_PORT=50051
+      - ADMIN_EMAIL=admin@demo.com
+      - ADMIN_PASSWORD=admin
     labels:
       - "traefik.enable=true"
       # Route for Authentication APIs
@@ -212,7 +214,7 @@ services:
       REDIS_DB: "0"
       ELASTICSEARCH_URL: http://elasticsearch:9200
       ELASTICSEARCH_SERVER_INDEX: sms_observation_logs
-      ICMP_PRIVILEGED: "true"
+      ICMP_PRIVILEGED: "false"
       MONITORING_FAILURE_THRESHOLD: "2"
       MONITORING_WORKER_CONCURRENCY: "500"
       MONITORING_WORKER_PING_TIMEOUT: 3s
@@ -262,11 +264,30 @@ services:
     labels:
       - "traefik.enable=true"
       # Route for Reporting APIs
-      - "traefik.http.routers.reporting.rule=PathPrefix(`/api/v1/reporting`)"
+      - "traefik.http.routers.reporting.rule=PathPrefix(`/api/v1/servers/report`)"
       - "traefik.http.routers.reporting.entrypoints=web"
+      - "traefik.http.routers.reporting.priority=200"
       - "traefik.http.services.reporting.loadbalancer.server.port=8002"
       # Apply ForwardAuth Middleware (from sms-identity)
       - "traefik.http.routers.reporting.middlewares=sms-auth@docker"
+    networks:
+      - default
+
+  # ============================================
+  # SMS Frontend Service
+  # ============================================
+  sms-frontend:
+    build:
+      context: ./sms-frontend
+      dockerfile: Dockerfile
+    container_name: sms_frontend
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      # Route all traffic to frontend by default
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=8080"
     networks:
       - default
 
