@@ -79,12 +79,12 @@ func (h *ForwardAuthHandler) validateCSRF(r *http.Request) error {
 
 	cookieToken := ""
 	for _, cookieStr := range cookieValues {
-		if strings.Contains(cookieStr, "cookie-csrf-token=") {
+		if strings.Contains(cookieStr, "csrf_token=") {
 			parts := strings.Split(cookieStr, ";")
 			for _, part := range parts {
 				part = strings.TrimSpace(part)
-				if strings.HasPrefix(part, "cookie-csrf-token=") {
-					cookieToken = strings.TrimPrefix(part, "cookie-csrf-token=")
+				if strings.HasPrefix(part, "csrf_token=") {
+					cookieToken = strings.TrimPrefix(part, "csrf_token=")
 				}
 			}
 		}

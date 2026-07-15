@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"sms-identity/internal/config"
+	"sms-identity/internal/domain"
 	"sms-identity/internal/handler"
 	authgrpc "sms-identity/internal/handler/grpcserver"
 	"sms-identity/internal/infrastructure/database"
@@ -14,6 +15,7 @@ import (
 	"sms-identity/internal/infrastructure/security"
 	authrepo "sms-identity/internal/repository/impl"
 	authsvc "sms-identity/internal/service"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type App struct {
@@ -45,6 +47,28 @@ func New() (*App, error) {
 	if err := database.AutoMigrate(db); err != nil {
 		return nil, err
 	}
+
+	// 3.5 Seed Admin User
+	if cfg.AdminEmail != "" && cfg.AdminPassword != "" {
+		var count int64
+		db.Model(&domain.User{}).Where("email = ?", cfg.AdminEmail).Count(&count)
+		if count == 0 {
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(cfg.AdminPassword), bcrypt.DefaultCost)
+			if err == nil {
+				adminUser := domain.User{
+					Email:    cfg.AdminEmail,
+					Password: string(hashedPassword),
+					RoleCode: domain.RoleCodeAdmin,
+				}
+				if err := db.Create(&adminUser).Error; err != nil {
+					logger.Log.Sugar().Errorf("Failed to seed admin user: %v", err)
+				} else {
+					logger.Log.Sugar().Infof("Seeded default admin user: %s", cfg.AdminEmail)
+				}
+			}
+		}
+	}
+
 	redisCfg, err := config.LoadRedisConfig()
 	if err != nil {
 		logger.Log.Sugar().Errorf("Failed to load redis config: %v", err)
