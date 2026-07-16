@@ -1,0 +1,221 @@
+services:
+  traefik:
+    image: traefik:latest
+    user: root
+    command:
+      - --log.level=DEBUG
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --providers.docker.swarmMode=true
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+    ports:
+      - 80:80
+      - 8080:8080
+    environment:
+      - DOCKER_API_VERSION=1.44
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - http_proxy=
+      - https_proxy=
+      - NO_PROXY=localhost,127.0.0.1
+      - no_proxy=localhost,127.0.0.1
+    networks:
+      - default
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+  sms-identity:
+    environment:
+      ENV_FILE: /app/.env
+      DB_URL_FILE: /run/secrets/db_url
+      ADMIN_PASSWORD_FILE: /run/secrets/admin_password
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+    networks:
+      - default
+    image: sms-sms-identity:latest
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.identity.rule=PathPrefix(`/api/v1/auth/`)
+        - traefik.http.routers.identity.entrypoints=web
+        - traefik.http.services.identity.loadbalancer.server.port=8000
+        - >-
+          traefik.http.middlewares.sms-auth.forwardauth.address=http://sms_identity:8000/verify
+        - traefik.http.middlewares.sms-auth.forwardauth.trustForwardHeader=true
+        - >-
+          traefik.http.middlewares.sms-auth.forwardauth.authRequestHeaders=X-Csrf-Token,Cookie,Authorization
+        - >-
+          traefik.http.middlewares.sms-auth.forwardauth.authResponseHeaders=X-User-Id,X-User-Role,X-User-Email,X-User-Name
+    secrets:
+      - db_url
+      - admin_password
+      - jwt_secret
+    configs:
+      - source: identity_config
+        target: /app/.env
+  sms-management:
+    environment:
+      ENV_FILE: /app/.env
+      DB_URL_FILE: /run/secrets/db_url
+    networks:
+      - default
+    image: sms-sms-management:latest
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.management.rule=PathPrefix(`/api/v1/servers`)
+        - traefik.http.routers.management.entrypoints=web
+        - traefik.http.services.management.loadbalancer.server.port=8001
+        - traefik.http.routers.management.middlewares=sms-auth@docker
+    secrets:
+      - db_url
+    configs:
+      - source: management_config
+        target: /app/.env
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: sms
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    ports:
+      - 15432:5432
+    volumes:
+      - sms_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U postgres
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    secrets:
+      - postgres_password
+  redis:
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - 9200:9200
+      - 9300:9300
+    volumes:
+      - sms_es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -s http://localhost:9200/_cluster/health | grep -q -E
+          'green|yellow'
+      interval: 10s
+      timeout: 10s
+      retries: 10
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - 1025:1025
+      - 8025:8025
+  simulator:
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      SIMULATOR_IP_COUNT: '10000'
+      SIMULATOR_SUBNET: '10.1'
+      SIMULATOR_AUTO_FLAP_ENABLED: 'true'
+      SIMULATOR_FLAP_INTERVAL: 60s
+      SIMULATOR_FLAP_PERCENT: '5'
+    networks:
+      - default
+    image: sms-simulator:latest
+    deploy:
+      endpoint_mode: dnsrr
+  sms-monitoring-worker:
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      ENV_FILE: /app/.env
+      DB_URL_FILE: /run/secrets/db_url
+    networks:
+      - default
+    image: sms-sms-monitoring-worker:latest
+    secrets:
+      - db_url
+    configs:
+      - source: monitoring_config
+        target: /app/.env
+  sms-reporting:
+    environment:
+      ENV_FILE: /app/.env
+      DB_URL_FILE: /run/secrets/db_url
+    networks:
+      - default
+    image: sms-sms-reporting:latest
+    deploy:
+      labels:
+        - traefik.enable=true
+        - >-
+          traefik.http.routers.reporting.rule=PathPrefix(`/api/v1/servers/report`)
+        - traefik.http.routers.reporting.entrypoints=web
+        - traefik.http.routers.reporting.priority=200
+        - traefik.http.services.reporting.loadbalancer.server.port=8002
+        - traefik.http.routers.reporting.middlewares=sms-auth@docker
+    secrets:
+      - db_url
+    configs:
+      - source: reporting_config
+        target: /app/.env
+  sms-frontend:
+    networks:
+      - default
+    image: sms-sms-frontend:latest
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.frontend.rule=PathPrefix(`/`)
+        - traefik.http.routers.frontend.entrypoints=web
+        - traefik.http.services.frontend.loadbalancer.server.port=8080
+volumes:
+  sms_postgres_data: null
+  sms_es_data: null
+networks:
+  default:
+    driver: overlay
+    attachable: true
+secrets:
+  postgres_password:
+    external: true
+  admin_password:
+    external: true
+  db_url:
+    external: true
+  jwt_secret:
+    external: true
+configs:
+  identity_config:
+    file: ./configs/identity.env
+  management_config:
+    file: ./configs/management.env
+  reporting_config:
+    file: ./configs/reporting.env
+  monitoring_config:
+    file: ./configs/monitoring.env
