@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -41,7 +42,14 @@ func (a *App) Run() error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	gwmux := runtime.NewServeMux()
+	gwmux := runtime.NewServeMux(
+		runtime.WithOutgoingHeaderMatcher(func(key string) (string, bool) {
+			if strings.HasPrefix(key, "set-cookie-") {
+				return "Set-Cookie", true
+			}
+			return runtime.DefaultHeaderMatcher(key)
+		}),
+	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	err = authv1.RegisterAuthServiceHandlerFromEndpoint(ctx, gwmux, grpcAddr, opts)
 	if err != nil {
