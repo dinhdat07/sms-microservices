@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,8 +24,18 @@ func loadEnv() {
 	})
 }
 
+func getEnv(key string) string {
+	fileKey := key + "_FILE"
+	if filePath := os.Getenv(fileKey); filePath != "" {
+		if content, err := os.ReadFile(filePath); err == nil {
+			return strings.TrimSpace(string(content))
+		}
+	}
+	return os.Getenv(key)
+}
+
 func GetEnvDefault(key, fallback string) string {
-	val := os.Getenv(key)
+	val := getEnv(key)
 	if val == "" {
 		return fallback
 	}
@@ -32,7 +43,7 @@ func GetEnvDefault(key, fallback string) string {
 }
 
 func GetEnvBool(key string, fallback bool) (bool, error) {
-	val := os.Getenv(key)
+	val := getEnv(key)
 	if val == "" {
 		return fallback, nil
 	}
@@ -40,7 +51,7 @@ func GetEnvBool(key string, fallback bool) (bool, error) {
 }
 
 func GetEnvInt(key string, fallback int) (int, error) {
-	val := os.Getenv(key)
+	val := getEnv(key)
 	if val == "" {
 		return fallback, nil
 	}
@@ -48,7 +59,7 @@ func GetEnvInt(key string, fallback int) (int, error) {
 }
 
 func GetEnvDuration(key string, fallback time.Duration) (time.Duration, error) {
-	val := os.Getenv(key)
+	val := getEnv(key)
 	if val == "" {
 		return fallback, nil
 	}
