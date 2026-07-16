@@ -7,11 +7,13 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /monitoring-worker ./cmd/monitoring-worker
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM alpine:latest
 
 WORKDIR /app
-COPY --chown=nonroot:nonroot --from=builder /monitoring-worker /app/monitoring-worker
+RUN apk add --no-cache iproute2
 
-USER nonroot:nonroot
+COPY --from=builder /monitoring-worker /app/monitoring-worker
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
-CMD ["/app/monitoring-worker"]
+CMD ["/app/entrypoint.sh"]

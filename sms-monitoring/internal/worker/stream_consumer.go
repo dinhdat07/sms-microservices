@@ -60,8 +60,8 @@ func (c *StreamConsumer) processMessage(ctx context.Context, msg messagebroker.M
 	}
 
 	var payload struct {
-		ID   string `json:"id"`
-		IPv4 string `json:"ip"`
+		ID   string `json:"server_id"`
+		IPv4 string `json:"ipv4"`
 	}
 
 	if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
@@ -73,7 +73,7 @@ func (c *StreamConsumer) processMessage(ctx context.Context, msg messagebroker.M
 	ipv4 := payload.IPv4
 
 	switch eventType {
-	case "ServerAdded", "ServerUpdated":
+	case "ServerCreated", "ServerUpdated":
 		logger.Log.Info("Syncing Server to Monitoring Cache", zap.String("event", eventType), zap.String("id", serverID))
 		c.rdb.SAdd(ctx, infraRedis.ServerAllIDsKey, serverID)
 		
