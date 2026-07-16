@@ -60,6 +60,7 @@ services:
       # Define ForwardAuth Middleware
       - "traefik.http.middlewares.sms-auth.forwardauth.address=http://sms_identity:8000/verify"
       - "traefik.http.middlewares.sms-auth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.sms-auth.forwardauth.authRequestHeaders=X-Csrf-Token,Cookie,Authorization"
       - "traefik.http.middlewares.sms-auth.forwardauth.authResponseHeaders=X-User-Id,X-User-Role,X-User-Email,X-User-Name"
     networks:
       - default
