@@ -55,11 +55,11 @@ func (c *eventConsumerImpl) handleServerEvent(ctx context.Context, msg messagebr
 	}
 
 	switch eventType {
-	case "ServerAdded", "ServerUpdated":
+	case "ServerCreated", "ServerUpdated":
 		var payload struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-			IP   string `json:"ip"`
+			ID   string `json:"server_id"`
+			Name string `json:"server_name"`
+			IP   string `json:"ipv4"`
 		}
 		if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
 			logger.Log.Error("[EventConsumer] Failed to unmarshal Server event payload", zap.Error(err))
@@ -81,7 +81,7 @@ func (c *eventConsumerImpl) handleServerEvent(ctx context.Context, msg messagebr
 
 	case "ServerDeleted":
 		var payload struct {
-			ID string `json:"id"`
+			ID string `json:"server_id"`
 		}
 		if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
 			logger.Log.Error("[EventConsumer] Failed to unmarshal ServerDeleted payload", zap.Error(err))
