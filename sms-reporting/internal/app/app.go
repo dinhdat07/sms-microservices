@@ -26,6 +26,7 @@ type App struct {
 	grpcServer  *grpc.Server
 	worker      service.ReportingWorker
 	eventStream consumer.EventConsumer
+	scheduler   *Scheduler
 }
 
 func NewApp() (*App, error) {
@@ -92,10 +93,14 @@ func NewApp() (*App, error) {
 	subscriber := messagebroker.NewRedisSubscriber(redisClient)
 	eventStream := consumer.NewEventConsumer(subscriber, repo, cfg.Consumer)
 
+	// Initialize Scheduler
+	sched := NewScheduler(worker, cfg.Reporting.CronSpec, cfg.Reporting.AdminEmail)
+
 	return &App{
 		cfg:         cfg,
 		grpcServer:  grpcServer,
 		worker:      worker,
 		eventStream: eventStream,
+		scheduler:   sched,
 	}, nil
 }

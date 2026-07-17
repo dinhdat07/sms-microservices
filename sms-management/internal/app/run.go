@@ -57,12 +57,19 @@ func (a *App) Run() error {
 
 	mux := http.NewServeMux()
 	
+	// Health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+	
 	// REST API Handler for import/export
 	mux.HandleFunc("/api/v1/servers/import", a.RESTImportExport.HandleImport)
 	mux.HandleFunc("/api/v1/servers/export", a.RESTImportExport.HandleExport)
 
 	// gRPC Gateway routes
 	mux.Handle("/", gwmux)
+	mux.Handle("/openapi/", http.StripPrefix("/openapi/", http.FileServer(http.Dir("./api/openapi"))))
 
 	httpAddr := fmt.Sprintf(":%s", a.Config.HTTPPort)
 	httpSrv := &http.Server{

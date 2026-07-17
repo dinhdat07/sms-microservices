@@ -24,6 +24,7 @@ WORKDIR /app
 # Copy the binary and logs dir with nonroot ownership
 COPY --chown=nonroot:nonroot --from=builder /app/bin/server /app/server
 COPY --chown=nonroot:nonroot --from=builder /app/logs /app/logs
+COPY --chown=nonroot:nonroot --from=builder /app/api/openapi /app/api/openapi
 
 USER nonroot:nonroot
 

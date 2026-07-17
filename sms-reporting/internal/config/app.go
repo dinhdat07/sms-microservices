@@ -27,6 +27,8 @@ type SMTPConfig struct {
 type ReportingConfig struct {
 	WorkerCount  int
 	JobQueueSize int
+	AdminEmail   string
+	CronSpec     string
 }
 
 type ConsumerConfig struct {
@@ -115,6 +117,8 @@ func Load() (*Config, error) {
 		Reporting: ReportingConfig{
 			WorkerCount:  workerCount,
 			JobQueueSize: jobQueueSize,
+			AdminEmail:   GetEnvDefault("ADMIN_EMAIL", "admin@sms.com"),
+			CronSpec:     GetEnvDefault("SCHEDULER_CRON_SPEC", "0 0 * * *"),
 		},
 		Consumer: ConsumerConfig{
 			Name:               GetEnvDefault("CONSUMER_NAME", "reporting_worker"),

@@ -20,8 +20,9 @@ WORKDIR /app
 # Copy the binary from builder
 COPY --chown=nonroot:nonroot --from=builder /app/reporting-service .
 
-# Copy email templates
+# Copy email templates and openapi docs
 COPY --chown=nonroot:nonroot --from=builder /app/internal/service/templates ./internal/service/templates
+COPY --chown=nonroot:nonroot --from=builder /app/api/openapi ./api/openapi
 
 USER nonroot:nonroot
 

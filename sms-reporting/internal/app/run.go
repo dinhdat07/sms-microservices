@@ -32,6 +32,11 @@ func (a *App) Run() error {
 	// Start Event Consumer
 	a.eventStream.Start(ctx)
 
+	// Start Scheduler
+	if err := a.scheduler.Start(); err != nil {
+		return fmt.Errorf("failed to start scheduler: %w", err)
+	}
+
 	go func() {
 		logger.Log.Sugar().Infof("gRPC server listening on %s", grpcAddr)
 		if err := a.grpcServer.Serve(lis); err != nil {
@@ -50,8 +55,15 @@ func (a *App) Run() error {
 	}
 
 	mux := http.NewServeMux()
+	// Health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+	
 	// Route all API traffic to gRPC gateway
 	mux.Handle("/", gwmux)
+	mux.Handle("/openapi/", http.StripPrefix("/openapi/", http.FileServer(http.Dir("./api/openapi"))))
 
 	httpAddr := fmt.Sprintf(":%s", a.cfg.HTTPPort)
 	httpSrv := &http.Server{
@@ -77,6 +89,7 @@ func (a *App) Run() error {
 	a.grpcServer.GracefulStop()
 	httpSrv.Shutdown(ctx)
 	a.worker.Stop()
+	a.scheduler.Stop()
 	
 	logger.Log.Info("Reporting Service shutdown complete")
 	return nil

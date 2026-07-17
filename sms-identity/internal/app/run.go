@@ -57,10 +57,18 @@ func (a *App) Run() error {
 	}
 
 	mux := http.NewServeMux()
+	
+	// Health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+	
 	// Traefik ForwardAuth route
 	mux.HandleFunc("/verify", a.ForwardAuthHandler.Verify)
 	// gRPC Gateway routes
 	mux.Handle("/", gwmux)
+	mux.Handle("/openapi/", http.StripPrefix("/openapi/", http.FileServer(http.Dir("./api/openapi"))))
 
 	httpAddr := fmt.Sprintf(":%s", a.Config.HTTPPort)
 	httpSrv := &http.Server{

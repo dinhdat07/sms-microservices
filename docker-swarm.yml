@@ -1,15 +1,21 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   traefik:
+    logging: *default-logging
     image: traefik:latest
     user: root
     command:
       - --log.level=DEBUG
       - --api.insecure=true
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
+      - --providers.swarm=true
+      - --providers.swarm.network=sms_stack_default
       - --entrypoints.web.address=:80
-      - --providers.docker.swarmMode=true
-      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.swarm.endpoint=unix:///var/run/docker.sock
     ports:
       - 80:80
       - 8080:8080
@@ -30,6 +36,7 @@ services:
         constraints:
           - node.role == manager
   sms-identity:
+    logging: *default-logging
     environment:
       ENV_FILE: /app/.env
       DB_URL_FILE: /run/secrets/db_url
@@ -41,16 +48,24 @@ services:
     deploy:
       labels:
         - traefik.enable=true
-        - traefik.http.routers.identity.rule=PathPrefix(`/api/v1/auth/`)
+        - traefik.http.routers.identity.rule=PathPrefix(`/api/v1/auth/`) || PathPrefix(`/openapi/auth/`)
         - traefik.http.routers.identity.entrypoints=web
+        - traefik.http.middlewares.sms-ratelimit.ratelimit.average=100
+        - traefik.http.middlewares.sms-ratelimit.ratelimit.burst=50
+        - traefik.http.routers.identity.middlewares=sms-ratelimit
         - traefik.http.services.identity.loadbalancer.server.port=8000
         - >-
-          traefik.http.middlewares.sms-auth.forwardauth.address=http://sms_identity:8000/verify
+          traefik.http.middlewares.sms-auth.forwardauth.address=http://sms-identity:8000/verify
         - traefik.http.middlewares.sms-auth.forwardauth.trustForwardHeader=true
         - >-
           traefik.http.middlewares.sms-auth.forwardauth.authRequestHeaders=X-Csrf-Token,Cookie,Authorization
         - >-
           traefik.http.middlewares.sms-auth.forwardauth.authResponseHeaders=X-User-Id,X-User-Role,X-User-Email,X-User-Name
+        - traefik.http.routers.identity-health.rule=PathPrefix(`/health/identity`)
+        - traefik.http.routers.identity-health.entrypoints=web
+        - traefik.http.routers.identity-health.service=identity
+        - traefik.http.routers.identity-health.middlewares=sms-ratelimit,identity-health-replace
+        - traefik.http.middlewares.identity-health-replace.replacepath.path=/health
     secrets:
       - db_url
       - admin_password
@@ -59,6 +74,7 @@ services:
       - source: identity_config
         target: /app/.env
   sms-management:
+    logging: *default-logging
     environment:
       ENV_FILE: /app/.env
       DB_URL_FILE: /run/secrets/db_url
@@ -70,14 +86,25 @@ services:
         - traefik.enable=true
         - traefik.http.routers.management.rule=PathPrefix(`/api/v1/servers`)
         - traefik.http.routers.management.entrypoints=web
-        - traefik.http.services.management.loadbalancer.server.port=8001
-        - traefik.http.routers.management.middlewares=sms-auth@docker
+        - traefik.http.routers.management.middlewares=sms-auth,sms-ratelimit
+        - traefik.http.routers.management.service=management-svc
+        - traefik.http.routers.management-openapi.rule=PathPrefix(`/openapi/server_management/`)
+        - traefik.http.routers.management-openapi.entrypoints=web
+        - traefik.http.routers.management-openapi.middlewares=sms-ratelimit
+        - traefik.http.routers.management-openapi.service=management-svc
+        - traefik.http.services.management-svc.loadbalancer.server.port=8001
+        - traefik.http.routers.management-health.rule=PathPrefix(`/health/management`)
+        - traefik.http.routers.management-health.entrypoints=web
+        - traefik.http.routers.management-health.service=management-svc
+        - traefik.http.routers.management-health.middlewares=sms-ratelimit,management-health-replace
+        - traefik.http.middlewares.management-health-replace.replacepath.path=/health
     secrets:
       - db_url
     configs:
       - source: management_config
         target: /app/.env
   postgres:
+    logging: *default-logging
     image: postgres:15
     environment:
       POSTGRES_USER: postgres
@@ -97,6 +124,7 @@ services:
     secrets:
       - postgres_password
   redis:
+    logging: *default-logging
     image: redis:7-alpine
     ports:
       - 6379:6379
@@ -109,6 +137,7 @@ services:
       timeout: 5s
       retries: 5
   elasticsearch:
+    logging: *default-logging
     image: docker.elastic.co/elasticsearch/elasticsearch:8.17.4
     environment:
       - discovery.type=single-node
@@ -129,11 +158,13 @@ services:
       timeout: 10s
       retries: 10
   mailhog:
+    logging: *default-logging
     image: mailhog/mailhog:latest
     ports:
       - 1025:1025
       - 8025:8025
   simulator:
+    logging: *default-logging
     cap_add:
       - NET_ADMIN
       - NET_RAW
@@ -149,6 +180,7 @@ services:
     deploy:
       endpoint_mode: dnsrr
   sms-monitoring-worker:
+    logging: *default-logging
     cap_add:
       - NET_ADMIN
       - NET_RAW
@@ -164,6 +196,7 @@ services:
       - source: monitoring_config
         target: /app/.env
   sms-reporting:
+    logging: *default-logging
     environment:
       ENV_FILE: /app/.env
       DB_URL_FILE: /run/secrets/db_url
@@ -173,18 +206,29 @@ services:
     deploy:
       labels:
         - traefik.enable=true
-        - >-
-          traefik.http.routers.reporting.rule=PathPrefix(`/api/v1/servers/report`)
+        - traefik.http.routers.reporting.rule=PathPrefix(`/api/v1/servers/report`)
         - traefik.http.routers.reporting.entrypoints=web
+        - traefik.http.routers.reporting.middlewares=sms-auth,sms-ratelimit
+        - traefik.http.routers.reporting.service=reporting-svc
+        - traefik.http.routers.reporting-openapi.rule=PathPrefix(`/openapi/reporting/`)
+        - traefik.http.routers.reporting-openapi.entrypoints=web
+        - traefik.http.routers.reporting-openapi.middlewares=sms-ratelimit
+        - traefik.http.routers.reporting-openapi.service=reporting-svc
         - traefik.http.routers.reporting.priority=200
-        - traefik.http.services.reporting.loadbalancer.server.port=8002
-        - traefik.http.routers.reporting.middlewares=sms-auth@docker
+        - traefik.http.routers.reporting-openapi.priority=200
+        - traefik.http.services.reporting-svc.loadbalancer.server.port=8002
+        - traefik.http.routers.reporting-health.rule=PathPrefix(`/health/reporting`)
+        - traefik.http.routers.reporting-health.entrypoints=web
+        - traefik.http.routers.reporting-health.service=reporting-svc
+        - traefik.http.routers.reporting-health.middlewares=sms-ratelimit,reporting-health-replace
+        - traefik.http.middlewares.reporting-health-replace.replacepath.path=/health
     secrets:
       - db_url
     configs:
       - source: reporting_config
         target: /app/.env
   sms-frontend:
+    logging: *default-logging
     networks:
       - default
     image: sms-sms-frontend:latest
@@ -194,6 +238,21 @@ services:
         - traefik.http.routers.frontend.rule=PathPrefix(`/`)
         - traefik.http.routers.frontend.entrypoints=web
         - traefik.http.services.frontend.loadbalancer.server.port=8080
+  swagger-ui:
+    logging: *default-logging
+    image: swaggerapi/swagger-ui:latest
+    environment:
+      - BASE_URL=/docs
+      - URLS=[{url:"/openapi/auth/v1/auth.swagger.json",name:"Identity API"},{url:"/openapi/server_management/v1/server.swagger.json",name:"Management API"},{url:"/openapi/reporting/v1/reporting.swagger.json",name:"Reporting API"}]
+    networks:
+      - default
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.swagger.rule=PathPrefix(`/docs`)
+        - traefik.http.routers.swagger.entrypoints=web
+        - traefik.http.services.swagger.loadbalancer.server.port=8080
+
 volumes:
   sms_postgres_data: null
   sms_es_data: null
