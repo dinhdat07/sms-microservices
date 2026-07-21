@@ -38,12 +38,14 @@ func NewWorkerPool(rdb redis.UniversalClient, monService service.MonitoringServi
 func (w *workerPool) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 
+	logger.Log.Sugar().Infof("Starting Worker Pool with concurrency %d", w.concurrency)
+
 	// Spawn workers
 	for i := 0; i < w.concurrency; i++ {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			
+
 			for {
 				// Check context cancellation
 				select {
@@ -52,18 +54,24 @@ func (w *workerPool) Run(ctx context.Context) error {
 				default:
 				}
 
-				// Pop a server ID from the shared Redis queue
-				serverID, err := w.rdb.LPop(ctx, "monitoring:queue").Result()
+				// Blocking Pop a server ID from the shared Redis queue
+				// Timeout of 2 seconds allows the loop to frequently check context cancellation
+				result, err := w.rdb.BLPop(ctx, 2*time.Second, "monitoring:queue").Result()
 				if err == redis.Nil {
-					// Queue is empty, cycle is complete
-					return
+					// Timeout reached, queue is empty, loop again
+					continue
 				} else if err != nil {
+					if ctx.Err() != nil {
+						return
+					}
 					logger.Log.Sugar().Errorf("[Worker-%d] Failed to pop from queue: %v", workerID, err)
-					return // Stop worker on redis error
+					time.Sleep(1 * time.Second)
+					continue
 				}
-
-				// Process the popped server
-				w.processServer(ctx, serverID)
+				if len(result) == 2 {
+					serverID := result[1]
+					w.processServer(ctx, serverID)
+				}
 			}
 		}(i)
 	}

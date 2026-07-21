@@ -41,6 +41,16 @@ func NewApp() (*App, error) {
 		logger.Log.Sugar().Errorf("Failed to load redis config: %v", err)
 	}
 
+	// Settings
+	concurrency, _ := config.GetEnvInt("MONITORING_WORKER_CONCURRENCY", 100)
+	pingTimeout, _ := config.GetEnvDuration("MONITORING_WORKER_PING_TIMEOUT", 3*time.Second)
+
+	// Ensure Redis pool size is large enough to handle all BLPOP blocking connections
+	if redisCfg != nil && redisCfg.PoolSize < concurrency+50 {
+		redisCfg.PoolSize = concurrency + 50
+		logger.Log.Sugar().Infof("Adjusted Redis PoolSize to %d to support BLPOP concurrency", redisCfg.PoolSize)
+	}
+
 	// Initialize Redis
 	redisClient := database.NewRedisClient(redisCfg)
 	if redisClient == nil {
@@ -72,10 +82,6 @@ func NewApp() (*App, error) {
 	privilegedStr := os.Getenv("ICMP_PRIVILEGED")
 	privileged, _ := strconv.ParseBool(privilegedStr)
 	pinger := worker.NewICMPPinger(privileged)
-
-	// Settings
-	concurrency, _ := config.GetEnvInt("MONITORING_WORKER_CONCURRENCY", 100)
-	pingTimeout, _ := config.GetEnvDuration("MONITORING_WORKER_PING_TIMEOUT", 3*time.Second)
 
 	pool := worker.NewWorkerPool(redisClient, monService, pinger, concurrency, pingTimeout)
 
@@ -114,15 +120,25 @@ func (a *App) Run() error {
 
 	logger.Log.Sugar().Infof("Monitoring Worker started. Scanning every %s\n", tickInterval)
 
+	// Always-on Consumer
 	go func() {
-		// Run immediately on startup
-		a.runCycle(ctx)
+		err := a.Pool.Run(ctx)
+		if err != nil && ctx.Err() == nil {
+			logger.Log.Sugar().Errorf("[Consumer] Worker pool stopped with error: %v", err)
+		} else {
+			logger.Log.Sugar().Info("[Consumer] Worker pool stopped")
+		}
+	}()
+
+	// Ticker-based Producer
+	go func() {
+		a.runProducerCycle(ctx)
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				a.runCycle(ctx)
+				a.runProducerCycle(ctx)
 			}
 		}
 	}()
@@ -142,14 +158,13 @@ func (a *App) Run() error {
 	return nil
 }
 
-func (a *App) runCycle(ctx context.Context) {
+func (a *App) runProducerCycle(ctx context.Context) {
 	lockKey := config.GetEnvDefault("MONITORING_PRODUCER_LOCK_KEY", "lock:monitoring_producer")
 	lockExpiration := 10 * time.Second
 
-	// 1. PHASE 1: Producer Election
+	// Producer Election
 	acquired, _ := database.AcquireLock(ctx, a.RedisClient, lockKey, lockExpiration)
 	if acquired {
-		// Check if queue is already empty to avoid snowballing (overlapping cycles)
 		queueLen, err := a.RedisClient.LLen(ctx, "monitoring:queue").Result()
 		if err == nil && queueLen > 0 {
 			logger.Log.Sugar().Warnf("[Producer] Queue still has %d items! Skipping push to avoid snowballing.", queueLen)
@@ -165,22 +180,21 @@ func (a *App) runCycle(ctx context.Context) {
 				}
 				a.RedisClient.RPush(ctx, "monitoring:queue", args...)
 				logger.Log.Sugar().Infof("[Producer] Pushed %d servers to the queue.", len(serverIDs))
+
+				// Track duration for this batch
+				start := time.Now()
+				go func(batchSize int) {
+					for {
+						time.Sleep(1 * time.Second)
+						length, err := a.RedisClient.LLen(context.Background(), "monitoring:queue").Result()
+						if err != nil || length == 0 {
+							duration := time.Since(start)
+							logger.Log.Sugar().Infof("[Consumer] Batch of %d servers processed (Duration: %s)", batchSize, duration)
+							return
+						}
+					}
+				}(len(serverIDs))
 			}
 		}
-	} else {
-		logger.Log.Sugar().Info("[Consumer] Ready to process queue...")
-		// Small wait to allow Producer to initialize queue
-		time.Sleep(1 * time.Second)
-	}
-
-	// 2. PHASE 2: Consumer (ALL workers participate)
-	start := time.Now()
-	err := a.Pool.Run(ctx)
-	duration := time.Since(start)
-
-	if err != nil {
-		logger.Log.Sugar().Errorf("[Consumer] Worker cycle completed with error: %v (Duration: %s)\n", err, duration)
-	} else {
-		logger.Log.Sugar().Infof("[Consumer] Worker cycle completed (Duration: %s)\n", duration)
 	}
 }
