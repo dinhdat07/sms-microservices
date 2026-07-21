@@ -304,6 +304,93 @@ workspace "SMS Microservices Architecture" "Server Management System" {
             autoLayout
         }
 
+        
+        dynamic identity "Identity_RefreshToken" "Detailed sequence for Token Refresh" {
+            spa -> traefik "1. POST /api/v1/auth/refresh (Cookie)"
+            traefik -> authServer "2. Routes request"
+            authServer -> identityService "3. RefreshToken(jwt)"
+            identityService -> refreshRepo "4. Validate Refresh Token"
+            refreshRepo -> postgres "5. SELECT FROM refresh_tokens"
+            identityService -> revocationStore "6. Check Revocation"
+            revocationStore -> redis "7. EXISTS revoked_session:{id}"
+            identityService -> sessionRepo "8. Revoke Session (if theft detected)"
+            sessionRepo -> postgres "9. UPDATE auth_sessions"
+            identityService -> revocationStore "10. Add Session to Blacklist"
+            revocationStore -> redis "11. SET revoked_session:{id} = true"
+            identityService -> authServer "12. Sign new JWT"
+            authServer -> traefik "13. Return 200 OK (New Tokens)"
+            traefik -> spa "14. Return JWT + Set-Cookie"
+            autoLayout
+        }
+
+        dynamic identity "Identity_Logout_Revocation" "Detailed sequence for Logout and Session Revocation" {
+            spa -> traefik "1. POST /api/v1/auth/logout"
+            traefik -> authServer "2. Routes request"
+            authServer -> identityService "3. Logout()"
+            identityService -> sessionRepo "4. Update AuthSession (RevokedAt = Now)"
+            sessionRepo -> postgres "5. UPDATE auth_sessions"
+            identityService -> revocationStore "6. Add Session to Blacklist"
+            revocationStore -> redis "7. SET revoked_session:{id} = true"
+            identityService -> authServer "8. Return Success"
+            authServer -> traefik "9. Return 200 OK (Clear Cookies)"
+            traefik -> spa "10. Clear Client Cookies"
+            autoLayout
+        }
+
+        dynamic management "Management_Bulk_Import" "Detailed sequence for Bulk CSV Import" {
+            spa -> traefik "1. POST /api/v1/servers/import"
+            traefik -> serverServer "2. Routes request"
+            serverServer -> serverService "3. Parse CSV & Validate"
+            serverService -> serverRepo "4. BEGIN Transaction (Batch of 100)"
+            serverService -> serverRepo "5. Bulk INSERT SERVERS"
+            serverRepo -> postgres "6. Execute SQL Batch"
+            serverService -> outboxRepo "7. Bulk INSERT OUTBOX_EVENTS"
+            outboxRepo -> postgres "8. Execute SQL Batch"
+            serverService -> serverRepo "9. COMMIT Transaction"
+            serverService -> serverServer "10. Return Import Summary"
+            serverServer -> traefik "11. Return 200 OK"
+            traefik -> spa "12. Return Response"
+            autoLayout
+        }
+
+        dynamic management "Management_Bulk_Export" "Detailed sequence for Bulk CSV Export" {
+            spa -> traefik "1. GET /api/v1/servers/export"
+            traefik -> serverServer "2. Routes request"
+            serverServer -> serverService "3. ExportServers()"
+            serverService -> serverRepo "4. Query cursor (Chunking)"
+            serverRepo -> postgres "5. SELECT Stream"
+            postgres -> serverRepo "6. Rows stream"
+            serverService -> serverServer "7. Format to CSV chunk"
+            serverServer -> traefik "8. HTTP Chunked Response"
+            traefik -> spa "9. Stream to file"
+            autoLayout
+        }
+
+        dynamic management "Management_Status_Consumer" "Worker updating DB from Monitoring Events" {
+            statusConsumer -> redis "1. XREAD sms.events.status"
+            redis -> statusConsumer "2. ServerStatusChanged event"
+            statusConsumer -> serverRepo "3. UpdateServerStatus(server_id, status)"
+            serverRepo -> postgres "4. UPDATE SERVERS SET current_status"
+            autoLayout
+        }
+
+        dynamic reporting "Reporting_Daily_Scheduler" "Cronjob triggering daily reports" {
+            dailyScheduler -> redis "1. SETNX lock:daily_report (Leader Election)"
+            dailyScheduler -> reportService "2. Trigger Report Generation for all Admins"
+            reportService -> reportRepo "3. Fetch targets/admins"
+            reportRepo -> postgres "4. SELECT"
+            reportService -> reportWorker "5. Enqueue to jobQueue"
+            autoLayout
+        }
+
+        dynamic reporting "Reporting_Event_Consumer" "Data replication from Management via Event Bus" {
+            eventConsumer -> redis "1. XREAD sms.events.server"
+            redis -> eventConsumer "2. ServerCreated / ServerDeleted event"
+            eventConsumer -> reportRepo "3. Sync Server Data"
+            reportRepo -> postgres "4. INSERT/DELETE REPORTING_SERVERS"
+            autoLayout
+        }
+
         styles {
             element "Person" {
                 color #ffffff
