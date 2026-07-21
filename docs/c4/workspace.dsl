@@ -138,6 +138,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
 
         # Component level relationships (Reporting)
         traefik -> reportHandler "Routes /api/v1/servers/report/*" "HTTP/gRPC"
+        dailyScheduler -> redis "Acquires lock (SET NX) to prevent duplicate emails" "TCP/6379"
         dailyScheduler -> reportService "Triggers Daily Reporting"
         reportHandler -> reportService "Delegates to"
         reportService -> reportRepo "Creates report request"

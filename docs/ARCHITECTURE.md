@@ -14,7 +14,6 @@ Hệ thống Server Management System (SMS) là nền tảng quản trị giúp 
 - **Server Management System (SMS):** Hệ thống phần mềm trung tâm, đóng vai trò giám sát, thu thập dữ liệu và báo cáo.
 - **Target Servers (10k+):** Hàng nghìn máy chủ đích nằm trong hạ tầng cần được giám sát. Hệ thống liên tục gửi gói tin ICMP (Ping) đến các server này.
 - **SMTP Server:** Hệ thống gửi email bên ngoài (như MailHog hoặc SendGrid). SMS giao tiếp với SMTP để gửi báo cáo uptime định kỳ.
-- **Network Simulator (sms-simulator):** (Môi trường Dev/Test) Mạng IP ảo dùng để stress-test hệ thống Monitoring.
 
 ---
 
@@ -43,7 +42,7 @@ Hệ thống được thiết kế theo chuẩn C4, bóc tách thành các Conta
 | **API Gateway** | Traefik | v3.0 | Reverse Proxy, TLS, Rate Limit, ForwardAuth |
 | **Frontend** | Angular | 19 | Single Page Application (SPA) |
 | **Primary DB** | PostgreSQL | 15 | Cơ sở dữ liệu quan hệ (OLTP) cho các service |
-| **Broker & Cache** | Redis | 7.x | Redis Streams (Event Bus), Distributed Lock, Session Cache |
+| **Broker & Cache** | Redis | 7.x | Redis Streams (Event Bus), Distributed Lock, Session Cache. Cấu hình Persistent (AOF+RDB) |
 | **Time-Series DB**| Elasticsearch | 8.17 | Lưu observation logs để query Aggregation uptime |
 | **Email** | SMTP / MailHog | - | Dịch vụ gửi email báo cáo |
 | **Ping Library** | pro-bing | 0.8 | Hỗ trợ ICMP unprivileged/privileged ping |
@@ -116,13 +115,13 @@ Chịu trách nhiệm thực thi Ping. Hoàn toàn không phụ thuộc vào Dat
 #### 4.3.1 Các luồng xử lý
 - **Vòng lặp Giám sát (Monitoring Cycle & Flapping Logic)**
   **[Placeholder: Sequence Diagram - Vòng lặp Giám sát (Monitoring_Cycle & Flapping Logic)]**
-  Phân bổ tải với Distributed Lock (`SETNX`). Sử dụng State Machine: Nếu ping thất bại >= Threshold (2) mới chính thức coi là OFFLINE để tránh Flapping do nhiễu mạng.
+  Phân bổ tải với Distributed Lock (cấp phát động `SET NX PX` đồng bộ theo chu kỳ tick). Sử dụng State Machine: Nếu ping thất bại >= Threshold (2) mới chính thức coi là OFFLINE để tránh Flapping do nhiễu mạng.
 
 #### 4.3.2 Thiết kế Data Store & Lock
-- **Elasticsearch (`sms_observation_logs`):** Ghi bulk log theo chuỗi thời gian (time-series). Gồm `server_id` (keyword), `is_success` (boolean), `timestamp` (date).
+- **Elasticsearch (`sms_observation_logs`):** Ghi bulk log theo chuỗi thời gian (time-series). Gồm `server_id` (keyword), `is_success` (boolean), `timestamp` (date). Cơ chế ghi log có buffer nội bộ và xả (flush) định kỳ, kết hợp `sync.Once` để Graceful Shutdown.
 - **Redis Sets (`server:all_ids`):** Lưu danh sách IP cần giám sát (Được đồng bộ ngầm từ Redis Streams).
-- **Redis Queue (`monitoring:queue`):** Hàng đợi chứa các jobs cho Worker Pool (500 Goroutines) tiêu thụ.
-- **Redis Lock (`lock:monitoring_producer`):** Đảm bảo chỉ 1 Replica làm nhiệm vụ đẩy Job vào hàng đợi.
+- **Redis Queue (`monitoring:queue`):** Hàng đợi chứa các jobs cho Worker Pool (500 Goroutines) tiêu thụ bằng kỹ thuật `BLPOP` (Blocking Pop) nhằm tối ưu triệt để CPU Idle.
+- **Redis Lock (`lock:monitoring_producer`):** Đảm bảo chỉ 1 Replica làm nhiệm vụ đẩy Job vào hàng đợi. Thời gian hết hạn của khóa (Expiration) được tính toán tự động dựa trên Tick Interval.
 
 ### 4.4 Nghiệp vụ Báo cáo tự trị (Reporting)
 Hoạt động độc lập nhờ cơ chế Data Replication, có khả năng tự gen HTML và bắn email mà không phụ thuộc vào Management Service.
@@ -131,6 +130,8 @@ Hoạt động độc lập nhờ cơ chế Data Replication, có khả năng t�
 - **Quy trình Xuất báo cáo tự trị (Reporting Generate)**
   **[Placeholder: Sequence Diagram - Quy trình Xuất báo cáo (Reporting_Generate)]**
   Sử dụng Uptime Calculator truy vấn thẳng Elasticsearch (Aggregation) để lấy % uptime.
+- **Cronjob Gửi Báo cáo (Daily Scheduler)**
+  Sử dụng Distributed Lock (`SET NX`) trên Redis để đảm bảo khi scale nhiều Replicas, chỉ có duy nhất 1 instance thực thi việc tạo và gửi email báo cáo mỗi ngày, tránh hiện tượng gửi email trùng lặp.
 
 #### 4.4.2 Thiết kế Database
 **A. PostgreSQL (Schema: reporting)**
@@ -168,5 +169,7 @@ Thực thể "Server" tồn tại dưới nhiều hình thái khác nhau qua cá
 - **Xác thực ủy quyền & Chống CSRF (ForwardAuth):** Mọi request bị Traefik chặn lại và hỏi ý kiến Identity qua `/verify`. Kiểm tra chéo CSRF Token giữa Cookie và Header. Traefik tự động đẩy Custom Headers (`X-User-Role`) xuống các service phía sau.
 
 ### 6.2. Hạ tầng triển khai (Docker Swarm)
-- **Zero Secrets in Env:** Hoàn toàn không lưu mật khẩu trong biến môi trường thô. Triển khai qua Docker Secrets (`db_url`, `jwt_secret`) và Docker Configs.
+- **Zero Downtime Deployments (ZDT):** Cấu hình `update_config: order: start-first` kết hợp với HTTP Healthchecks đảm bảo quá trình cập nhật không gây gián đoạn dịch vụ. Traefik tự động điều hướng traffic (Load Balancing).
+- **Native OS Environment Variables:** Loại bỏ hoàn toàn sự phụ thuộc vào file `.env` tĩnh (Docker Configs). Cấu hình động được tiêm trực tiếp qua `environment` block của Swarm, tuân thủ nguyên lý 12-Factor App.
+- **Mật khẩu an toàn (Docker Secrets):** Các dữ liệu nhạy cảm (`db_url`, `jwt_secret`) được truyền qua Docker Secrets dưới dạng In-Memory Files (tmpfs), tuyệt đối không phơi bày ra môi trường thô.
 - **ICMP Privileged Mode:** Monitoring cho phép cấu hình `ICMP_PRIVILEGED=true/false` để tự động chuyển đổi giữa việc dùng Raw Sockets (cần quyền root) hoặc UDP Datagrams (an toàn hơn).
