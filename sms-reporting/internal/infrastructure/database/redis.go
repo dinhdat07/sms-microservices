@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"time"
 
 	"sms-reporting/internal/config"
 
@@ -31,4 +32,11 @@ func PingRedis(ctx context.Context, rdb redis.UniversalClient) error {
 		return nil
 	}
 	return rdb.Ping(ctx).Err()
+}
+
+func AcquireLock(ctx context.Context, rdb redis.UniversalClient, key string, expiration time.Duration) (bool, error) {
+	if rdb == nil {
+		return true, nil
+	}
+	return rdb.SetNX(ctx, key, "locked", expiration).Result()
 }

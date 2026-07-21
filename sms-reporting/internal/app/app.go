@@ -79,7 +79,7 @@ func NewApp() (*App, error) {
 	// Initialize Repos & Services
 	repo := impl.NewGormReportingRepository(db)
 	uptimeCalc := elasticsearch.NewESUptimeCalculator(esClient, esCfg.ServerIndex)
-	
+
 	worker := service.NewReportingWorker(repo, uptimeCalc, cfg.Reporting.WorkerCount, cfg.Reporting.JobQueueSize, smtpMailer)
 	svc := service.NewReportingService(repo, worker)
 	handler := grpchandler.NewReportingGrpcHandler(svc)
@@ -94,7 +94,7 @@ func NewApp() (*App, error) {
 	eventStream := consumer.NewEventConsumer(subscriber, repo, cfg.Consumer)
 
 	// Initialize Scheduler
-	sched := NewScheduler(worker, cfg.Reporting.CronSpec, cfg.Reporting.AdminEmail)
+	sched := NewScheduler(worker, redisClient, cfg.Reporting.CronSpec, cfg.Reporting.AdminEmail)
 
 	return &App{
 		cfg:         cfg,

@@ -46,6 +46,7 @@ services:
       - default
     image: sms-sms-identity:latest
     deploy:
+      replicas: 3
       labels:
         - traefik.enable=true
         - traefik.http.routers.identity.rule=PathPrefix(`/api/v1/auth/`) || PathPrefix(`/openapi/auth/`)
@@ -82,6 +83,7 @@ services:
       - default
     image: sms-sms-management:latest
     deploy:
+      replicas: 2
       labels:
         - traefik.enable=true
         - traefik.http.routers.management.rule=PathPrefix(`/api/v1/servers`)
@@ -190,6 +192,8 @@ services:
     networks:
       - default
     image: sms-sms-monitoring-worker:latest
+    deploy:
+      replicas: 2
     secrets:
       - db_url
     configs:
@@ -204,6 +208,7 @@ services:
       - default
     image: sms-sms-reporting:latest
     deploy:
+      replicas: 2
       labels:
         - traefik.enable=true
         - traefik.http.routers.reporting.rule=PathPrefix(`/api/v1/servers/report`)
@@ -233,6 +238,7 @@ services:
       - default
     image: sms-sms-frontend:latest
     deploy:
+      replicas: 2
       labels:
         - traefik.enable=true
         - traefik.http.routers.frontend.rule=PathPrefix(`/`)
