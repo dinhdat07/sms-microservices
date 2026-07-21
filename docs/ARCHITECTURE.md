@@ -79,6 +79,8 @@ Hệ thống sử dụng cơ chế **Token Theft Detection (Truy vết đánh c�
 #### 4.1.1 Các luồng xử lý
 - **Luồng Đăng nhập (Login)**
   **[Placeholder: Sequence Diagram - Luồng Đăng nhập]**
+- **Quản lý Phiên (Session Management: Logout, LogoutAll, RefreshToken)**
+  Cung cấp các API để làm mới hoặc thu hồi token. Khi người dùng Logout hoặc LogoutAll, token/session sẽ bị tước quyền và đẩy vào Blacklist (Redis Revocation Store).
 - **Luồng Xác thực Token (ForwardAuth Verify)**
   **[Placeholder: Sequence Diagram - Luồng Kiểm tra Quyền Truy cập (ForwardAuth Verify)]**
   Middleware Traefik luôn check API này để biết token có bị Revoked trong Redis hay không trước khi cho phép request đi tiếp.
@@ -129,7 +131,7 @@ Hoạt động độc lập nhờ cơ chế Data Replication, có khả năng t�
 #### 4.4.1 Các luồng xử lý
 - **Quy trình Xuất báo cáo tự trị (Reporting Generate)**
   **[Placeholder: Sequence Diagram - Quy trình Xuất báo cáo (Reporting_Generate)]**
-  Sử dụng Uptime Calculator truy vấn thẳng Elasticsearch (Aggregation) để lấy % uptime.
+  Sử dụng Uptime Calculator truy vấn thẳng Elasticsearch (Aggregation) để lấy % uptime. Tích hợp sẵn `SMTP Notifier` (trước đây là module Notification độc lập ở Backend cũ) để build cấu trúc Multipart MIME và gửi Email trực tiếp, giảm thiểu độ trễ RPC qua lại giữa các service.
 - **Cronjob Gửi Báo cáo (Daily Scheduler)**
   Sử dụng Distributed Lock (`SET NX`) trên Redis để đảm bảo khi scale nhiều Replicas, chỉ có duy nhất 1 instance thực thi việc tạo và gửi email báo cáo mỗi ngày, tránh hiện tượng gửi email trùng lặp.
 

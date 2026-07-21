@@ -55,7 +55,7 @@ services:
       replicas: 3
       update_config:
         parallelism: 1
-        delay: 5s
+        delay: 10s
         order: start-first
       labels:
         - traefik.enable=true
@@ -77,11 +77,6 @@ services:
         - traefik.http.routers.identity-health.service=identity
         - traefik.http.routers.identity-health.middlewares=sms-ratelimit,identity-health-replace
         - traefik.http.middlewares.identity-health-replace.replacepath.path=/health
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
     secrets:
       - db_url
       - admin_password
@@ -102,7 +97,7 @@ services:
       replicas: 2
       update_config:
         parallelism: 1
-        delay: 5s
+        delay: 10s
         order: start-first
       labels:
         - traefik.enable=true
@@ -120,11 +115,6 @@ services:
         - traefik.http.routers.management-health.service=management-svc
         - traefik.http.routers.management-health.middlewares=sms-ratelimit,management-health-replace
         - traefik.http.middlewares.management-health-replace.replacepath.path=/health
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
     secrets:
       - db_url
   postgres:
@@ -248,7 +238,7 @@ services:
       replicas: 2
       update_config:
         parallelism: 1
-        delay: 5s
+        delay: 10s
         order: start-first
     secrets:
       - db_url
@@ -276,7 +266,7 @@ services:
       replicas: 2
       update_config:
         parallelism: 1
-        delay: 5s
+        delay: 10s
         order: start-first
       labels:
         - traefik.enable=true
@@ -296,11 +286,6 @@ services:
         - traefik.http.routers.reporting-health.service=reporting-svc
         - traefik.http.routers.reporting-health.middlewares=sms-ratelimit,reporting-health-replace
         - traefik.http.middlewares.reporting-health-replace.replacepath.path=/health
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
     secrets:
       - db_url
   sms-frontend:

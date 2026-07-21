@@ -23,7 +23,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
             }
             
             management = container "Management Service" "Handles CRUD operations and Bulk Import/Export for Server inventories." "Go" "Microservice" {
-                serverServer = component "Server gRPC/REST Server" "Provides CRUD endpoints for target servers." "Go gRPC/HTTP Server"
+                serverServer = component "Server gRPC/REST Server" "Provides CRUD and Bulk Import/Export endpoints for target servers." "Go gRPC/HTTP Server"
                 serverService = component "Server Service" "Core business logic for server management." "Go Service"
                 serverRepo = component "Server Repository (PostgreSQL)" "Reads/writes server metadata." "Go Repository"
                 outboxRepo = component "Outbox Repository (PostgreSQL)" "Stores domain events for reliable publishing." "Go Repository"
