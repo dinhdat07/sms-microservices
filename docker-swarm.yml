@@ -38,15 +38,25 @@ services:
   sms-identity:
     logging: *default-logging
     environment:
-      ENV_FILE: /app/.env
-      DB_URL_FILE: /run/secrets/db_url
-      ADMIN_PASSWORD_FILE: /run/secrets/admin_password
-      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      - ENV=development
+      - REDIS_ENABLED=true
+      - REDIS_ADDR=redis:6379
+      - HTTP_PORT=8000
+      - GRPC_PORT=50051
+      - ADMIN_EMAIL=admin@example.com
+      - USER_EMAIL=user@example.com
+      - DB_URL_FILE=/run/secrets/db_url
+      - ADMIN_PASSWORD_FILE=/run/secrets/admin_password
+      - JWT_SECRET_FILE=/run/secrets/jwt_secret
     networks:
       - default
     image: sms-sms-identity:latest
     deploy:
       replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
       labels:
         - traefik.enable=true
         - traefik.http.routers.identity.rule=PathPrefix(`/api/v1/auth/`) || PathPrefix(`/openapi/auth/`)
@@ -67,23 +77,33 @@ services:
         - traefik.http.routers.identity-health.service=identity
         - traefik.http.routers.identity-health.middlewares=sms-ratelimit,identity-health-replace
         - traefik.http.middlewares.identity-health-replace.replacepath.path=/health
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     secrets:
       - db_url
       - admin_password
       - jwt_secret
-    configs:
-      - source: identity_config
-        target: /app/.env
   sms-management:
     logging: *default-logging
     environment:
-      ENV_FILE: /app/.env
-      DB_URL_FILE: /run/secrets/db_url
+      - ENV=development
+      - REDIS_ENABLED=true
+      - REDIS_ADDR=redis:6379
+      - HTTP_PORT=8001
+      - GRPC_PORT=50052
+      - DB_URL_FILE=/run/secrets/db_url
     networks:
       - default
     image: sms-sms-management:latest
     deploy:
       replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
       labels:
         - traefik.enable=true
         - traefik.http.routers.management.rule=PathPrefix(`/api/v1/servers`)
@@ -100,11 +120,13 @@ services:
         - traefik.http.routers.management-health.service=management-svc
         - traefik.http.routers.management-health.middlewares=sms-ratelimit,management-health-replace
         - traefik.http.middlewares.management-health-replace.replacepath.path=/health
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     secrets:
       - db_url
-    configs:
-      - source: management_config
-        target: /app/.env
   postgres:
     logging: *default-logging
     image: postgres:15
@@ -128,8 +150,24 @@ services:
   redis:
     logging: *default-logging
     image: redis:7-alpine
+    command: 
+      - "redis-server"
+      - "--appendonly"
+      - "yes"
+      - "--appendfsync"
+      - "everysec"
+      - "--aof-use-rdb-preamble"
+      - "yes"
+      - "--save"
+      - "900 1"
+      - "--save"
+      - "300 10"
+      - "--save"
+      - "60 10000"
     ports:
       - 6379:6379
+    volumes:
+      - sms_redis_data:/data
     healthcheck:
       test:
         - CMD
@@ -187,28 +225,59 @@ services:
       - NET_ADMIN
       - NET_RAW
     environment:
-      ENV_FILE: /app/.env
-      DB_URL_FILE: /run/secrets/db_url
+      - ENV=development
+      - REDIS_ENABLED=true
+      - REDIS_ADDR=redis:6379
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_SERVER_INDEX=sms_observation_logs
+      - MONITORING_FAILURE_THRESHOLD=2
+      - MONITORING_WORKER_CONCURRENCY=500
+      - MONITORING_WORKER_PING_TIMEOUT=3s
+      - MONITORING_WORKER_TICK_INTERVAL=30s
+      - MONITORING_WORKER_LOCK_KEY=lock:monitoring_worker
+      - MONITORING_WORKER_LOCK_EXPIRATION=25s
+      - SIMULATOR_HOST=simulator
+      - SIMULATOR_SUBNET=10.1.0.0/16
+      - LOG_LEVEL=info
+      - LOG_FORMAT=text
+      - DB_URL_FILE=/run/secrets/db_url
     networks:
       - default
     image: sms-sms-monitoring-worker:latest
     deploy:
       replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
     secrets:
       - db_url
-    configs:
-      - source: monitoring_config
-        target: /app/.env
   sms-reporting:
     logging: *default-logging
     environment:
-      ENV_FILE: /app/.env
-      DB_URL_FILE: /run/secrets/db_url
+      - ENV=development
+      - REDIS_ENABLED=true
+      - REDIS_ADDR=redis:6379
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_SERVER_INDEX=sms_observation_logs
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_USE_AUTH=false
+      - SMTP_USE_TLS=false
+      - SMTP_FROM=reports@sms.local
+      - HTTP_PORT=8002
+      - GRPC_PORT=50053
+      - CONSUMER_NAME=reporting_worker
+      - DB_URL_FILE=/run/secrets/db_url
     networks:
       - default
     image: sms-sms-reporting:latest
     deploy:
       replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
       labels:
         - traefik.enable=true
         - traefik.http.routers.reporting.rule=PathPrefix(`/api/v1/servers/report`)
@@ -227,11 +296,13 @@ services:
         - traefik.http.routers.reporting-health.service=reporting-svc
         - traefik.http.routers.reporting-health.middlewares=sms-ratelimit,reporting-health-replace
         - traefik.http.middlewares.reporting-health-replace.replacepath.path=/health
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     secrets:
       - db_url
-    configs:
-      - source: reporting_config
-        target: /app/.env
   sms-frontend:
     logging: *default-logging
     networks:
@@ -262,6 +333,7 @@ services:
 volumes:
   sms_postgres_data: null
   sms_es_data: null
+  sms_redis_data: null
 networks:
   default:
     driver: overlay
@@ -275,12 +347,3 @@ secrets:
     external: true
   jwt_secret:
     external: true
-configs:
-  identity_config:
-    file: ./configs/identity.env
-  management_config:
-    file: ./configs/management.env
-  reporting_config:
-    file: ./configs/reporting.env
-  monitoring_config:
-    file: ./configs/monitoring.env

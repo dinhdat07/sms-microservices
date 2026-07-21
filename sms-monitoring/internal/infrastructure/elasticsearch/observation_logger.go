@@ -34,6 +34,7 @@ type bufferedLogger struct {
 	flushInterval time.Duration
 	retryMax      int
 	retryDelay    time.Duration
+	closeOnce     sync.Once
 }
 
 func NewObservationLogger(client *elasticsearch.TypedClient, index string, cfg config.ObservationLoggerConfig) ObservationLogger {
@@ -64,7 +65,9 @@ func (l *bufferedLogger) LogObservation(ctx context.Context, serverID string, is
 }
 
 func (l *bufferedLogger) Shutdown() {
-	close(l.ch)
+	l.closeOnce.Do(func() {
+		close(l.ch)
+	})
 	l.wg.Wait()
 }
 

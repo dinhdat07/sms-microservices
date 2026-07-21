@@ -4,7 +4,6 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         admin = person "System Administrator" "Performs administrative tasks, manages servers, views reports, and receives alerts."
         smtp = softwareSystem "SMTP Server" "External email system (e.g., MailHog, SendGrid)" "External"
         targetServers = softwareSystem "Target Servers (10k+)" "External infrastructure servers monitored via ICMP" "External"
-        simulator = softwareSystem "Network Simulator" "Development tool that generates up to 10,000 virtual IPs with controlled flapping for load testing." "Go / nftables" "External"
 
         sms = softwareSystem "Server Management System (SMS)" "Monitors target servers, collects observation data, and generates uptime reports." {
 
@@ -55,14 +54,13 @@ workspace "SMS Microservices Architecture" "Server Management System" {
             }
             
             postgres = container "Primary Database" "Stores Users, Sessions, and Server Metadata." "PostgreSQL 15" "Database"
-            redis = container "Event Broker & Cache" "Redis Streams for pub/sub events, token blacklist, and target cache." "Redis 7" "Message Broker"
+            redis = container "Event Broker & Cache" "Redis Streams for pub/sub events, token blacklist, and target cache. (Persistent AOF+RDB)" "Redis 7" "Message Broker"
             es = container "Time-Series DB" "Stores millions of ICMP Observation Logs for fast uptime aggregation." "Elasticsearch 8" "Database"
         }
 
         # Context level relationships
         admin -> sms "Manages servers, requests reports, and views status via"
         sms -> targetServers "Pings continuously using ICMP protocol"
-        sms -> simulator "Pings virtual targets (Testing Environment)"
         sms -> smtp "Sends email reports and alerts via"
         smtp -> admin "Delivers emails to"
 
@@ -92,7 +90,6 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         monitoring -> redis "Reads targets, publishes Status events, consumes CRUD events" "Redis Stream / Cache"
         monitoring -> es "Bulk inserts observation logs to" "HTTP/9200"
         monitoring -> targetServers "Pings" "ICMP"
-        monitoring -> simulator "Pings" "ICMP"
         
         # Component level relationships (Identity)
         traefik -> forwardAuthHandler "Calls /verify" "HTTP"
@@ -126,10 +123,10 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         # Component level relationships (Monitoring)
         redis -> streamConsumer "Delivers stream sms.events.server" "XREADGROUP"
         streamConsumer -> cacheRepo "Updates targets"
-        scheduler -> redis "Acquires lock (SETNX)" "TCP/6379"
+        scheduler -> redis "Acquires dynamic lock (SET NX PX)" "TCP/6379"
         scheduler -> cacheRepo "Reads all targets (SMEMBERS)"
         scheduler -> queueRepo "Pushes targets (LPUSH)"
-        monitorWorker -> queueRepo "Pulls targets (LPOP)"
+        monitorWorker -> queueRepo "Pulls targets (BLPOP)"
         monitorWorker -> targetServers "Pings" "ICMP"
         monitorWorker -> monitoringService "Evaluates ping result"
         monitoringService -> observationLogger "Logs observation"

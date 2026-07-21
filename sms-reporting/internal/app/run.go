@@ -57,8 +57,9 @@ func (a *App) Run() error {
 	mux := http.NewServeMux()
 	// Health check endpoint
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		hostname, _ := os.Hostname()
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		w.Write([]byte(fmt.Sprintf("OK from %s\n", hostname)))
 	})
 	
 	// Route all API traffic to gRPC gateway

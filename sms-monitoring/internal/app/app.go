@@ -160,7 +160,14 @@ func (a *App) Run() error {
 
 func (a *App) runProducerCycle(ctx context.Context) {
 	lockKey := config.GetEnvDefault("MONITORING_PRODUCER_LOCK_KEY", "lock:monitoring_producer")
-	lockExpiration := 10 * time.Second
+	tickInterval, _ := config.GetEnvDuration("MONITORING_WORKER_TICK_INTERVAL", 30*time.Second)
+	
+	// Set lock expiration to slightly less than tick interval to tightly block other workers
+	// but still allow the lock to expire before the next legitimate cycle.
+	lockExpiration := tickInterval - 2*time.Second
+	if lockExpiration <= 0 {
+		lockExpiration = tickInterval
+	}
 
 	// Producer Election
 	acquired, _ := database.AcquireLock(ctx, a.RedisClient, lockKey, lockExpiration)
