@@ -33,10 +33,12 @@ func (h *ForwardAuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// CSRF Check for state-changing methods
-	if err := h.validateCSRF(r); err != nil {
-		http.Error(w, "Forbidden: CSRF validation failed - "+err.Error(), http.StatusForbidden)
-		return
+	// CSRF Check for state-changing methods - ONLY if authenticated via Cookie
+	if r.Header.Get("Authorization") == "" {
+		if err := h.validateCSRF(r); err != nil {
+			http.Error(w, "Forbidden: CSRF validation failed - "+err.Error(), http.StatusForbidden)
+			return
+		}
 	}
 
 	// Set headers for downstream services
