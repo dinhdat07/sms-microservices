@@ -30,7 +30,7 @@ func (h *ReportingGrpcHandler) RequestReport(ctx context.Context, req *reporting
 
 	err := h.service.RequestReport(ctx, req.TargetEmail, req.StartDate, req.EndDate)
 	if err != nil {
-		if errors.Is(err, domain.ErrInvalidEmail) {
+		if errors.Is(err, domain.ErrInvalidEmail) || errors.Is(err, domain.ErrInvalidDateRange) || errors.Is(err, domain.ErrInvalidDateFormat) {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 		return nil, status.Errorf(codes.Internal, "failed to request report: %v", err)

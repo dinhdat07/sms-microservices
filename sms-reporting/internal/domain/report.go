@@ -9,6 +9,8 @@ import (
 )
 
 var ErrInvalidEmail = errors.New("invalid email address")
+var ErrInvalidDateRange = errors.New("start time must be before or equal to end time")
+var ErrInvalidDateFormat = errors.New("invalid date format: must be YYYY-MM-DD")
 
 const (
 	ReportStatusPending    = "PENDING"
@@ -37,6 +39,10 @@ func (ReportRequest) TableName() string {
 func NewReportRequest(requestorEmail string, startTime, endTime time.Time, correlationID string) (*ReportRequest, error) {
 	if strings.TrimSpace(requestorEmail) == "" {
 		return nil, ErrInvalidEmail
+	}
+
+	if startTime.After(endTime) {
+		return nil, ErrInvalidDateRange
 	}
 
 	requestID := uuid.New()

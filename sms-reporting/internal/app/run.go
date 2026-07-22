@@ -7,14 +7,17 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 
 	reportingv1 "sms-reporting/gen/go/reporting/v1"
 	"sms-reporting/internal/infrastructure/logger"
+	"sms-reporting/internal/infrastructure/middlewares"
 )
 
 func (a *App) Run() error {
@@ -37,6 +40,15 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to start scheduler: %w", err)
 	}
 
+	a.grpcServer = grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			middlewares.AuthMetadataInterceptor(),
+			middlewares.PermissionInterceptor(a.authorizer, a.methodPermissions),
+		),
+	)
+	reportingv1.RegisterReportingServiceServer(a.grpcServer, a.grpcHandler)
+	reflection.Register(a.grpcServer)
+
 	go func() {
 		logger.Log.Sugar().Infof("gRPC server listening on %s", grpcAddr)
 		if err := a.grpcServer.Serve(lis); err != nil {
@@ -45,7 +57,14 @@ func (a *App) Run() error {
 	}()
 
 	// Setup gRPC Gateway
-	gwmux := runtime.NewServeMux()
+	gwmux := runtime.NewServeMux(
+		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
+			if strings.HasPrefix(key, "X-User-") {
+				return key, true
+			}
+			return runtime.DefaultHeaderMatcher(key)
+		}),
+	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	
 	// Register the generated handler for gRPC Gateway

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 
 	reportingv1 "sms-reporting/gen/go/reporting/v1"
 	"sms-reporting/internal/config"
@@ -17,16 +16,20 @@ import (
 	"sms-reporting/internal/infrastructure/logger"
 	"sms-reporting/internal/infrastructure/messagebroker"
 	"sms-reporting/internal/infrastructure/notifier"
+	"sms-reporting/internal/infrastructure/security"
 	"sms-reporting/internal/repository/impl"
 	"sms-reporting/internal/service"
 )
 
 type App struct {
-	cfg         *config.Config
-	grpcServer  *grpc.Server
-	worker      service.ReportingWorker
-	eventStream consumer.EventConsumer
-	scheduler   *Scheduler
+	cfg               *config.Config
+	grpcServer        *grpc.Server
+	grpcHandler       reportingv1.ReportingServiceServer
+	worker            service.ReportingWorker
+	eventStream       consumer.EventConsumer
+	scheduler         *Scheduler
+	authorizer        *security.Authorizer
+	methodPermissions map[string]security.PermissionCode
 }
 
 func NewApp() (*App, error) {
@@ -85,9 +88,7 @@ func NewApp() (*App, error) {
 	handler := grpchandler.NewReportingGrpcHandler(svc)
 
 	// Setup gRPC Server
-	grpcServer := grpc.NewServer()
-	reportingv1.RegisterReportingServiceServer(grpcServer, handler)
-	reflection.Register(grpcServer)
+	// Note: We don't initialize the grpc server here anymore. It will be initialized in run.go with interceptors.
 
 	// Initialize Event Consumer
 	subscriber := messagebroker.NewRedisSubscriber(redisClient)
@@ -96,11 +97,19 @@ func NewApp() (*App, error) {
 	// Initialize Scheduler
 	sched := NewScheduler(worker, redisClient, cfg.Reporting.CronSpec, cfg.Reporting.AdminEmail)
 
+	authorizer := security.NewAuthorizer()
+	methodPermissions := map[string]security.PermissionCode{
+		reportingv1.ReportingService_RequestReport_FullMethodName: security.PermReportRequest,
+	}
+
 	return &App{
-		cfg:         cfg,
-		grpcServer:  grpcServer,
-		worker:      worker,
-		eventStream: eventStream,
-		scheduler:   sched,
+		cfg:               cfg,
+		grpcServer:        nil, // Set in run.go
+		grpcHandler:       handler,
+		worker:            worker,
+		eventStream:       eventStream,
+		scheduler:         sched,
+		authorizer:        authorizer,
+		methodPermissions: methodPermissions,
 	}, nil
 }

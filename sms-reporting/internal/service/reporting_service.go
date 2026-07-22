@@ -31,12 +31,12 @@ func (s *reportingServiceImpl) RequestReport(ctx context.Context, email string, 
 	// Format is YYYY-MM-DD
 	start, err := time.Parse("2006-01-02", startDate)
 	if err != nil {
-		return err
+		return domain.ErrInvalidDateFormat
 	}
 
 	end, err := time.Parse("2006-01-02", endDate)
 	if err != nil {
-		return err
+		return domain.ErrInvalidDateFormat
 	}
 	// Make sure end is at the end of the day
 	end = end.Add(24 * time.Hour).Add(-time.Nanosecond)
