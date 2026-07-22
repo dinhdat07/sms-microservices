@@ -32,3 +32,9 @@ packages:
       dir: "{{.InterfaceDir}}/mock"
       filename: "mock_{{.InterfaceName | snakecase}}.go"
       outpkg: "mock"
+  sms-reporting/internal/domain:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
