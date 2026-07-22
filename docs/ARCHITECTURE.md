@@ -78,82 +78,11 @@ Hệ thống sử dụng cơ chế **Token Theft Detection (Truy vết đánh c�
 
 #### 4.1.1 Các luồng xử lý
 - **Luồng Đăng nhập (Login)**
-  ```mermaid
-sequenceDiagram
-    participant Client
-    participant Traefik as API Gateway
-    participant AuthServer as Identity Service
-    participant Repo as Postgres (Users/Sessions)
-    
-    Client->>Traefik: POST /api/v1/auth/login
-    Traefik->>AuthServer: gRPC Login()
-    AuthServer->>Repo: Check Credentials & Hash
-    Repo-->>AuthServer: Valid User
-    AuthServer->>Repo: Create AuthSession & RefreshToken
-    AuthServer->>AuthServer: Sign JWT Access Token
-    AuthServer-->>Traefik: JWT + HttpOnly Cookie
-    Traefik-->>Client: 200 OK (Tokens)
-```
   Xử lý xác thực thông tin, tạo và trả về Access Token, Refresh Token và thiết lập Cookie an toàn.
 - **Quản lý Phiên (Session Management: Logout, LogoutAll, RefreshToken)**
-  - **Làm mới Token (Refresh):** ```mermaid
-sequenceDiagram
-    participant Client
-    participant Traefik as API Gateway
-    participant AuthServer as Identity Service
-    participant Repo as Postgres (Tokens)
-    participant Redis as Revocation Store
-    
-    Client->>Traefik: POST /api/v1/auth/refresh (Cookie)
-    Traefik->>AuthServer: gRPC RefreshToken()
-    AuthServer->>Repo: Validate Refresh Token
-    alt Token is Revoked (Theft Detected)
-        AuthServer->>Repo: Revoke entire AuthSession
-        AuthServer->>Redis: Add Session to Blacklist
-        AuthServer-->>Client: 401 Unauthorized
-    else Token is Valid
-        AuthServer->>Repo: Mark old token as replaced, Create new
-        AuthServer->>AuthServer: Sign new JWT
-        AuthServer-->>Client: 200 OK (New Tokens)
-    end
-``` Cấp phát lại Access Token khi hết hạn mà không cần đăng nhập lại.
-  - **Thu hồi Phiên (Logout/Revocation):** ```mermaid
-sequenceDiagram
-    participant Client
-    participant Traefik
-    participant AuthServer as Identity Service
-    participant Repo as Postgres
-    participant Redis as Revocation Store
-    
-    Client->>Traefik: POST /api/v1/auth/logout
-    Traefik->>AuthServer: gRPC Logout()
-    AuthServer->>Repo: Update AuthSession (RevokedAt = Now)
-    AuthServer->>Redis: SET revoked_session:{id} = true
-    AuthServer-->>Client: 200 OK (Clear Cookies)
-``` Khi người dùng Logout hoặc LogoutAll, token/session sẽ bị tước quyền và đẩy vào Blacklist (Redis Revocation Store).
+  - **Làm mới Token (Refresh):** Cấp phát lại Access Token khi hết hạn mà không cần đăng nhập lại.
+  - **Thu hồi Phiên (Logout/Revocation):** Khi người dùng Logout hoặc LogoutAll, token/session sẽ bị tước quyền và đẩy vào Blacklist (Redis Revocation Store).
 - **Luồng Xác thực Token (ForwardAuth Verify)**
-  ```mermaid
-sequenceDiagram
-    participant Client
-    participant Traefik as API Gateway
-    participant ForwardAuth as Identity Service (/verify)
-    participant Redis as Revocation Store
-    participant Service as Upstream Service (Management/Reporting)
-    
-    Client->>Traefik: GET /api/v1/servers
-    Traefik->>ForwardAuth: ForwardAuth Request (Header/Cookie)
-    ForwardAuth->>ForwardAuth: Validate JWT Signature
-    ForwardAuth->>Redis: Check Blacklist (revoked_session:{id})
-    alt Is Blacklisted
-        ForwardAuth-->>Traefik: 401 Unauthorized
-        Traefik-->>Client: 401 Unauthorized
-    else Is Valid
-        ForwardAuth-->>Traefik: 200 OK (Inject X-User-Id, X-User-Role)
-        Traefik->>Service: Forward Request + Headers
-        Service-->>Traefik: Response
-        Traefik-->>Client: 200 OK
-    end
-```
   Middleware Traefik luôn check API này để biết token có bị Revoked trong Redis hay không trước khi cho phép request đi tiếp.
 
 #### 4.1.2 Thiết kế Database
@@ -170,68 +99,11 @@ Cung cấp API CRUD và thao tác hàng loạt. Ứng dụng kỹ thuật Event-
 
 #### 4.2.1 Các luồng xử lý
 - **Luồng Thêm/Sửa/Xóa Server (CRUD & Outbox Transaction)**
-  ```mermaid
-sequenceDiagram
-    participant Client
-    participant ServerService as Management Service
-    participant DB as PostgreSQL
-    participant OutboxWorker as Outbox Relay Worker
-    participant Redis as Redis Streams
-    
-    Client->>ServerService: Create Server
-    ServerService->>DB: BEGIN Transaction
-    ServerService->>DB: INSERT INTO SERVERS
-    ServerService->>DB: INSERT INTO OUTBOX_EVENTS
-    ServerService->>DB: COMMIT
-    ServerService-->>Client: 201 Created
-    
-    loop Every 2 seconds
-        OutboxWorker->>DB: Poll un-processed OUTBOX_EVENTS
-        DB-->>OutboxWorker: List of events
-        OutboxWorker->>Redis: XADD sms.events.server (Publish Event)
-        OutboxWorker->>DB: UPDATE OUTBOX_EVENTS (processed = true)
-    end
-```
   Khi thêm Server, dữ liệu được ghi vào bảng SERVERS và OUTBOX_EVENTS trong **cùng một Transaction**. Tránh triệt để lỗi Dual-Write.
 - **Xử lý hàng loạt (Bulk Import/Export)**
-  - **Nhập Hàng Loạt (Import):** ```mermaid
-sequenceDiagram
-    participant Client
-    participant REST as Management REST API
-    participant DB as PostgreSQL
-    
-    Client->>REST: POST /import (Multipart CSV)
-    REST->>REST: Parse CSV & Validate lines
-    loop Every 100 lines (Batch)
-        REST->>DB: BEGIN Transaction
-        REST->>DB: Bulk INSERT SERVERS
-        REST->>DB: Bulk INSERT OUTBOX_EVENTS
-        REST->>DB: COMMIT
-    end
-    REST-->>Client: 200 OK (Import Summary)
-``` Phân lô batch 100 dòng để tối ưu I/O DB và tránh Out-of-Memory khi import hàng chục ngàn server.
-  - **Xuất Hàng Loạt (Export):** ```mermaid
-sequenceDiagram
-    participant Client
-    participant REST as Management REST API
-    participant DB as PostgreSQL
-    
-    Client->>REST: GET /export
-    REST->>DB: Query cursor (Chunking)
-    DB-->>REST: Rows stream
-    REST->>REST: Format to CSV chunk
-    REST-->>Client: HTTP Chunked Response (Stream to file)
-``` Stream file CSV về client, tải dần dữ liệu tránh sập RAM.
+  - **Nhập Hàng Loạt (Import):** Phân lô batch 100 dòng để tối ưu I/O DB và tránh Out-of-Memory khi import hàng chục ngàn server.
+  - **Xuất Hàng Loạt (Export):** Stream file CSV về client, tải dần dữ liệu tránh sập RAM.
 - **Tiêu thụ Sự kiện Trạng thái (Status Consumer)**
-  ```mermaid
-sequenceDiagram
-    participant Redis as Redis Streams
-    participant StatusConsumer as Management Worker
-    participant DB as PostgreSQL
-    
-    Redis->>StatusConsumer: XREAD sms.events.status (ServerStatusChanged)
-    StatusConsumer->>DB: UPDATE SERVERS SET current_status = ?
-```
   Worker lắng nghe trạng thái Server thay đổi từ Monitoring (qua Redis Streams) và cập nhật lại vào PostgreSQL một cách không đồng bộ.
 
 #### 4.2.2 Thiết kế Database
@@ -247,47 +119,11 @@ Chịu trách nhiệm thực thi Ping. Hoàn toàn không phụ thuộc vào Dat
 
 #### 4.3.1 Các luồng xử lý
 - **Vòng lặp Giám sát (Monitoring Cycle & Flapping Logic)**
-  ```mermaid
-sequenceDiagram
-    participant Scheduler as Monitoring Cycle Scheduler
-    participant Redis as Redis
-    participant Queue as Redis Queue (monitoring:queue)
-    
-    loop Every Tick (e.g. 10s)
-        Scheduler->>Redis: SET NX PX lock:monitoring_producer
-        alt Lock Acquired
-            Scheduler->>Redis: SMEMBERS server:all_ids (Get monitored targets)
-            Scheduler->>Queue: LPUSH targets (Batch Push)
-        else Lock Not Acquired
-            Scheduler->>Scheduler: Skip (Another Replica is producing)
-        end
-    end
-```
-  Phân bổ tải với Distributed Lock (cấp phát động `SET NX PX` đồng bộ theo chu kỳ tick).
+  **Quy trình Phân bổ tải & Bầu chọn Producer (Producer Election):**
+  - **Distributed Lock:** Scheduler sử dụng lệnh `SET NX PX` với thời gian hết hạn của khóa (expiration) luôn nhỏ hơn chu kỳ Tick một chút (vd: `Tick - 2s`). Điều này đảm bảo khi hệ thống có N Replicas, luôn chỉ có duy nhất 1 Replica giữ vai trò cấp phát công việc (Producer), các Replicas khác sẽ bị chặn lại (Skip).
+  - **Snowballing Prevention (Chống bùng nổ hàng đợi):** Ngay cả khi đã lấy được Lock, Producer vẫn phải kiểm tra độ dài hàng đợi hiện tại (`LLen monitoring:queue`). Nếu hàng đợi vẫn còn job (tức là các Worker xử lý không kịp), Producer sẽ lập tức **hủy bỏ chu kỳ đẩy mới** để tránh nhồi nhét thêm, ngăn chặn tình trạng tràn bộ nhớ Redis (Snowballing).
+  - **Batch Push:** Nếu hàng đợi trống, Producer mới lấy toàn bộ ID/IP từ `server:all_ids` (lệnh `SMEMBERS`) và đẩy vào `monitoring:queue` thông qua một lệnh `RPUSH` duy nhất, giúp tối ưu tối đa số vòng lặp I/O (RTT).
 - **Ping Worker & Ghi Log Observation**
-  ```mermaid
-sequenceDiagram
-    participant Worker as Monitoring Worker Pool (500)
-    participant Queue as Redis Queue
-    participant Target as Target Server
-    participant RedisStream as Redis Streams
-    participant ES as Elasticsearch
-    
-    Worker->>Queue: BLPOP (Wait for target)
-    Queue-->>Worker: target_ip
-    Worker->>Target: ICMP Ping (Timeout 2s)
-    Target-->>Worker: Ping Result (Success/Fail)
-    
-    Worker->>Worker: Apply Flapping Threshold (Failure Count >= 2)
-    alt State actually changed
-        Worker->>RedisStream: XADD sms.events.status (ServerStatusChanged)
-    end
-    
-    Worker->>Worker: Buffer Observation Log
-    loop Every 5s or Buffer Full
-        Worker->>ES: Bulk Insert Observation Logs (Time-series)
-    end
-```
   Sử dụng State Machine: Nếu ping thất bại >= Threshold (2) mới chính thức coi là OFFLINE để tránh Flapping do nhiễu mạng. Worker đẩy log vào Logger để Bulk Insert lên Elasticsearch.
 
 #### 4.3.2 Thiết kế Data Store & Lock
@@ -301,52 +137,10 @@ Hoạt động độc lập nhờ cơ chế Data Replication, có khả năng t�
 
 #### 4.4.1 Các luồng xử lý
 - **Quy trình Xuất báo cáo tự trị (Reporting Generate)**
-  ```mermaid
-sequenceDiagram
-    participant Client
-    participant Reporting as Reporting Service
-    participant ES as Elasticsearch
-    participant SMTP as SMTP Server
-    
-    Client->>Reporting: POST /reports (Generate)
-    Reporting->>ES: Query Aggregations (Count success/total by server_id)
-    ES-->>Reporting: Uptime percentages
-    Reporting->>Reporting: Render HTML Template
-    Reporting->>SMTP: Send Multipart MIME Email
-    SMTP-->>Reporting: Success
-    Reporting-->>Client: 200 OK
-```
   Sử dụng Uptime Calculator truy vấn thẳng Elasticsearch (Aggregation) để lấy % uptime. Tích hợp sẵn `SMTP Notifier` (trước đây là module Notification độc lập ở Backend cũ) để build cấu trúc Multipart MIME và gửi Email trực tiếp, giảm thiểu độ trễ RPC qua lại giữa các service.
 - **Cronjob Gửi Báo cáo (Daily Scheduler)**
-  ```mermaid
-sequenceDiagram
-    participant Scheduler as Daily Scheduler
-    participant Redis as Redis Lock
-    participant Service as Reporting Service
-    
-    loop Cron (e.g. 0 8 * * *)
-        Scheduler->>Redis: SET NX lock:daily_report
-        alt Lock Acquired
-            Scheduler->>Service: Trigger Report Generation for all Admins
-            Service->>Service: Execute (See Reporting_Generate)
-        end
-    end
-```
   Sử dụng Distributed Lock (`SET NX`) trên Redis để đảm bảo khi scale nhiều Replicas, chỉ có duy nhất 1 instance thực thi việc tạo và gửi email báo cáo mỗi ngày, tránh hiện tượng gửi email trùng lặp.
 - **Đồng bộ Dữ liệu Server (Event Consumer)**
-  ```mermaid
-sequenceDiagram
-    participant RedisStream as Redis Streams (sms.events.server)
-    participant Consumer as Reporting Event Consumer
-    participant DB as Postgres (Reporting Schema)
-    
-    RedisStream->>Consumer: XREAD (ServerCreated/Deleted)
-    alt Event == ServerCreated
-        Consumer->>DB: INSERT INTO REPORTING_SERVERS
-    else Event == ServerDeleted
-        Consumer->>DB: DELETE FROM REPORTING_SERVERS
-    end
-```
   Worker lắng nghe sự kiện CRUD từ Redis Streams để tự động cập nhật bản sao dữ liệu (Data Replication) vào CSDL Reporting, duy trì tính tự trị (autonomy).
 
 #### 4.4.2 Thiết kế Database
@@ -373,8 +167,21 @@ Thực thể "Server" tồn tại dưới nhiều hình thái khác nhau qua cá
 - Tại **SMS Monitoring**: Là `MonitoredEndpoint` nằm trong Redis Cache (chỉ cần `IPv4`, `State`).
 - Tại **SMS Reporting**: Là `ReportingServer` được nhân bản (Data Replication) qua Event để đảm bảo service hoạt động tự trị.
 
-### 5.3. Sơ đồ dữ liệu quan hệ tổng thể (ERD)
-**[Placeholder: Sơ đồ ERD tổng thể của hệ thống]**
+#### A. Sơ đồ ERD (Entity-Relationship Diagram)
+
+### 5.4. Các luồng quy trình chính (Sequence Diagrams)
+
+#### 1. Luồng Thêm/Sửa Server (CRUD & Outbox Transaction)
+Đảm bảo tính nhất quán dữ liệu bằng Transaction Database và Pattern Outbox.
+
+#### 2. Luồng Import/Export hàng loạt (Bulk Operations)
+Xử lý phân lô (batching) để tránh Out-of-Memory khi thao tác với file Excel dung lượng lớn.
+
+#### 3. Luồng Giám sát (Monitoring Worker)
+Tách biệt quy trình đồng bộ danh sách Server (từ Redis Streams) và quy trình Ping (qua Redis Queue).
+
+#### 4. Luồng Báo cáo tự trị (Reporting & Uptime)
+Tự động sinh HTML và gửi Email định kỳ mà không cần tương tác trực tiếp với Database của Management.
 
 ---
 

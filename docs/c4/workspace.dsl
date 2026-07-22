@@ -273,7 +273,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
             scheduler -> queueRepo "4. RPUSH monitoring:queue"
             queueRepo -> redis "5. Enqueue targets"
             
-            monitorWorker -> queueRepo "6. LPOP monitoring:queue (Consume Job)"
+            monitorWorker -> queueRepo "6. BLPOP monitoring:queue (Consume Job)"
             queueRepo -> redis "7. Dequeue target"
             monitorWorker -> targetServers "8. ICMP Ping"
             monitorWorker -> monitoringService "9. Evaluate(serverID, success)"
@@ -359,16 +359,14 @@ workspace "SMS Microservices Architecture" "Server Management System" {
             serverServer -> serverService "3. ExportServers()"
             serverService -> serverRepo "4. Query cursor (Chunking)"
             serverRepo -> postgres "5. SELECT Stream"
-            postgres -> serverRepo "6. Rows stream"
-            serverService -> serverServer "7. Format to CSV chunk"
+                        serverService -> serverServer "7. Format to CSV chunk"
             serverServer -> traefik "8. HTTP Chunked Response"
             traefik -> spa "9. Stream to file"
             autoLayout
         }
 
         dynamic management "Management_Status_Consumer" "Worker updating DB from Monitoring Events" {
-            statusConsumer -> redis "1. XREAD sms.events.status"
-            redis -> statusConsumer "2. ServerStatusChanged event"
+                        redis -> statusConsumer "1. Delivers ServerStatusChanged event via XREAD"
             statusConsumer -> serverRepo "3. UpdateServerStatus(server_id, status)"
             serverRepo -> postgres "4. UPDATE SERVERS SET current_status"
             autoLayout
@@ -384,8 +382,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         }
 
         dynamic reporting "Reporting_Event_Consumer" "Data replication from Management via Event Bus" {
-            eventConsumer -> redis "1. XREAD sms.events.server"
-            redis -> eventConsumer "2. ServerCreated / ServerDeleted event"
+                        redis -> eventConsumer "1. Delivers ServerCreated/Deleted event via XREAD"
             eventConsumer -> reportRepo "3. Sync Server Data"
             reportRepo -> postgres "4. INSERT/DELETE REPORTING_SERVERS"
             autoLayout
