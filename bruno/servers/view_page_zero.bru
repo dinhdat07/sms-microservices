@@ -1,0 +1,13 @@
+meta {
+  name: View Servers - Page Zero (400)
+  type: http
+  seq: 25
+}
+
+get {
+  url: {{baseURL}}/api/v1/servers?page=0&limit=10
+}
+
+assert {
+  res.status: gte 400
+}

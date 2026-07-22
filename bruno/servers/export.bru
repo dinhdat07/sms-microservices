@@ -1,0 +1,26 @@
+meta {
+  name: Export Servers (Success)
+  type: http
+  seq: 38
+}
+
+get {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/export?page=1&limit=100
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+script:post-response {
+  // Export returns binary Excel, not JSON — verify via Content-Type header
+  const ct = res.headers['content-type'] || res.headers['Content-Type'] || '';
+  if (!ct.includes('spreadsheetml')) {
+    throw new Error('Expected Excel Content-Type, got: ' + ct);
+  }
+}

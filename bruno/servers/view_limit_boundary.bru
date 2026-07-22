@@ -1,0 +1,18 @@
+meta {
+  name: View Servers - Limit=1
+  type: http
+  seq: 21
+}
+
+get {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers?page=1&limit=1
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

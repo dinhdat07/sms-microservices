@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "name": "SMS - Server Management Service",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "scripts": {
+    "preRequest": "scripts/pre-request.js"
+  }
+}

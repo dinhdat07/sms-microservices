@@ -1,0 +1,29 @@
+meta {
+  name: Update Server (Success)
+  type: http
+  seq: 26
+}
+
+put {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/{{createdServerId}}
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {"serverName":"{{createdServerName}}-updated","ipv4":"{{testServerIPv4Alt}}"}
+}
+
+assert {
+  res.status: eq 200
+  res.body.server.serverId: eq {{createdServerId}}
+  res.body.server.ipv4: eq {{testServerIPv4Alt}}
+}

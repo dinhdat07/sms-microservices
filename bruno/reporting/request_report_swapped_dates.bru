@@ -1,0 +1,27 @@
+meta {
+  name: Request Report - Swapped Dates (400)
+  type: http
+  seq: 41
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/report
+  body: json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "startDate": "2026-06-10",
+    "endDate": "2026-06-01",
+    "targetEmail": "{{testReportEmail}}"
+  }
+}
+
+assert {
+  res.status: eq 400
+}

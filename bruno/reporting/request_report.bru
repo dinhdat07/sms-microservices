@@ -1,0 +1,30 @@
+meta {
+  name: Request Uptime Report (Success)
+  type: http
+  seq: 38
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/report
+  body: json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "startDate": "2026-06-01",
+    "endDate": "2026-06-10",
+    "targetEmail": "{{testReportEmail}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq processing
+  res.body.code: eq 202
+  res.body.message: isString
+}

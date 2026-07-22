@@ -1,0 +1,27 @@
+meta {
+  name: Update Server - Deleted (404)
+  type: http
+  seq: 33
+}
+
+put {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/{{deletedServerId}}
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {"serverName":"resurrect","ipv4":"10.0.0.98"}
+}
+
+assert {
+  res.status: eq 404
+}

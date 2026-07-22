@@ -1,0 +1,33 @@
+meta {
+  name: Create Server (Success)
+  type: http
+  seq: 11
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers
+  body: json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {"serverName":"{{testServerName}}-{{$guid}}","ipv4":"{{testServerIPv4}}"}
+}
+
+assert {
+  res.status: eq 200
+  res.body.server.serverId: isString
+  res.body.server.ipv4: eq {{testServerIPv4}}
+  res.body.server.currentStatus: eq ONLINE
+}
+
+script:post-response {
+  if (res.body.server) {
+    bru.setVar("createdServerId", res.body.server.serverId);
+    bru.setVar("createdServerName", res.body.server.serverName);
+  }
+}

@@ -1,0 +1,13 @@
+meta {
+  name: AuthZ - No Token (401)
+  type: http
+  seq: 44
+}
+
+get {
+  url: {{baseURL}}/api/v1/servers?page=1&limit=10
+}
+
+assert {
+  res.status: eq 401
+}

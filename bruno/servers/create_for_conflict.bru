@@ -1,0 +1,30 @@
+meta {
+  name: Create Server - For IP Conflict Test
+  type: http
+  seq: 28
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers
+  body: json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {"serverName":"conflict-target-{{$guid}}","ipv4":"192.168.200.1"}
+}
+
+assert {
+  res.status: eq 200
+  res.body.server.serverId: isString
+}
+
+script:post-response {
+  if (res.body.server) {
+    bru.setVar("conflictServerId", res.body.server.serverId);
+  }
+}

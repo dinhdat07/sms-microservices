@@ -1,0 +1,26 @@
+meta {
+  name: Request Report - No Email (400)
+  type: http
+  seq: 39
+}
+
+post {
+  url: {{baseURL}}/api/v1/servers/report
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "startDate": "2026-06-01",
+    "endDate": "2026-06-10"
+  }
+}
+
+assert {
+  res.status: eq 400
+}

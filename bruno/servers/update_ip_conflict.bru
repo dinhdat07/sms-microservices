@@ -1,0 +1,27 @@
+meta {
+  name: Update Server - IP Conflict (409)
+  type: http
+  seq: 29
+}
+
+put {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/{{conflictServerId}}
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {"serverName":"conflict-renamed","ipv4":"{{testServerIPv4Alt}}"}
+}
+
+assert {
+  res.status: eq 409
+}

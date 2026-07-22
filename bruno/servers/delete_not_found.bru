@@ -1,0 +1,18 @@
+meta {
+  name: Delete Server - Not Found (404)
+  type: http
+  seq: 31
+}
+
+delete {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/00000000-0000-0000-0000-000000000000
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 404
+}

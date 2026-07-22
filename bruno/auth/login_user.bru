@@ -1,0 +1,30 @@
+meta {
+  name: Login - Regular User (Success)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseURL}}/api/v1/auth/login
+  body: json
+}
+
+body:json {
+  {
+    "identifier": "{{userEmail}}",
+    "password": "{{userPassword}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.accessToken: isString
+  res.body.refreshToken: isString
+  res.body.tokenType: eq Bearer
+  res.body.expiresIn: isString
+}
+
+script:post-response {
+  bru.setVar("userAccessToken", res.body.accessToken);
+  bru.setVar("userRefreshToken", res.body.refreshToken);
+}

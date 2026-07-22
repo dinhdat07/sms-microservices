@@ -1,0 +1,23 @@
+meta {
+  name: Import Servers - Missing Columns (400)
+  type: http
+  seq: 37
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/import
+  body: multipartForm
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:multipart-form {
+  file: @file(testdata/servers_no_header.xlsx)
+}
+
+assert {
+  res.status: gte 400
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Create Server - Duplicate IPv4 (409)
+  type: http
+  seq: 13
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {"serverName":"unique-{{$guid}}","ipv4":"{{testServerIPv4}}"}
+}
+
+assert {
+  res.status: eq 409
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Create Server - Invalid IPv4 (400)
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseURL}}/api/v1/servers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "serverName": "bad-ip-server",
+    "ipv4": "999.999.999.999"
+  }
+}
+
+assert {
+  res.status: eq 400
+}

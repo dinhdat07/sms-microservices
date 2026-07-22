@@ -1,0 +1,37 @@
+meta {
+  name: Import Servers - Excel (Success)
+  type: http
+  seq: 33
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/import
+  body: multipartForm
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:multipart-form {
+  file: @file(testdata/servers.xlsx)
+}
+
+assert {
+  res.status: eq 200
+  res.body.successCount: eq 3
+  res.body.failCount: eq 0
+}
+
+script:post-response {
+  if (res.body.successfulServers && res.body.successfulServers.length > 0) {
+    bru.setVar("importSrv0", res.body.successfulServers[0].serverId);
+  }
+  if (res.body.successfulServers && res.body.successfulServers.length > 1) {
+    bru.setVar("importSrv1", res.body.successfulServers[1].serverId);
+  }
+  if (res.body.successfulServers && res.body.successfulServers.length > 2) {
+    bru.setVar("importSrv2", res.body.successfulServers[2].serverId);
+  }
+}

@@ -1,0 +1,18 @@
+meta {
+  name: View Servers - Sort DESC
+  type: http
+  seq: 24
+}
+
+get {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers?page=1&limit=10&sortBy=server_name&sortDirection=desc
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

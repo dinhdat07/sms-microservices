@@ -1,0 +1,23 @@
+meta {
+  name: Import Servers - Truly Empty File (400)
+  type: http
+  seq: 36
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/import
+  body: multipartForm
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:multipart-form {
+  file: @file(testdata/servers_truly_empty.xlsx)
+}
+
+assert {
+  res.status: gte 400
+}

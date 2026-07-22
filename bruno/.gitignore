@@ -1,0 +1,3 @@
+environments/local.bru
+environments/dev.bru
+!environments/*.example.bru

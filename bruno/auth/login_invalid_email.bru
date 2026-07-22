@@ -1,0 +1,21 @@
+meta {
+  name: Login - Invalid Email (400)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseURL}}/api/v1/auth/login
+  body: json
+}
+
+body:json {
+  {
+    "identifier": "not-an-email",
+    "password": "somepassword"
+  }
+}
+
+assert {
+  res.status: gte 400
+}

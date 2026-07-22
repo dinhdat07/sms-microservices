@@ -1,0 +1,27 @@
+meta {
+  name: Request Uptime Report - Forbidden (403)
+  type: http
+  seq: 43
+}
+
+post {
+  url: {{baseURL}}/api/v1/servers/report
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userAccessToken}}
+}
+
+body:json {
+  {
+    "startDate": "2026-06-01",
+    "endDate": "2026-06-10",
+    "targetEmail": "{{testReportEmail}}"
+  }
+}
+
+assert {
+  res.status: eq 403
+}

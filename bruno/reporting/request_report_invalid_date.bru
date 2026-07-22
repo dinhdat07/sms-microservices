@@ -1,0 +1,27 @@
+meta {
+  name: Request Report - Invalid Date (400)
+  type: http
+  seq: 40
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/report
+  body: json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "startDate": "01-06-2026",
+    "endDate": "10-06-2026",
+    "targetEmail": "{{testReportEmail}}"
+  }
+}
+
+assert {
+  res.status: eq 400
+}

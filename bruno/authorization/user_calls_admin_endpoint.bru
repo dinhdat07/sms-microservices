@@ -1,0 +1,26 @@
+meta {
+  name: AuthZ - User -> CreateServer (403)
+  type: http
+  seq: 45
+}
+
+post {
+  url: {{baseURL}}/api/v1/servers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userAccessToken}}
+}
+
+body:json {
+  {
+    "server_name": "should-fail-{{$randomInt}}",
+    "ipv4": "10.99.99.99"
+  }
+}
+
+assert {
+  res.status: eq 403
+}

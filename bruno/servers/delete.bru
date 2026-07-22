@@ -1,0 +1,23 @@
+meta {
+  name: Delete Server (Success)
+  type: http
+  seq: 30
+}
+
+delete {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/{{createdServerId}}
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+}
+
+script:post-response {
+  bru.setVar("deletedServerId", bru.getVar("createdServerId"));
+}

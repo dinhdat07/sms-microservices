@@ -1,0 +1,32 @@
+meta {
+  name: Refresh Token (Success)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseURL}}/api/v1/auth/refresh
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "refresh_token": "{{refreshToken}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.accessToken: isString
+  res.body.refreshToken: isString
+  res.body.tokenType: eq Bearer
+  res.body.expiresIn: isString
+}
+
+script:post-response {
+  if (res.body.accessToken) {
+    bru.setVar("accessToken", res.body.accessToken);
+    bru.setVar("refreshToken", res.body.refreshToken);
+  }
+}

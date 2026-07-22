@@ -1,0 +1,27 @@
+meta {
+  name: Update Server - Not Found (404)
+  type: http
+  seq: 27
+}
+
+put {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/00000000-0000-0000-0000-000000000000
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {"serverName":"ghost","ipv4":"10.0.0.99"}
+}
+
+assert {
+  res.status: eq 404
+}

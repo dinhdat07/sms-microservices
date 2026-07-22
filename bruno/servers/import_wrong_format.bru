@@ -1,0 +1,23 @@
+meta {
+  name: Import Servers - CSV Not Excel (400)
+  type: http
+  seq: 35
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/import
+  body: multipartForm
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:multipart-form {
+  file: @file(testdata/not_excel.csv)
+}
+
+assert {
+  res.status: gte 400
+}

@@ -1,0 +1,18 @@
+meta {
+  name: View Servers - Filter ONLINE
+  type: http
+  seq: 22
+}
+
+get {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers?page=1&limit=10&filterStatus=ONLINE
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

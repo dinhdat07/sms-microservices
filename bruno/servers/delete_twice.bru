@@ -1,0 +1,18 @@
+meta {
+  name: Delete Server - Twice (404)
+  type: http
+  seq: 32
+}
+
+delete {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/{{deletedServerId}}
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 404
+}

@@ -1,0 +1,13 @@
+meta {
+  name: Logout - No Token (401)
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseURL}}/api/v1/auth/logout
+}
+
+assert {
+  res.status: eq 200
+}

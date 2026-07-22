@@ -1,0 +1,25 @@
+meta {
+  name: Import Servers - Empty File (200)
+  type: http
+  seq: 34
+}
+
+post {
+  auth: bearer
+  url: {{baseURL}}/api/v1/servers/import
+  body: multipartForm
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:multipart-form {
+  file: @file(testdata/servers_empty.xlsx)
+}
+
+assert {
+  res.status: eq 200
+  res.body.successCount: eq 0
+  res.body.failCount: eq 0
+}

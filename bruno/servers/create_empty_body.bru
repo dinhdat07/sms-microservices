@@ -1,0 +1,23 @@
+meta {
+  name: Create Server - Empty Body (400)
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseURL}}/api/v1/servers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {}
+}
+
+assert {
+  res.status: eq 400
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Create Server - Missing IPv4 (400)
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseURL}}/api/v1/servers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "serverName": "no-ip-server"
+  }
+}
+
+assert {
+  res.status: eq 400
+}
