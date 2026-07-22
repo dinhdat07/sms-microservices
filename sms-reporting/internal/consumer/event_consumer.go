@@ -112,7 +112,7 @@ func (c *eventConsumerImpl) handleStatusEvent(ctx context.Context, msg messagebr
 
 	if eventType == "ServerStatusChanged" {
 		var payload struct {
-			ID     string `json:"id"`
+			ID     string `json:"server_id"`
 			Status string `json:"status"`
 		}
 		if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
