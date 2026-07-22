@@ -87,12 +87,46 @@ Hệ thống sử dụng cơ chế **Token Theft Detection (Truy vết đánh c�
 
 #### 4.1.2 Thiết kế Database
 **A. PostgreSQL (Schema: identity)**
-- **USERS:** Lưu trữ `email`, `password_hash`, `role_code`.
-- **AUTH_SESSIONS:** Lưu `id`, `user_id`, `expires_at`, `revoked_at`, `ip_address`, `user_agent`.
-- **REFRESH_TOKENS:** Lưu `id`, `session_id`, `token_hash`, `replaced_by`, `revoked_at`.
+
+**Bảng `users`**
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | UINT | PK | Khóa chính tự tăng (gorm.Model) |
+| `email` | VARCHAR(255) | UK, Indexed | Địa chỉ email dùng để đăng nhập |
+| `password` | VARCHAR | | Mật khẩu băm (Bcrypt) |
+| `role_code` | VARCHAR(50) | | Phân quyền người dùng (VD: ADMIN) |
+| `created_at` / `updated_at` | TIMESTAMP | | Dấu thời gian tạo/cập nhật |
+| `deleted_at` | TIMESTAMP | Indexed | Dùng cho cơ chế Soft Delete |
+
+**Bảng `auth_sessions`**
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | UUID | PK | Khóa chính, mặc định `gen_random_uuid()` |
+| `user_id` | UINT | FK, Indexed | Khóa ngoại liên kết bảng `users` |
+| `expires_at` | TIMESTAMP | Not Null | Thời gian hết hạn của session |
+| `last_used_at` | TIMESTAMP | | Thời điểm sử dụng gần nhất |
+| `revoked_at` | TIMESTAMP | | Đánh dấu session bị thu hồi trước thời hạn |
+| `ip_address` | VARCHAR(45) | | IP Address của người dùng khi tạo session |
+| `user_agent` | VARCHAR | | Thông tin User Agent |
+| `created_at` / `updated_at` | TIMESTAMP | | Dấu thời gian tạo/cập nhật |
+
+**Bảng `refresh_tokens`**
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | UUID | PK | Khóa chính, mặc định `gen_random_uuid()` |
+| `session_id` | UUID | FK, Indexed, Not Null | Khóa ngoại liên kết bảng `auth_sessions` |
+| `user_id` | UINT | FK, Indexed, Not Null | Khóa ngoại liên kết bảng `users` |
+| `token_hash` | VARCHAR | UK, Not Null | Mã băm của Refresh Token |
+| `expires_at` | TIMESTAMP | Not Null | Thời gian hết hạn của token |
+| `revoked_at` | TIMESTAMP | | Đánh dấu token bị thu hồi |
+| `replaced_by` | UUID | FK | Trỏ tới Refresh Token mới thay thế nó (Token Rotation) |
+| `created_at` / `updated_at` | TIMESTAMP | | Dấu thời gian tạo/cập nhật |
 
 **B. Redis Cache**
-- **`revoked_session:{id}`:** (STRING) Lưu trữ session bị cấm để chặn Anti-Replay Attack cực nhanh.
+
+| Key Pattern | Data Type | TTL | Purpose |
+| :--- | :--- | :--- | :--- |
+| `revoked_session:{id}` | STRING | Theo thời hạn Token | Chặn session bị thu hồi sớm, chống Anti-Replay Attack cực nhanh. |
 
 ### 4.2 Nghiệp vụ Quản lý Server (Management)
 Cung cấp API CRUD và thao tác hàng loạt. Ứng dụng kỹ thuật Event-Driven để đảm bảo dữ liệu được nhân bản an toàn sang các service khác.
@@ -108,11 +142,33 @@ Cung cấp API CRUD và thao tác hàng loạt. Ứng dụng kỹ thuật Event-
 
 #### 4.2.2 Thiết kế Database
 **A. PostgreSQL (Schema: management)**
-- **SERVERS:** Lưu thông tin gốc `server_id`, `server_name`, `ipv4`, `current_status`.
-- **OUTBOX_EVENTS:** Chứa các sự kiện chưa được phát `event_type`, `payload`, `processed`.
+
+**Bảng `servers`**
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `server_id` | UUID | PK | Khóa chính, mặc định `gen_random_uuid()` |
+| `server_name` | VARCHAR(255) | UK, Indexed, Not Null | Tên server (duy nhất) |
+| `ipv4` | VARCHAR(15) | UK, Indexed, Not Null | Địa chỉ IPv4 của server (duy nhất) |
+| `current_status` | VARCHAR(20) | Not Null, Default `ONLINE` | Trạng thái hiện tại của Server (VD: ONLINE, OFFLINE) |
+| `consecutive_failures` | INT | Not Null, Default `0` | Số lần ping thất bại liên tiếp |
+| `created_at` / `updated_at` | TIMESTAMP | | Dấu thời gian tạo/cập nhật |
+
+**Bảng `outbox_events`**
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | VARCHAR(36) | PK | Khóa chính (UUID) |
+| `aggregate_type` | VARCHAR(50) | Indexed, Not Null | Loại Aggregate Root (VD: SERVER) |
+| `aggregate_id` | VARCHAR(255) | Indexed, Not Null | ID của Aggregate |
+| `event_type` | VARCHAR(50) | Not Null | Loại sự kiện (VD: ServerCreated) |
+| `payload` | JSONB | Not Null | Nội dung sự kiện |
+| `is_processed` | BOOLEAN | Indexed, Not Null, Default `false` | Trạng thái đã gửi qua Message Broker hay chưa |
+| `created_at` | TIMESTAMP | Not Null | Thời điểm tạo sự kiện |
 
 **B. Redis Streams (Event Bus)**
-- **`sms.events.server`:** Kênh Pub/Sub phát các sự kiện ServerCreated, ServerUpdated, ServerDeleted.
+
+| Key Pattern | Data Type | TTL | Purpose |
+| :--- | :--- | :--- | :--- |
+| `sms.events.server` | STREAM | Unbounded | Outbox events phân phối các thay đổi CRUD của Server (Created, Updated, Deleted). Publish bởi `sms-management`. |
 
 ### 4.3 Nghiệp vụ Giám sát Server (Monitoring)
 Chịu trách nhiệm thực thi Ping. Hoàn toàn không phụ thuộc vào Database quan hệ, chỉ dùng Redis để điều phối và ES để ghi log.
@@ -127,10 +183,18 @@ Chịu trách nhiệm thực thi Ping. Hoàn toàn không phụ thuộc vào Dat
   Sử dụng State Machine: Nếu ping thất bại >= Threshold (2) mới chính thức coi là OFFLINE để tránh Flapping do nhiễu mạng. Worker đẩy log vào Logger để Bulk Insert lên Elasticsearch.
 
 #### 4.3.2 Thiết kế Data Store & Lock
-- **Elasticsearch (`sms_observation_logs`):** Ghi bulk log theo chuỗi thời gian (time-series). Gồm `server_id` (keyword), `is_success` (boolean), `timestamp` (date). Cơ chế ghi log có buffer nội bộ và xả (flush) định kỳ, kết hợp `sync.Once` để Graceful Shutdown.
-- **Redis Sets (`server:all_ids`):** Lưu danh sách IP cần giám sát (Được đồng bộ ngầm từ Redis Streams).
-- **Redis Queue (`monitoring:queue`):** Hàng đợi chứa các jobs cho Worker Pool (500 Goroutines) tiêu thụ bằng kỹ thuật `BLPOP` (Blocking Pop) nhằm tối ưu triệt để CPU Idle.
-- **Redis Lock (`lock:monitoring_producer`):** Đảm bảo chỉ 1 Replica làm nhiệm vụ đẩy Job vào hàng đợi. Thời gian hết hạn của khóa (Expiration) được tính toán tự động dựa trên Tick Interval.
+**A. Elasticsearch**
+- **`sms_observation_logs`:** Ghi bulk log theo chuỗi thời gian (time-series). Gồm `server_id` (keyword), `is_success` (boolean), `timestamp` (date). Cơ chế ghi log có buffer nội bộ và xả (flush) định kỳ, kết hợp `sync.Once` để Graceful Shutdown.
+
+**B. Redis Cache & Streams**
+
+| Key Pattern | Data Type | TTL | Purpose |
+| :--- | :--- | :--- | :--- |
+| `sms.events.server_status` | STREAM | Unbounded | Phân phối các sự kiện thay đổi trạng thái (ONLINE/OFFLINE) của Server sau khi Ping. Publish bởi `sms-monitoring`. |
+| `server:all_ids` | SET | Unbounded | Lưu danh sách IP/ID cần giám sát (Được đồng bộ ngầm từ Redis Streams). |
+| `server:info:{id}` | HASH | Unbounded | Lưu trữ thông tin chi tiết (ví dụ `ipv4`) của một Server cụ thể phục vụ cho Ping nhanh. |
+| `monitoring:queue` | LIST | N/A | Hàng đợi chứa các jobs cho Worker Pool (500 Goroutines) tiêu thụ bằng kỹ thuật `BLPOP` (Blocking Pop) nhằm tối ưu triệt để CPU Idle. |
+| `lock:monitoring_producer`| STRING | Tick Interval | Đảm bảo chỉ 1 Replica làm nhiệm vụ đẩy Job vào hàng đợi (Distributed Lock). |
 
 ### 4.4 Nghiệp vụ Báo cáo tự trị (Reporting)
 Hoạt động độc lập nhờ cơ chế Data Replication, có khả năng tự gen HTML và bắn email mà không phụ thuộc vào Management Service.
@@ -145,8 +209,36 @@ Hoạt động độc lập nhờ cơ chế Data Replication, có khả năng t�
 
 #### 4.4.2 Thiết kế Database
 **A. PostgreSQL (Schema: reporting)**
-- **REPORT_REQUESTS:** Ghi nhận lịch sử xuất báo cáo `status` (PENDING, PROCESSING, COMPLETED, FAILED).
-- **REPORTING_SERVERS:** Bản sao dữ liệu Server (Data Replication) chứa `server_id`, `server_name`.
+
+**Bảng `reporting_servers`**
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `server_id` | VARCHAR(255) | PK | Khóa chính liên kết với `server_id` gốc |
+| `name` | VARCHAR(255) | | Tên Server |
+| `ipv4` | VARCHAR(45) | | Địa chỉ IPv4 |
+| `status` | VARCHAR(50) | Default `UNKNOWN` | Trạng thái của Server |
+| `updated_at` | TIMESTAMP | | Dấu thời gian cập nhật lần cuối |
+
+**Bảng `reports`**
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | UUID | PK | Khóa chính của yêu cầu xuất báo cáo |
+| `requestor_email` | VARCHAR(255) | Not Null | Email người yêu cầu báo cáo |
+| `start_time` / `end_time` | TIMESTAMP | Not Null | Khoảng thời gian báo cáo |
+| `status` | VARCHAR(50) | Not Null | Trạng thái báo cáo (PENDING, PROCESSING, COMPLETED, FAILED) |
+| `correlation_id` | VARCHAR(255) | Indexed, Not Null | ID liên kết cho việc tracing |
+| `created_at` / `updated_at` | TIMESTAMP | | Dấu thời gian tạo/cập nhật |
+
+**B. Redis (Cache & Lock)**
+
+| Key Pattern | Data Type | TTL | Purpose |
+| :--- | :--- | :--- | :--- |
+| `lock:daily_report` | STRING | Theo chu kỳ chạy | Đảm bảo chỉ duy nhất 1 Replica thực thi tiến trình gửi email báo cáo (Cronjob Daily Scheduler). |
+| `sms.events.server` | STREAM | Unbounded | Consumer lắng nghe sự kiện để đồng bộ dữ liệu vào `reporting_servers` (Data Replication). |
+| `sms.events.server_status` | STREAM | Unbounded | Lắng nghe thay đổi trạng thái (ONLINE/OFFLINE) để cập nhật `reporting_servers`. |
+
+**C. Elasticsearch (Time-Series Query)**
+- **Index `sms_observation_logs`:** Reporting truy vấn trực tiếp vào index này thông qua Elasticsearch Aggregation Query để tính toán `% Uptime` trong khoảng thời gian báo cáo (tránh full-table scan trên PostgreSQL).
 
 #### 4.4.3 Thuật toán tính Uptime (Elasticsearch Aggregation)
 Hệ thống sử dụng Query Range theo `timestamp` và đếm tổng số log có `is_success = true` chia cho tổng số log, xử lý trực tiếp trên Elasticsearch Engine giúp tốc độ phản hồi tính bằng mili-giây.
@@ -167,21 +259,17 @@ Thực thể "Server" tồn tại dưới nhiều hình thái khác nhau qua cá
 - Tại **SMS Monitoring**: Là `MonitoredEndpoint` nằm trong Redis Cache (chỉ cần `IPv4`, `State`).
 - Tại **SMS Reporting**: Là `ReportingServer` được nhân bản (Data Replication) qua Event để đảm bảo service hoạt động tự trị.
 
-#### A. Sơ đồ ERD (Entity-Relationship Diagram)
+### 5.3. Luồng dữ liệu và cơ chế đồng bộ
+Để đảm bảo các thành phần lưu trữ hoạt động đồng bộ trên kiến trúc phân tán, hệ thống áp dụng các cơ chế sau:
 
-### 5.4. Các luồng quy trình chính (Sequence Diagrams)
+- **Đồng bộ Eventual Consistency qua Outbox Pattern & Redis Streams:**
+  Thay vì Dual-write tiềm ẩn rủi ro lỗi đồng bộ, hệ thống ghi dữ liệu thay đổi vào bảng nghiệp vụ và bảng `outbox_events` trên PostgreSQL trong cùng một Transaction (ở Management Service). Một Outbox Worker sau đó sẽ quét và phát (Publish) sự kiện lên Redis Streams. Monitoring và Reporting Service đóng vai trò là Consumer, nhận sự kiện và tự động cập nhật bản sao dữ liệu của mình (Data Replication) trên Redis Cache và PostgreSQL cục bộ.
 
-#### 1. Luồng Thêm/Sửa Server (CRUD & Outbox Transaction)
-Đảm bảo tính nhất quán dữ liệu bằng Transaction Database và Pattern Outbox.
+- **Giảm khuếch đại ghi (Write Amplification Reduction) chống Flapping:**
+  Tiến trình Monitoring hoạt động liên tục (ví dụ ping mỗi 10 giây). Thay vì liên tục đẩy trạng thái về Management, Monitoring chỉ phát sinh sự kiện `ServerStatusChanged` qua Redis Streams khi trạng thái của server thực sự thay đổi (đã vượt qua ngưỡng chịu lỗi Threshold). Cách tiếp cận này giúp Management và Reporting không bị quá tải bởi các cập nhật trạng thái không cần thiết.
 
-#### 2. Luồng Import/Export hàng loạt (Bulk Operations)
-Xử lý phân lô (batching) để tránh Out-of-Memory khi thao tác với file Excel dung lượng lớn.
-
-#### 3. Luồng Giám sát (Monitoring Worker)
-Tách biệt quy trình đồng bộ danh sách Server (từ Redis Streams) và quy trình Ping (qua Redis Queue).
-
-#### 4. Luồng Báo cáo tự trị (Reporting & Uptime)
-Tự động sinh HTML và gửi Email định kỳ mà không cần tương tác trực tiếp với Database của Management.
+- **Ghi log bất đồng bộ lên Elasticsearch (Asynchronous Logging):**
+  Kết quả của mỗi nhịp Ping được Worker đưa vào bộ đệm nội bộ (Buffered Logger). Dữ liệu này sẽ được gom thành từng lô (Batch) và thực hiện Bulk Insert lên Elasticsearch theo chu kỳ thời gian hoặc khi đầy bộ đệm. Cơ chế này giúp tiến trình Ping không bị ảnh hưởng bởi độ trễ I/O của database, tối đa hóa thông lượng (throughput) của hệ thống.
 
 ---
 
