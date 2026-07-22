@@ -50,7 +50,7 @@ services:
       - JWT_SECRET_FILE=/run/secrets/jwt_secret
     networks:
       - default
-    image: sms-sms-identity:latest
+    image: whaleplay710/sms-identity:v1.0.0
     deploy:
       replicas: 3
       update_config:
@@ -92,7 +92,7 @@ services:
       - DB_URL_FILE=/run/secrets/db_url
     networks:
       - default
-    image: sms-sms-management:latest
+    image: whaleplay710/sms-management:v1.0.0
     deploy:
       replicas: 2
       update_config:
@@ -206,7 +206,7 @@ services:
       SIMULATOR_FLAP_PERCENT: '5'
     networks:
       - default
-    image: sms-simulator:latest
+    image: whaleplay710/sms-simulator:v1.0.0
     deploy:
       endpoint_mode: dnsrr
   sms-monitoring-worker:
@@ -233,7 +233,7 @@ services:
       - DB_URL_FILE=/run/secrets/db_url
     networks:
       - default
-    image: sms-sms-monitoring-worker:latest
+    image: whaleplay710/sms-monitoring-worker:v1.0.0
     deploy:
       replicas: 2
       update_config:
@@ -261,7 +261,7 @@ services:
       - DB_URL_FILE=/run/secrets/db_url
     networks:
       - default
-    image: sms-sms-reporting:latest
+    image: whaleplay710/sms-reporting:v1.0.0
     deploy:
       replicas: 2
       update_config:
@@ -292,7 +292,7 @@ services:
     logging: *default-logging
     networks:
       - default
-    image: sms-sms-frontend:latest
+    image: whaleplay710/sms-frontend:v1.0.0
     deploy:
       replicas: 2
       labels:
