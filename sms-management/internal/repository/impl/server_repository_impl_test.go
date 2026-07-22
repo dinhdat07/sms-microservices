@@ -273,3 +273,19 @@ func TestGormServerRepository_Delete(t *testing.T) {
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 }
+
+func TestServerRepository_ExecuteInTx(t *testing.T) {
+	db, mock := setupTestDB(t)
+	repo := NewGormServerRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectCommit()
+
+	err := repo.ExecuteInTx(context.Background(), func(ctx context.Context) error {
+		return nil
+	})
+
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+

@@ -20,7 +20,7 @@ func newTestService(repo repository.ServerRepository, outbox repository.OutboxRe
 	return service.NewServerService(repo, outbox)
 }
 
-func mockTx(repo *repomock.ServerRepository) {
+func mockTx(repo *repomock.MockServerRepository) {
 	repo.On("ExecuteInTx", mock.Anything, mock.AnythingOfType("func(context.Context) error")).Return(func(ctx context.Context, fn func(context.Context) error) error {
 		return fn(ctx)
 	}).Maybe()
@@ -28,8 +28,8 @@ func mockTx(repo *repomock.ServerRepository) {
 
 func TestCreateServer_Success(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -48,8 +48,8 @@ func TestCreateServer_Success(t *testing.T) {
 
 func TestCreateServer_NameExists(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -65,8 +65,8 @@ func TestCreateServer_NameExists(t *testing.T) {
 
 func TestCreateServer_IPv4Exists(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -83,8 +83,8 @@ func TestCreateServer_IPv4Exists(t *testing.T) {
 
 func TestCreateServer_DBError(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -102,8 +102,8 @@ func TestCreateServer_DBError(t *testing.T) {
 
 func TestUpdateServer_Success(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -124,8 +124,8 @@ func TestUpdateServer_Success(t *testing.T) {
 
 func TestUpdateServer_NotFound(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -140,8 +140,8 @@ func TestUpdateServer_NotFound(t *testing.T) {
 
 func TestUpdateServer_NameConflict(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -159,8 +159,8 @@ func TestUpdateServer_NameConflict(t *testing.T) {
 
 func TestUpdateServer_IPv4Conflict(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -179,8 +179,8 @@ func TestUpdateServer_IPv4Conflict(t *testing.T) {
 
 func TestDeleteServer_Success(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -196,8 +196,8 @@ func TestDeleteServer_Success(t *testing.T) {
 
 func TestDeleteServer_NotFound(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -211,8 +211,8 @@ func TestDeleteServer_NotFound(t *testing.T) {
 
 func TestDeleteServer_DBError(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -229,8 +229,8 @@ func TestDeleteServer_DBError(t *testing.T) {
 
 func TestSearchServers_WithFilters(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -252,8 +252,8 @@ func TestSearchServers_WithFilters(t *testing.T) {
 
 func TestSearchServers_Empty(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -271,8 +271,8 @@ func TestSearchServers_Empty(t *testing.T) {
 
 func TestSearchServers_DBError(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -291,8 +291,8 @@ func TestSearchServers_DBError(t *testing.T) {
 // Case 1: CreateServer - GetByName DB error
 func TestCreateServer_GetByNameError(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -308,8 +308,8 @@ func TestCreateServer_GetByNameError(t *testing.T) {
 // Case 2: CreateServer - GetByIPv4 DB error
 func TestCreateServer_GetByIPv4Error(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -326,8 +326,8 @@ func TestCreateServer_GetByIPv4Error(t *testing.T) {
 // Case 3: UpdateServer - Same name, different IP (skip GetByName)
 func TestUpdateServer_SameNameDiffIP(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -352,8 +352,8 @@ func TestUpdateServer_SameNameDiffIP(t *testing.T) {
 // Case 4: UpdateServer - Same IP, different name (skip GetByIPv4)
 func TestUpdateServer_SameIPDiffName(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -376,8 +376,8 @@ func TestUpdateServer_SameIPDiffName(t *testing.T) {
 // Case 5: UpdateServer - Identical values (skip all conflict checks)
 func TestUpdateServer_IdenticalValues(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -399,8 +399,8 @@ func TestUpdateServer_IdenticalValues(t *testing.T) {
 // Case 6: UpdateServer - GetByName returns error during conflict check
 func TestUpdateServer_GetByNameError(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -418,8 +418,8 @@ func TestUpdateServer_GetByNameError(t *testing.T) {
 // Case 7: UpdateServer - GetByIPv4 returns error during conflict check
 func TestUpdateServer_GetByIPv4Error(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -437,8 +437,8 @@ func TestUpdateServer_GetByIPv4Error(t *testing.T) {
 // Case 8: UpdateServer - repo.Update returns error
 func TestUpdateServer_UpdateError(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -458,8 +458,8 @@ func TestUpdateServer_UpdateError(t *testing.T) {
 // Case 9: DeleteServer - repo.Delete returns ErrNotFound (maps to service.ErrServerNotFound)
 func TestDeleteServer_DeleteReturnsNotFound(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -476,8 +476,8 @@ func TestDeleteServer_DeleteReturnsNotFound(t *testing.T) {
 // Case 10: DeleteServer - repo.Delete returns generic error
 func TestDeleteServer_DeleteError(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -495,8 +495,8 @@ func TestDeleteServer_DeleteError(t *testing.T) {
 // Case 11: SearchServers - Page=0 defaults to 1
 func TestSearchServers_PageZeroDefaultsToOne(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -515,8 +515,8 @@ func TestSearchServers_PageZeroDefaultsToOne(t *testing.T) {
 // Case 12: SearchServers - PageSize=0 defaults to 20
 func TestSearchServers_PageSizeZeroDefaults(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -532,8 +532,8 @@ func TestSearchServers_PageSizeZeroDefaults(t *testing.T) {
 // Case 13: SearchServers - PageSize=101 clamped to 20
 func TestSearchServers_PageSizeExceedsMax(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -549,8 +549,8 @@ func TestSearchServers_PageSizeExceedsMax(t *testing.T) {
 // Case 14: ImportServers - BatchCreate returns error
 func TestImportServers_BatchCreateError(t *testing.T) {
 	ctx := context.Background()
-	repo := repomock.NewServerRepository(t)
-	outbox := repomock.NewOutboxRepository(t)
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
 	outbox.On("Create", ctx, mock.AnythingOfType("*domain.OutboxEvent")).Return(nil).Maybe()
 	outbox.On("BatchCreate", ctx, mock.AnythingOfType("[]*domain.OutboxEvent")).Return(nil).Maybe()
 	svc := newTestService(repo, outbox)
@@ -573,3 +573,37 @@ func TestImportServers_BatchCreateError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "batch create failed")
 }
+
+func TestSearchServers_InvalidStatus(t *testing.T) {
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := service.NewServerService(repo, outbox)
+
+	_, _, err := svc.SearchServers(context.Background(), repository.ServerListFilter{
+		Status: "INVALID_STATUS",
+	})
+	assert.ErrorContains(t, err, "invalid status filter")
+}
+
+
+func TestDeleteServer_NilServer(t *testing.T) {
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := service.NewServerService(repo, outbox)
+
+	repo.On("GetByID", mock.Anything, "id-1").Return(nil, nil).Once()
+	err := svc.DeleteServer(context.Background(), "id-1")
+	assert.ErrorIs(t, err, service.ErrServerNotFound)
+}
+
+
+func TestUpdateServer_NilServer(t *testing.T) {
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := service.NewServerService(repo, outbox)
+
+	repo.On("GetByID", mock.Anything, "id-1").Return(nil, nil).Once()
+	_, err := svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{ServerName: "test"})
+	assert.ErrorIs(t, err, service.ErrServerNotFound)
+}
+
