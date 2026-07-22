@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 	"errors"
+	"net"
 	"time"
 
 	server_managementv1 "sms-management/gen/go/server_management/v1"
@@ -59,6 +60,19 @@ func mapServerToPB(server *domain.Server) *server_managementv1.Server {
 func (s *ServerManagementServer) CreateServer(ctx context.Context, req *server_managementv1.CreateServerRequest) (*server_managementv1.CreateServerResponse, error) {
 	if req == nil {
 		return nil, gstatus.Error(codes.InvalidArgument, "request is required")
+	}
+
+	if req.GetServerName() == "" {
+		return nil, gstatus.Error(codes.InvalidArgument, "server name is required")
+	}
+	if len(req.GetServerName()) > 100 {
+		return nil, gstatus.Error(codes.InvalidArgument, "server name is too long")
+	}
+	if req.GetIpv4() == "" {
+		return nil, gstatus.Error(codes.InvalidArgument, "ipv4 is required")
+	}
+	if net.ParseIP(req.GetIpv4()) == nil {
+		return nil, gstatus.Error(codes.InvalidArgument, "invalid ipv4 address")
 	}
 
 	input := service.CreateServerInput{

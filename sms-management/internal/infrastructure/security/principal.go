@@ -8,3 +8,10 @@ type Principal struct {
 	RoleCode    string `json:"role_code"`
 	SessionID   string `json:"session_id"`
 }
+
+const (
+	HeaderUserID   = "x-user-id"
+	HeaderUserRole = "x-user-role"
+	HeaderUserEmail = "x-user-email"
+	HeaderUserName = "x-user-name"
+)

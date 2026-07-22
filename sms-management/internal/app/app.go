@@ -12,6 +12,8 @@ import (
 	"sms-management/internal/infrastructure/database"
 	"sms-management/internal/infrastructure/logger"
 	"sms-management/internal/infrastructure/messagebroker"
+	"sms-management/internal/infrastructure/security"
+	servermanagementv1 "sms-management/gen/go/server_management/v1"
 	"sms-management/internal/repository/impl"
 	"sms-management/internal/service"
 	"sms-management/internal/worker"
@@ -25,6 +27,8 @@ type App struct {
 	RESTImportExport *resthandler.ImportExportHandler
 	OutboxRelay      *worker.OutboxRelay
 	StatusConsumer   *worker.StatusConsumer
+	Authorizer       *security.Authorizer
+	MethodPermissions map[string]security.PermissionCode
 }
 
 func New() (*App, error) {
@@ -78,6 +82,16 @@ func New() (*App, error) {
 	subscriber := messagebroker.NewRedisSubscriber(redisClient)
 	statusConsumer := worker.NewStatusConsumer(subscriber, serverRepo)
 
+	authorizer := security.NewAuthorizer()
+	methodPermissions := map[string]security.PermissionCode{
+		servermanagementv1.ServerManagementService_CreateServer_FullMethodName: security.PermServerCreate,
+		servermanagementv1.ServerManagementService_ViewServers_FullMethodName:  security.PermServerRead,
+		servermanagementv1.ServerManagementService_UpdateServer_FullMethodName: security.PermServerUpdate,
+		servermanagementv1.ServerManagementService_DeleteServer_FullMethodName: security.PermServerDelete,
+		servermanagementv1.ServerManagementService_ImportServers_FullMethodName: security.PermServerImport,
+		servermanagementv1.ServerManagementService_ExportServers_FullMethodName: security.PermServerExport,
+	}
+
 	return &App{
 		Config:           cfg,
 		DB:               db,
@@ -86,5 +100,7 @@ func New() (*App, error) {
 		RESTImportExport: restImportExport,
 		OutboxRelay:      outboxRelay,
 		StatusConsumer:   statusConsumer,
+		Authorizer:       authorizer,
+		MethodPermissions: methodPermissions,
 	}, nil
 }

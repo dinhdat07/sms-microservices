@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	servermanagementv1 "sms-management/gen/go/server_management/v1"
+	"sms-management/internal/infrastructure/middlewares"
 	"sms-management/internal/infrastructure/logger"
 )
 
@@ -34,7 +36,12 @@ func (a *App) Run() error {
 		a.StatusConsumer.Start(context.Background())
 	}
 
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			middlewares.AuthMetadataInterceptor(),
+			middlewares.PermissionInterceptor(a.Authorizer, a.MethodPermissions),
+		),
+	)
 	servermanagementv1.RegisterServerManagementServiceServer(grpcSrv, a.ServerHandler)
 
 	go func() {
@@ -48,7 +55,15 @@ func (a *App) Run() error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	gwmux := runtime.NewServeMux()
+	// Setup gRPC Gateway
+	gwmux := runtime.NewServeMux(
+		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
+			if strings.HasPrefix(key, "X-User-") {
+				return key, true
+			}
+			return runtime.DefaultHeaderMatcher(key)
+		}),
+	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	err = servermanagementv1.RegisterServerManagementServiceHandlerFromEndpoint(ctx, gwmux, grpcAddr, opts)
 	if err != nil {
