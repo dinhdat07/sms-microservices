@@ -60,8 +60,9 @@ func (c *StreamConsumer) processMessage(ctx context.Context, msg messagebroker.M
 	}
 
 	var payload struct {
-		ID   string `json:"server_id"`
-		IPv4 string `json:"ipv4"`
+		ID            string `json:"server_id"`
+		IPv4          string `json:"ipv4"`
+		CurrentStatus string `json:"current_status"`
 	}
 
 	if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
@@ -71,6 +72,10 @@ func (c *StreamConsumer) processMessage(ctx context.Context, msg messagebroker.M
 
 	serverID := payload.ID
 	ipv4 := payload.IPv4
+	status := payload.CurrentStatus
+	if status == "" {
+		status = "UNKNOWN"
+	}
 
 	switch eventType {
 	case "ServerCreated", "ServerUpdated":
@@ -80,6 +85,7 @@ func (c *StreamConsumer) processMessage(ctx context.Context, msg messagebroker.M
 		if ipv4 != "" {
 			c.rdb.HSet(ctx, fmt.Sprintf(infraRedis.ServerInfoKeyFmt, serverID), "ipv4", ipv4)
 		}
+		c.rdb.HSet(ctx, fmt.Sprintf(infraRedis.ServerInfoKeyFmt, serverID), "status", status)
 
 	case "ServerDeleted":
 		logger.Log.Info("Removing Server from Monitoring Cache", zap.String("id", serverID))

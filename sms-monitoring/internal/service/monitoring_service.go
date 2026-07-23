@@ -45,7 +45,7 @@ func (s *monitoringServiceImpl) Evaluate(ctx context.Context, serverID string, i
 
 	currentStatusStr := state.Status
 	if currentStatusStr == "" {
-		currentStatusStr = string(serverDomain.ServerStatusOnline) // Default
+		currentStatusStr = string(serverDomain.ServerStatusUnknown) // Default
 	}
 	currentStatus := serverDomain.ServerStatus(currentStatusStr)
 
