@@ -59,8 +59,8 @@ func (c *StatusConsumer) processMessage(ctx context.Context, msg messagebroker.M
 	}
 
 	var payload struct {
-		ID     string `json:"id"`
-		Status string `json:"status"`
+		ServerID string `json:"server_id"`
+		Status   string `json:"status"`
 	}
 
 	if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
@@ -68,14 +68,15 @@ func (c *StatusConsumer) processMessage(ctx context.Context, msg messagebroker.M
 		return err
 	}
 
-	if payload.ID == "" || payload.Status == "" {
+	id := payload.ServerID
+	if id == "" || payload.Status == "" {
 		return nil
 	}
 
 	// Update server status in Postgres
-	server, err := c.serverRepo.GetByID(ctx, payload.ID)
+	server, err := c.serverRepo.GetByID(ctx, id)
 	if err != nil {
-		logger.Log.Sugar().Debugf("Server %s not found in DB, skipping status update", payload.ID)
+		logger.Log.Sugar().Debugf("Server %s not found in DB, skipping status update", id)
 		return nil // Don't retry for not-found servers
 	}
 
@@ -87,14 +88,14 @@ func (c *StatusConsumer) processMessage(ctx context.Context, msg messagebroker.M
 	server.CurrentStatus = newStatus
 	if err := c.serverRepo.Update(ctx, server); err != nil {
 		logger.Log.Error("Failed to update server status in DB",
-			zap.String("serverID", payload.ID),
+			zap.String("serverID", id),
 			zap.String("newStatus", payload.Status),
 			zap.Error(err))
 		return err
 	}
 
 	logger.Log.Info("Updated server status in DB",
-		zap.String("serverID", payload.ID),
+		zap.String("serverID", id),
 		zap.String("status", payload.Status))
 
 	return nil
