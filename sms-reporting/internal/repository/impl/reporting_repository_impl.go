@@ -47,7 +47,14 @@ func (r *gormReportingRepository) UpsertReportingServer(ctx context.Context, ser
 }
 
 func (r *gormReportingRepository) UpdateReportingServerStatus(ctx context.Context, serverID string, status string) error {
-	return r.db.WithContext(ctx).Model(&domain.ReportingServer{}).Where("server_id = ?", serverID).Update("status", status).Error
+	result := r.db.WithContext(ctx).Model(&domain.ReportingServer{}).Where("server_id = ?", serverID).Update("status", status)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return repository.ErrRecordNotFound
+	}
+	return nil
 }
 
 func (r *gormReportingRepository) DeleteReportingServer(ctx context.Context, serverID string) error {

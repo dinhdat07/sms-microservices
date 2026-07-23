@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"sms-reporting/internal/config"
 	"sms-reporting/internal/domain"
@@ -122,6 +123,10 @@ func (c *eventConsumerImpl) handleStatusEvent(ctx context.Context, msg messagebr
 
 		err := c.repo.UpdateReportingServerStatus(ctx, payload.ID, payload.Status)
 		if err != nil {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				logger.Log.Warn("[EventConsumer] Ignored ServerStatusChanged event: server_id not found in reporting DB", zap.String("serverID", payload.ID))
+				return nil
+			}
 			logger.Log.Error("[EventConsumer] Failed to update reporting server status", zap.Error(err))
 			return err
 		}

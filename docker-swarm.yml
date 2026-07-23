@@ -13,7 +13,7 @@ services:
       - --log.level=DEBUG
       - --api.insecure=true
       - --providers.swarm=true
-      - --providers.swarm.network=sms_stack_default
+      - --providers.swarm.network=sms_default
       - --entrypoints.web.address=:80
       - --providers.swarm.endpoint=unix:///var/run/docker.sock
     ports:
@@ -35,6 +35,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+
   sms-identity:
     logging: *default-logging
     environment:
@@ -81,6 +82,7 @@ services:
       - db_url
       - admin_password
       - jwt_secret
+
   sms-management:
     logging: *default-logging
     environment:
@@ -117,6 +119,7 @@ services:
         - traefik.http.middlewares.management-health-replace.replacepath.path=/health
     secrets:
       - db_url
+
   postgres:
     logging: *default-logging
     image: postgres:15
@@ -137,6 +140,11 @@ services:
       retries: 5
     secrets:
       - postgres_password
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == node-3
+
   redis:
     logging: *default-logging
     image: redis:7-alpine
@@ -166,6 +174,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == node-3
+
   elasticsearch:
     logging: *default-logging
     image: docker.elastic.co/elasticsearch/elasticsearch:8.17.4
@@ -184,15 +197,36 @@ services:
         - >-
           curl -s http://localhost:9200/_cluster/health | grep -q -E
           'green|yellow'
-      interval: 10s
+      interval: 15s
       timeout: 10s
       retries: 10
+      start_period: 90s
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == node-3
+  
+  sms-seeder:
+    image: whaleplay710/sms-simulator:v1.0.0
+    networks:
+      - default
+    environment:
+      - REDIS_ADDR=redis:6379
+    entrypoint: ["/bin/sh", "-c", "export DB_URL=$$(cat /run/secrets/db_url) && ./server-seed"]
+    secrets:
+      - db_url
+    deploy:
+      restart_policy:
+        condition: none 
+
+
   mailhog:
     logging: *default-logging
     image: mailhog/mailhog:latest
     ports:
       - 1025:1025
       - 8025:8025
+
   simulator:
     logging: *default-logging
     cap_add:
@@ -209,6 +243,7 @@ services:
     image: whaleplay710/sms-simulator:v1.0.0
     deploy:
       endpoint_mode: dnsrr
+
   sms-monitoring-worker:
     logging: *default-logging
     cap_add:
@@ -242,6 +277,7 @@ services:
         order: start-first
     secrets:
       - db_url
+
   sms-reporting:
     logging: *default-logging
     environment:
@@ -288,6 +324,7 @@ services:
         - traefik.http.middlewares.reporting-health-replace.replacepath.path=/health
     secrets:
       - db_url
+
   sms-frontend:
     logging: *default-logging
     networks:
@@ -300,6 +337,7 @@ services:
         - traefik.http.routers.frontend.rule=PathPrefix(`/`)
         - traefik.http.routers.frontend.entrypoints=web
         - traefik.http.services.frontend.loadbalancer.server.port=8080
+
   swagger-ui:
     logging: *default-logging
     image: swaggerapi/swagger-ui:latest
@@ -319,10 +357,12 @@ volumes:
   sms_postgres_data: null
   sms_es_data: null
   sms_redis_data: null
+
 networks:
   default:
     driver: overlay
     attachable: true
+
 secrets:
   postgres_password:
     external: true

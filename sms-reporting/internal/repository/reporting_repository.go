@@ -2,9 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"sms-reporting/internal/domain"
 )
+
+var ErrRecordNotFound = errors.New("record not found")
 
 type ReportingRepository interface {
 	// Report Request operations

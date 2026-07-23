@@ -24,6 +24,18 @@ type Server struct {
 	UpdatedAt     time.Time `gorm:"column:updated_at"`
 }
 
+type ReportingServer struct {
+	ServerID  string    `gorm:"primaryKey;column:server_id"`
+	Name      string    `gorm:"column:name"`
+	IPv4      string    `gorm:"column:ipv4"`
+	Status    string    `gorm:"column:status"`
+	UpdatedAt time.Time `gorm:"column:updated_at"`
+}
+
+func (ReportingServer) TableName() string {
+	return "reporting_schema.reporting_servers"
+}
+
 func (Server) TableName() string {
 	return "management_schema.servers"
 }
@@ -69,7 +81,13 @@ func run() error {
 	if result.Error != nil {
 		return fmt.Errorf("cleanup old sim servers: %w", result.Error)
 	}
-	log.Printf("Deleted %d old simulation servers\n", result.RowsAffected)
+	log.Printf("Deleted %d old simulation servers from management\n", result.RowsAffected)
+
+	resultReporting := db.Where("name LIKE ?", "sim-%").Delete(&ReportingServer{})
+	if resultReporting.Error != nil {
+		return fmt.Errorf("cleanup old sim servers reporting: %w", resultReporting.Error)
+	}
+	log.Printf("Deleted %d old simulation servers from reporting\n", resultReporting.RowsAffected)
 
 	// 2. Setup Redis
 	rdb := redis.NewClient(&redis.Options{
@@ -98,6 +116,7 @@ func run() error {
 		}
 		
 		var batch []*Server
+		var reportingBatch []*ReportingServer
 		redisPipeline := rdb.Pipeline()
 
 		for j := i; j < end; j++ {
@@ -113,6 +132,15 @@ func run() error {
 				CurrentStatus: "ONLINE",
 				CreatedAt:     time.Now(),
 				UpdatedAt:     time.Now(),
+			})
+			
+			// Add to reporting batch
+			reportingBatch = append(reportingBatch, &ReportingServer{
+				ServerID:  id,
+				Name:      name,
+				IPv4:      ip,
+				Status:    "ONLINE",
+				UpdatedAt: time.Now(),
 			})
 
 			// Add to Redis pipeline (New Schema: Hash for info, Set for all IDs)
@@ -134,6 +162,11 @@ func run() error {
 		// Execute DB Insert
 		if err := db.Create(batch).Error; err != nil {
 			return fmt.Errorf("batch create at offset %d: %w", i, err)
+		}
+		
+		// Execute Reporting DB Insert
+		if err := db.Create(reportingBatch).Error; err != nil {
+			return fmt.Errorf("reporting batch create at offset %d: %w", i, err)
 		}
 
 		// Execute Redis Pipeline
