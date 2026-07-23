@@ -56,7 +56,7 @@ func (s *monitoringServiceImpl) Evaluate(ctx context.Context, serverID string, i
 	var statusChanged bool
 
 	if pingSuccess {
-		if currentStatus == serverDomain.ServerStatusOffline {
+		if currentStatus == serverDomain.ServerStatusOffline || currentStatus == serverDomain.ServerStatusUnknown {
 			// Recovery Threshold = 1
 			newStatus = serverDomain.ServerStatusOnline
 			statusChanged = true
@@ -66,9 +66,9 @@ func (s *monitoringServiceImpl) Evaluate(ctx context.Context, serverID string, i
 			retryCount = 0
 		}
 	} else {
-		if currentStatus == serverDomain.ServerStatusOnline {
+		if currentStatus == serverDomain.ServerStatusOnline || currentStatus == serverDomain.ServerStatusUnknown {
 			retryCount++
-			if retryCount >= s.failureThreshold {
+			if retryCount >= s.failureThreshold || currentStatus == serverDomain.ServerStatusUnknown {
 				newStatus = serverDomain.ServerStatusOffline
 				statusChanged = true
 				retryCount = 0

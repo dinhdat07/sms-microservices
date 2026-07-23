@@ -64,7 +64,7 @@ func run() error {
 	if dbUrl == "" {
 		dbUrl = "postgres://postgres:postgres@localhost:15432/sms?sslmode=disable"
 	}
-	
+
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
 		redisAddr = "localhost:6379"
@@ -77,6 +77,11 @@ func run() error {
 	}
 
 	log.Println("Cleaning up previous simulation servers...")
+
+	// Collect IDs of old simulation servers before deleting
+	var oldSimServerIDs []string
+	db.Model(&Server{}).Where("server_name LIKE ?", "sim-%").Pluck("server_id", &oldSimServerIDs)
+
 	result := db.Where("server_name LIKE ?", "sim-%").Delete(&Server{})
 	if result.Error != nil {
 		return fmt.Errorf("cleanup old sim servers: %w", result.Error)
@@ -95,11 +100,19 @@ func run() error {
 	})
 
 	ctx := context.Background()
-	keys, _ := rdb.Keys(ctx, "server:*").Result()
-	if len(keys) > 0 {
-		rdb.Del(ctx, keys...)
+
+	// Only delete the Redis keys of the simulation servers
+	if len(oldSimServerIDs) > 0 {
+		var redisKeys []string
+		for _, id := range oldSimServerIDs {
+			redisKeys = append(redisKeys, fmt.Sprintf("server:info:%s", id))
+			rdb.SRem(ctx, "server:all_ids", id)
+		}
+
+		// Delete from Redis
+		rdb.Del(ctx, redisKeys...)
 	}
-	log.Printf("Redis: flushed %d server keys\n", len(keys))
+	log.Printf("Redis: flushed %d simulation server keys\n", len(oldSimServerIDs))
 
 	// 3. Seed Data
 	batchSize := 500
@@ -114,7 +127,7 @@ func run() error {
 		if end > count {
 			end = count
 		}
-		
+
 		var batch []*Server
 		var reportingBatch []*ReportingServer
 		redisPipeline := rdb.Pipeline()
@@ -133,7 +146,7 @@ func run() error {
 				CreatedAt:     time.Now(),
 				UpdatedAt:     time.Now(),
 			})
-			
+
 			// Add to reporting batch
 			reportingBatch = append(reportingBatch, &ReportingServer{
 				ServerID:  id,
@@ -164,7 +177,7 @@ func run() error {
 		if err := db.Create(batch).Error; err != nil {
 			return fmt.Errorf("batch create at offset %d: %w", i, err)
 		}
-		
+
 		// Execute Reporting DB Insert
 		if err := db.Create(reportingBatch).Error; err != nil {
 			return fmt.Errorf("reporting batch create at offset %d: %w", i, err)
