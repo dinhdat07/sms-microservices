@@ -58,20 +58,26 @@ func (c *eventConsumerImpl) handleServerEvent(ctx context.Context, msg messagebr
 	switch eventType {
 	case "ServerCreated", "ServerUpdated":
 		var payload struct {
-			ID   string `json:"server_id"`
-			Name string `json:"server_name"`
-			IP   string `json:"ipv4"`
+			ID            string `json:"server_id"`
+			Name          string `json:"server_name"`
+			IP            string `json:"ipv4"`
+			CurrentStatus string `json:"current_status"`
 		}
 		if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
 			logger.Log.Error("[EventConsumer] Failed to unmarshal Server event payload", zap.Error(err))
 			return err
 		}
 
+		status := payload.CurrentStatus
+		if status == "" {
+			status = "UNKNOWN"
+		}
+		
 		server := &domain.ReportingServer{
 			ServerID: payload.ID,
 			Name:     payload.Name,
 			IPv4:     payload.IP,
-			Status:   "ONLINE", // Default status for new servers
+			Status:   status,
 		}
 		err := c.repo.UpsertReportingServer(ctx, server)
 		if err != nil {

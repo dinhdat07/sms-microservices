@@ -37,6 +37,7 @@ func TestReportingWorker_Lifecycle(t *testing.T) {
 	repo.On("GetServerCountByStatus", ctx, "").Return(int64(100), nil)
 	repo.On("GetServerCountByStatus", ctx, "ONLINE").Return(int64(80), nil)
 	repo.On("GetServerCountByStatus", ctx, "OFFLINE").Return(int64(20), nil)
+	repo.On("GetServerCountByStatus", ctx, "UNKNOWN").Return(int64(0), nil)
 	
 	uptimeCalc.On("CalculateUptime", ctx, req.StartTime, req.EndTime).Return(99.5, nil)
 	
@@ -149,6 +150,7 @@ func TestReportingWorker_DoWork_ESError(t *testing.T) {
 	repo.On("GetServerCountByStatus", mock.Anything, "").Return(int64(100), nil)
 	repo.On("GetServerCountByStatus", mock.Anything, "ONLINE").Return(int64(80), nil)
 	repo.On("GetServerCountByStatus", mock.Anything, "OFFLINE").Return(int64(20), nil)
+	repo.On("GetServerCountByStatus", mock.Anything, "UNKNOWN").Return(int64(0), nil)
 	
 	uptimeCalc.On("CalculateUptime", mock.Anything, mock.Anything, mock.Anything).Return(float64(0), assert.AnError)
 	
@@ -174,6 +176,7 @@ func TestReportingWorker_DoWork_NotifierError(t *testing.T) {
 	repo.On("GetServerCountByStatus", mock.Anything, "").Return(int64(100), nil)
 	repo.On("GetServerCountByStatus", mock.Anything, "ONLINE").Return(int64(80), nil)
 	repo.On("GetServerCountByStatus", mock.Anything, "OFFLINE").Return(int64(20), nil)
+	repo.On("GetServerCountByStatus", mock.Anything, "UNKNOWN").Return(int64(0), nil)
 	
 	uptimeCalc.On("CalculateUptime", mock.Anything, mock.Anything, mock.Anything).Return(float64(100), nil)
 	

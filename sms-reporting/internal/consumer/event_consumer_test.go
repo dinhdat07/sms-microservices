@@ -58,7 +58,7 @@ func TestEventConsumer_HandleServerEvent_Created(t *testing.T) {
 		ServerID: "svr-1",
 		Name:     "Test Server",
 		IPv4:     "10.0.0.1",
-		Status:   "ONLINE",
+		Status:   "UNKNOWN",
 	}).Return(nil)
 
 	err := consumer.handleServerEvent(context.Background(), msg)

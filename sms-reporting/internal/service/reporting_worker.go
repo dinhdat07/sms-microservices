@@ -25,9 +25,11 @@ type TemplateData struct {
 	TotalServers   int64
 	OnlineServers  int64
 	OfflineServers int64
+	UnknownServers int64
 	UptimePercent  float64
 	OnlinePercent  float64
 	OfflinePercent float64
+	UnknownPercent float64
 	HealthLabel    string
 }
 
@@ -129,6 +131,10 @@ func (w *reportingWorkerImpl) doWork(ctx context.Context, req *domain.ReportRequ
 	if err != nil {
 		return err
 	}
+	unknownServers, err := w.repo.GetServerCountByStatus(ctx, "UNKNOWN")
+	if err != nil {
+		return err
+	}
 
 	// 2. Get Uptime from Elasticsearch
 	uptimePercent, err := w.uptimeCalc.CalculateUptime(ctx, req.StartTime, req.EndTime)
@@ -149,9 +155,11 @@ func (w *reportingWorkerImpl) doWork(ctx context.Context, req *domain.ReportRequ
 		TotalServers:   totalServers,
 		OnlineServers:  onlineServers,
 		OfflineServers: offlineServers,
+		UnknownServers: unknownServers,
 		UptimePercent:  uptimePercent,
 		OnlinePercent:  percentage(onlineServers, totalServers),
 		OfflinePercent: percentage(offlineServers, totalServers),
+		UnknownPercent: percentage(unknownServers, totalServers),
 		HealthLabel:    healthLabel(uptimePercent),
 	}
 
