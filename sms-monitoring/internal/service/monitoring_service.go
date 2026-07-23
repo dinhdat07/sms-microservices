@@ -92,7 +92,7 @@ func (s *monitoringServiceImpl) Evaluate(ctx context.Context, serverID string, i
 	// Publish Event via Publisher ONLY if state actually changes
 	if statusChanged {
 		payload, _ := json.Marshal(map[string]interface{}{
-			"id":          serverID,
+			"server_id":   serverID,
 			"status":      newStatus,
 			"retry_count": retryCount,
 		})
