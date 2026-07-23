@@ -15,7 +15,7 @@ func TestServerStatus_IsValid(t *testing.T) {
 		{"ONLINE is valid", ServerStatusOnline, true},
 		{"OFFLINE is valid", ServerStatusOffline, true},
 		{"empty string is invalid", ServerStatus(""), false},
-		{"UNKNOWN is invalid", ServerStatus("UNKNOWN"), false},
+		{"UNKNOWN is valid", ServerStatusUnknown, true},
 		{"random is invalid", ServerStatus("RANDOM"), false},
 		{"lowercase online is invalid", ServerStatus("online"), false},
 	}

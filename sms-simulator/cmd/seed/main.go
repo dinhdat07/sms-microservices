@@ -129,7 +129,7 @@ func run() error {
 				ServerID:      id,
 				ServerName:    name,
 				IPv4:          ip,
-				CurrentStatus: "ONLINE",
+				CurrentStatus: "UNKNOWN",
 				CreatedAt:     time.Now(),
 				UpdatedAt:     time.Now(),
 			})
@@ -139,15 +139,16 @@ func run() error {
 				ServerID:  id,
 				Name:      name,
 				IPv4:      ip,
-				Status:    "ONLINE",
+				Status:    "UNKNOWN",
 				UpdatedAt: time.Now(),
 			})
 
 			// Add to Redis pipeline (New Schema: Hash for info, Set for all IDs)
 			redisKey := fmt.Sprintf("server:info:%s", id)
 			redisPipeline.HSet(ctx, redisKey, map[string]interface{}{
+				"id":          id,
 				"ipv4":        ip,
-				"status":      "ONLINE",
+				"status":      "UNKNOWN",
 				"retry_count": 0,
 			})
 			redisPipeline.SAdd(ctx, "server:all_ids", id)

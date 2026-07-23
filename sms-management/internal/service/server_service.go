@@ -72,8 +72,9 @@ func (s *serverService) CreateServer(ctx context.Context, input CreateServerInpu
 	}
 
 	server := &domain.Server{
-		ServerName: input.ServerName,
-		IPv4:       input.IPv4,
+		ServerName:    input.ServerName,
+		IPv4:          input.IPv4,
+		CurrentStatus: domain.ServerStatusUnknown,
 	}
 
 	err = s.repo.ExecuteInTx(ctx, func(txCtx context.Context) error {
@@ -125,6 +126,7 @@ func (s *serverService) UpdateServer(ctx context.Context, id string, input Updat
 			return nil, ErrIPv4Exists
 		}
 		server.IPv4 = input.IPv4
+		server.CurrentStatus = domain.ServerStatusUnknown // Reset status on IP change
 	}
 
 	err = s.repo.ExecuteInTx(ctx, func(txCtx context.Context) error {

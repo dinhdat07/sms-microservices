@@ -88,7 +88,7 @@ message ViewServersRequest {
   int32 page = 1 [(buf.validate.field).int32.gte = 1];
   int32 limit = 2 [(buf.validate.field).int32.gte = 1, (buf.validate.field).int32.lte = 100];
   string filter_status = 3 [(buf.validate.field).string = {
-    in: ["ONLINE", "OFFLINE", ""]
+    in: ["ONLINE", "OFFLINE", "UNKNOWN", ""]
   }];
   string filter_name = 4;
   string sort_by = 5 [(buf.validate.field).string = {
@@ -122,7 +122,7 @@ message ExportServersRequest {
   int32 page = 1 [(buf.validate.field).int32.gte = 1];
   int32 limit = 2 [(buf.validate.field).int32.gte = 1];
   string filter_status = 3 [(buf.validate.field).string = {
-    in: ["ONLINE", "OFFLINE", ""]
+    in: ["ONLINE", "OFFLINE", "UNKNOWN", ""]
   }];
   string filter_name = 4;
   string sort_by = 5 [(buf.validate.field).string = {

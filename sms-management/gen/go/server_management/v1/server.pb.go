@@ -852,11 +852,11 @@ const file_server_management_v1_server_proto_rawDesc = "" +
 	"\x13DeleteServerRequest\x12%\n" +
 	"\tserver_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\bserverId\"0\n" +
 	"\x14DeleteServerResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x8c\x03\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x95\x03\n" +
 	"\x12ViewServersRequest\x12\x1b\n" +
 	"\x04page\x18\x01 \x01(\x05B\a\xbaH\x04\x1a\x02(\x01R\x04page\x12\x1f\n" +
-	"\x05limit\x18\x02 \x01(\x05B\t\xbaH\x06\x1a\x04\x18d(\x01R\x05limit\x12=\n" +
-	"\rfilter_status\x18\x03 \x01(\tB\x18\xbaH\x15r\x13R\x06ONLINER\aOFFLINER\x00R\ffilterStatus\x12\x1f\n" +
+	"\x05limit\x18\x02 \x01(\x05B\t\xbaH\x06\x1a\x04\x18d(\x01R\x05limit\x12F\n" +
+	"\rfilter_status\x18\x03 \x01(\tB!\xbaH\x1er\x1cR\x06ONLINER\aOFFLINER\aUNKNOWNR\x00R\ffilterStatus\x12\x1f\n" +
 	"\vfilter_name\x18\x04 \x01(\tR\n" +
 	"filterName\x12[\n" +
 	"\asort_by\x18\x05 \x01(\tBB\xbaH?r=R\vserver_nameR\n" +
@@ -878,11 +878,11 @@ const file_server_management_v1_server_proto_rawDesc = "" +
 	"\x12successful_servers\x18\x02 \x03(\tR\x11successfulServers\x12\x1d\n" +
 	"\n" +
 	"fail_count\x18\x03 \x01(\x05R\tfailCount\x12%\n" +
-	"\x0efailed_servers\x18\x04 \x03(\tR\rfailedServers\"\x8c\x03\n" +
+	"\x0efailed_servers\x18\x04 \x03(\tR\rfailedServers\"\x95\x03\n" +
 	"\x14ExportServersRequest\x12\x1b\n" +
 	"\x04page\x18\x01 \x01(\x05B\a\xbaH\x04\x1a\x02(\x01R\x04page\x12\x1d\n" +
-	"\x05limit\x18\x02 \x01(\x05B\a\xbaH\x04\x1a\x02(\x01R\x05limit\x12=\n" +
-	"\rfilter_status\x18\x03 \x01(\tB\x18\xbaH\x15r\x13R\x06ONLINER\aOFFLINER\x00R\ffilterStatus\x12\x1f\n" +
+	"\x05limit\x18\x02 \x01(\x05B\a\xbaH\x04\x1a\x02(\x01R\x05limit\x12F\n" +
+	"\rfilter_status\x18\x03 \x01(\tB!\xbaH\x1er\x1cR\x06ONLINER\aOFFLINER\aUNKNOWNR\x00R\ffilterStatus\x12\x1f\n" +
 	"\vfilter_name\x18\x04 \x01(\tR\n" +
 	"filterName\x12[\n" +
 	"\asort_by\x18\x05 \x01(\tBB\xbaH?r=R\vserver_nameR\n" +
