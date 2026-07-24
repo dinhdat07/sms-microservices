@@ -29,6 +29,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Patch Go version for CI
+        run: |
+          sed -i 's/go 1.26.2/go 1.22/g' ${{ matrix.service }}/go.mod
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -68,6 +72,11 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Patch Go version for CI
+        run: |
+          find . -name "go.mod" -exec sed -i 's/go 1.26.2/go 1.22/g' {} +
+          find . -name "Dockerfile" -exec sed -i 's/golang:1.26.2-alpine/golang:1.22-alpine/g' {} +
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
