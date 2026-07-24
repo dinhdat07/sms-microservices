@@ -110,7 +110,7 @@ func TestImportExportHandler_HandleImport(t *testing.T) {
 		body := new(bytes.Buffer)
 		writer := multipart.NewWriter(body)
 		part, _ := writer.CreateFormFile("file", "test.csv")
-		part.Write([]byte("csv data"))
+		_, _ = part.Write([]byte("csv data"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/import", body)

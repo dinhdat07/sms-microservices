@@ -204,10 +204,10 @@ func generateServerExcel(servers []*domain.Server) ([]byte, error) {
 	defer f.Close()
 
 	// Set column widths for better balance
-	f.SetColWidth("Sheet1", "A", "A", 30) // Server Name
-	f.SetColWidth("Sheet1", "B", "B", 20) // IPv4
-	f.SetColWidth("Sheet1", "C", "C", 15) // Status
-	f.SetColWidth("Sheet1", "D", "E", 25) // Dates
+	_ = f.SetColWidth("Sheet1", "A", "A", 30) // Server Name
+	_ = f.SetColWidth("Sheet1", "B", "B", 20) // IPv4
+	_ = f.SetColWidth("Sheet1", "C", "C", 15) // Status
+	_ = f.SetColWidth("Sheet1", "D", "E", 25) // Dates
 
 	sw, err := f.NewStreamWriter("Sheet1")
 	if err != nil {

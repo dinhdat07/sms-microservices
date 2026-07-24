@@ -557,10 +557,10 @@ func TestImportServers_BatchCreateError(t *testing.T) {
 	mockTx(repo)
 
 	f := excelize.NewFile()
-	f.SetCellValue("Sheet1", "A1", "Server Name")
-	f.SetCellValue("Sheet1", "B1", "IPv4")
-	f.SetCellValue("Sheet1", "A2", "srv-1")
-	f.SetCellValue("Sheet1", "B2", "10.0.0.1")
+	_ = f.SetCellValue("Sheet1", "A1", "Server Name")
+	_ = f.SetCellValue("Sheet1", "B1", "IPv4")
+	_ = f.SetCellValue("Sheet1", "A2", "srv-1")
+	_ = f.SetCellValue("Sheet1", "B2", "10.0.0.1")
 
 	buf := new(bytes.Buffer)
 	_ = f.Write(buf)

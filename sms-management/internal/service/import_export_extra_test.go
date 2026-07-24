@@ -24,13 +24,13 @@ func createExcelBytes(t *testing.T, headers []string, data [][]string) []byte {
 
 	for i, header := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
-		f.SetCellValue(sheetName, cell, header)
+		_ = f.SetCellValue(sheetName, cell, header)
 	}
 
 	for rowIndex, rowData := range data {
 		for colIndex, val := range rowData {
 			cell, _ := excelize.CoordinatesToCellName(colIndex+1, rowIndex+2)
-			f.SetCellValue(sheetName, cell, val)
+			_ = f.SetCellValue(sheetName, cell, val)
 		}
 	}
 

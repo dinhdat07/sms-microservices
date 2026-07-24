@@ -75,7 +75,7 @@ func (a *App) Run() error {
 	// Health check endpoint
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 
 	// REST API Handler for import/export
@@ -109,7 +109,9 @@ func (a *App) Run() error {
 		a.OutboxRelay.Stop()
 	}
 	grpcSrv.GracefulStop()
-	httpSrv.Shutdown(ctx)
+	if err := httpSrv.Shutdown(ctx); err != nil {
+		logger.Log.Sugar().Errorf("HTTP server shutdown failed: %v", err)
+	}
 	logger.Log.Sugar().Info("Shutdown complete")
 
 	return nil

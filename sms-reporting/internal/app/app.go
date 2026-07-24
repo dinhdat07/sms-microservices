@@ -46,8 +46,12 @@ func NewApp() (*App, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 	// Migrate schema
-	db.Exec("CREATE SCHEMA IF NOT EXISTS reporting_schema;")
-	db.AutoMigrate(&domain.ReportRequest{}, &domain.ReportingServer{})
+	if err := db.Exec("CREATE SCHEMA IF NOT EXISTS reporting_schema;").Error; err != nil {
+		return nil, fmt.Errorf("failed to create schema: %w", err)
+	}
+	if err := db.AutoMigrate(&domain.ReportRequest{}, &domain.ReportingServer{}); err != nil {
+		return nil, fmt.Errorf("failed to migrate database: %w", err)
+	}
 
 	// Initialize Redis
 	redisCfg, err := config.LoadRedisConfig()

@@ -78,7 +78,7 @@ func (a *App) Run() error {
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		hostname, _ := os.Hostname()
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fmt.Sprintf("OK from %s\n", hostname)))
+		_, _ = w.Write([]byte(fmt.Sprintf("OK from %s\n", hostname)))
 	})
 
 	// Route all API traffic to gRPC gateway
@@ -107,7 +107,9 @@ func (a *App) Run() error {
 
 	cancel()
 	a.grpcServer.GracefulStop()
-	httpSrv.Shutdown(ctx)
+	if err := httpSrv.Shutdown(ctx); err != nil {
+		logger.Log.Sugar().Errorf("HTTP server shutdown failed: %v", err)
+	}
 	a.worker.Stop()
 	a.scheduler.Stop()
 

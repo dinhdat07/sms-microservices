@@ -44,16 +44,6 @@ func writeError(w http.ResponseWriter, status int, message string) {
 	})
 }
 
-func extractBearer(r *http.Request) string {
-	auth := r.Header.Get("Authorization")
-	if strings.HasPrefix(auth, "Bearer ") {
-		return strings.TrimPrefix(auth, "Bearer ")
-	}
-	if cookie, err := r.Cookie("access_token"); err == nil {
-		return strings.TrimSpace(cookie.Value)
-	}
-	return ""
-}
 
 func (h *ImportExportHandler) HandleImport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -168,7 +158,7 @@ func (h *ImportExportHandler) HandleExport(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.Header().Set("Content-Disposition", "attachment; filename=\""+filename+"\"")
 	w.WriteHeader(http.StatusOK)
-	w.Write(fileBytes)
+	_, _ = w.Write(fileBytes)
 }
 
 func parseCreatedDateRange(createdFrom, createdTo string) (time.Time, time.Time, error) {

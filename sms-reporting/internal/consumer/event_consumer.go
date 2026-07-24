@@ -40,8 +40,16 @@ func (c *eventConsumerImpl) Start(ctx context.Context) {
 
 	logger.Log.Info("[EventConsumer] Starting message broker subscriber", zap.String("consumer", c.cfg.Name))
 
-	go c.subscriber.Subscribe(ctx, c.cfg.ServerStream, c.cfg.ServerGroup, c.cfg.Name, c.handleServerEvent)
-	go c.subscriber.Subscribe(ctx, c.cfg.ServerStatusStream, c.cfg.ServerStatusGroup, c.cfg.Name, c.handleStatusEvent)
+	go func() {
+		if err := c.subscriber.Subscribe(ctx, c.cfg.ServerStream, c.cfg.ServerGroup, c.cfg.Name, c.handleServerEvent); err != nil {
+			logger.Log.Error("Failed to subscribe to ServerStream", zap.Error(err))
+		}
+	}()
+	go func() {
+		if err := c.subscriber.Subscribe(ctx, c.cfg.ServerStatusStream, c.cfg.ServerStatusGroup, c.cfg.Name, c.handleStatusEvent); err != nil {
+			logger.Log.Error("Failed to subscribe to ServerStatusStream", zap.Error(err))
+		}
+	}()
 }
 
 func (c *eventConsumerImpl) handleServerEvent(ctx context.Context, msg messagebroker.Message) error {

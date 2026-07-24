@@ -21,7 +21,7 @@ func runDummySMTPServer(t *testing.T, listener net.Listener) {
 	reader := bufio.NewReader(conn)
 
 	// Initial greeting
-	writer.WriteString("220 mock.smtp.server ESMTP\r\n")
+	_, _ = writer.WriteString("220 mock.smtp.server ESMTP\r\n")
 	writer.Flush()
 
 	for {
@@ -32,32 +32,32 @@ func runDummySMTPServer(t *testing.T, listener net.Listener) {
 		line = strings.TrimSpace(line)
 		
 		if strings.HasPrefix(line, "EHLO") || strings.HasPrefix(line, "HELO") {
-			writer.WriteString("250-mock.smtp.server\r\n250 AUTH PLAIN\r\n")
+			_, _ = writer.WriteString("250-mock.smtp.server\r\n250 AUTH PLAIN\r\n")
 			writer.Flush()
 		} else if strings.HasPrefix(line, "AUTH PLAIN") {
-			writer.WriteString("235 2.7.0 Authentication successful\r\n")
+			_, _ = writer.WriteString("235 2.7.0 Authentication successful\r\n")
 			writer.Flush()
 		} else if strings.HasPrefix(line, "MAIL FROM") {
-			writer.WriteString("250 2.1.0 Ok\r\n")
+			_, _ = writer.WriteString("250 2.1.0 Ok\r\n")
 			writer.Flush()
 		} else if strings.HasPrefix(line, "RCPT TO") {
-			writer.WriteString("250 2.1.5 Ok\r\n")
+			_, _ = writer.WriteString("250 2.1.5 Ok\r\n")
 			writer.Flush()
 		} else if strings.HasPrefix(line, "DATA") {
-			writer.WriteString("354 End data with <CR><LF>.<CR><LF>\r\n")
+			_, _ = writer.WriteString("354 End data with <CR><LF>.<CR><LF>\r\n")
 			writer.Flush()
 			
 			// Read until \r\n.\r\n
 			for {
 				dataLine, _ := reader.ReadString('\n')
 				if strings.TrimSpace(dataLine) == "." {
-					writer.WriteString("250 2.0.0 Ok: queued\r\n")
+					_, _ = writer.WriteString("250 2.0.0 Ok: queued\r\n")
 					writer.Flush()
 					break
 				}
 			}
 		} else if strings.HasPrefix(line, "QUIT") {
-			writer.WriteString("221 2.0.0 Bye\r\n")
+			_, _ = writer.WriteString("221 2.0.0 Bye\r\n")
 			writer.Flush()
 			return
 		}

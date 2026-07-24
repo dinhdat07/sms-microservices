@@ -24,14 +24,6 @@ func (m *mockPinger) Ping(ip string, timeout time.Duration) bool {
 	return args.Bool(0)
 }
 
-type mockMonitoringService struct {
-	mock.Mock
-}
-
-func (m *mockMonitoringService) Evaluate(ctx context.Context, serverID string, ip string, pingSuccess bool) error {
-	args := m.Called(ctx, serverID, ip, pingSuccess)
-	return args.Error(0)
-}
 
 func TestWorkerPool_Run(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
