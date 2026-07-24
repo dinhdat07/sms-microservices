@@ -46,7 +46,7 @@ services:
       - GRPC_PORT=50051
       - ADMIN_EMAIL=admin@example.com
       - USER_EMAIL=user@example.com
-      - USER_PASSWORD=user
+      - USER_PASSWORD_FILE=/run/secrets/user_password
       - DB_URL_FILE=/run/secrets/db_url
       - ADMIN_PASSWORD_FILE=/run/secrets/admin_password
       - JWT_SECRET_FILE=/run/secrets/jwt_secret
@@ -82,6 +82,7 @@ services:
     secrets:
       - db_url
       - admin_password
+      - user_password
       - jwt_secret
 
   sms-management:
@@ -374,4 +375,6 @@ secrets:
   db_url:
     external: true
   jwt_secret:
+    external: true
+  user_password:
     external: true
