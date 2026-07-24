@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"sms-identity/internal/infrastructure/grpcctx"
 	"sms-identity/internal/infrastructure/security"
 
 	"google.golang.org/grpc"
@@ -34,7 +33,7 @@ func AuthenticationInterceptor(authenticator *security.Authenticator, publicMeth
 			return nil, status.Error(codes.Unauthenticated, "invalid authorize format")
 		}
 
-		ctx = grpcctx.SetPrincipal(ctx, principal)
+		ctx = security.SetPrincipal(ctx, principal)
 		return handler(ctx, req)
 	}
 }

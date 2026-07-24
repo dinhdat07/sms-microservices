@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	authv1 "sms-identity/gen/go/auth/v1"
+	"sms-identity/internal/handler/grpc/middlewares"
 	"sms-identity/internal/infrastructure/logger"
-	"sms-identity/internal/infrastructure/middlewares"
 )
 
 func (a *App) Run() error {
@@ -57,13 +57,13 @@ func (a *App) Run() error {
 	}
 
 	mux := http.NewServeMux()
-	
+
 	// Health check endpoint
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
-	
+
 	// Traefik ForwardAuth route
 	mux.HandleFunc("/verify", a.ForwardAuthHandler.Verify)
 	// gRPC Gateway routes

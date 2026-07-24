@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	servermanagementv1 "sms-management/gen/go/server_management/v1"
-	"sms-management/internal/infrastructure/middlewares"
+	"sms-management/internal/handler/grpc/middlewares"
 	"sms-management/internal/infrastructure/logger"
 )
 
@@ -71,13 +71,13 @@ func (a *App) Run() error {
 	}
 
 	mux := http.NewServeMux()
-	
+
 	// Health check endpoint
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
-	
+
 	// REST API Handler for import/export
 	mux.HandleFunc("/api/v1/servers/import", a.RESTImportExport.HandleImport)
 	mux.HandleFunc("/api/v1/servers/export", a.RESTImportExport.HandleExport)

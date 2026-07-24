@@ -1,4 +1,4 @@
-package grpcserver
+package grpc
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	authv1 "sms-identity/gen/go/auth/v1"
 	"sms-identity/internal/infrastructure/security"
-	"sms-identity/internal/infrastructure/grpcctx"
 
 	"sms-identity/internal/service"
 
@@ -105,7 +104,7 @@ func (s *AuthServer) Login(ctx context.Context, req *authv1.LoginRequest) (*auth
 }
 
 func (s *AuthServer) Logout(ctx context.Context, req *authv1.LogoutRequest) (*authv1.LogoutResponse, error) {
-	principal, ok := grpcctx.GetPrincipal(ctx)
+	principal, ok := security.GetPrincipal(ctx)
 	if ok && principal != nil && principal.SessionID != "" {
 		_ = s.authService.Logout(ctx, principal.SessionID)
 	}
@@ -153,7 +152,7 @@ func (s *AuthServer) RefreshToken(ctx context.Context, req *authv1.RefreshReques
 }
 
 func (s *AuthServer) LogoutAll(ctx context.Context, req *authv1.LogoutAllRequest) (*authv1.LogoutAllResponse, error) {
-	principal, ok := grpcctx.GetPrincipal(ctx)
+	principal, ok := security.GetPrincipal(ctx)
 	if ok && principal != nil && principal.UserID != "" {
 		var userID uint
 		if _, err := fmt.Sscanf(principal.UserID, "%d", &userID); err != nil {

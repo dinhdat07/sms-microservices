@@ -8,7 +8,7 @@ import (
 
 	"sms-identity/internal/config"
 	"sms-identity/internal/handler"
-	authgrpc "sms-identity/internal/handler/grpcserver"
+	authgrpc "sms-identity/internal/handler/grpc"
 	"sms-identity/internal/infrastructure/database"
 	"sms-identity/internal/infrastructure/logger"
 	"sms-identity/internal/infrastructure/security"

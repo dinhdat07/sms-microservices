@@ -6,28 +6,28 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
+	servermanagementv1 "sms-management/gen/go/server_management/v1"
 	"sms-management/internal/config"
-	"sms-management/internal/handler/grpcserver"
+	grpchandler "sms-management/internal/handler/grpc"
 	resthandler "sms-management/internal/handler/rest"
 	"sms-management/internal/infrastructure/database"
 	"sms-management/internal/infrastructure/logger"
 	"sms-management/internal/infrastructure/messagebroker"
 	"sms-management/internal/infrastructure/security"
-	servermanagementv1 "sms-management/gen/go/server_management/v1"
 	"sms-management/internal/repository/impl"
 	"sms-management/internal/service"
 	"sms-management/internal/worker"
 )
 
 type App struct {
-	Config           *config.Config
-	DB               *gorm.DB
-	RedisClient      redis.UniversalClient
-	ServerHandler    *grpcserver.ServerManagementServer
-	RESTImportExport *resthandler.ImportExportHandler
-	OutboxRelay      *worker.OutboxRelay
-	StatusConsumer   *worker.StatusConsumer
-	Authorizer       *security.Authorizer
+	Config            *config.Config
+	DB                *gorm.DB
+	RedisClient       redis.UniversalClient
+	ServerHandler     *grpchandler.ServerManagementServer
+	RESTImportExport  *resthandler.ImportExportHandler
+	OutboxRelay       *worker.OutboxRelay
+	StatusConsumer    *worker.StatusConsumer
+	Authorizer        *security.Authorizer
 	MethodPermissions map[string]security.PermissionCode
 }
 
@@ -69,7 +69,7 @@ func New() (*App, error) {
 	outboxRepo := impl.NewGormOutboxRepository(db)
 	serverSvc := service.NewServerService(serverRepo, outboxRepo)
 
-	serverHandler := grpcserver.NewServerManagementServer(serverSvc)
+	serverHandler := grpchandler.NewServerManagementServer(serverSvc)
 	restImportExport := resthandler.NewImportExportHandler(serverSvc)
 
 	// Initialize Publisher
@@ -84,23 +84,23 @@ func New() (*App, error) {
 
 	authorizer := security.NewAuthorizer()
 	methodPermissions := map[string]security.PermissionCode{
-		servermanagementv1.ServerManagementService_CreateServer_FullMethodName: security.PermServerCreate,
-		servermanagementv1.ServerManagementService_ViewServers_FullMethodName:  security.PermServerRead,
-		servermanagementv1.ServerManagementService_UpdateServer_FullMethodName: security.PermServerUpdate,
-		servermanagementv1.ServerManagementService_DeleteServer_FullMethodName: security.PermServerDelete,
+		servermanagementv1.ServerManagementService_CreateServer_FullMethodName:  security.PermServerCreate,
+		servermanagementv1.ServerManagementService_ViewServers_FullMethodName:   security.PermServerRead,
+		servermanagementv1.ServerManagementService_UpdateServer_FullMethodName:  security.PermServerUpdate,
+		servermanagementv1.ServerManagementService_DeleteServer_FullMethodName:  security.PermServerDelete,
 		servermanagementv1.ServerManagementService_ImportServers_FullMethodName: security.PermServerImport,
 		servermanagementv1.ServerManagementService_ExportServers_FullMethodName: security.PermServerExport,
 	}
 
 	return &App{
-		Config:           cfg,
-		DB:               db,
-		RedisClient:      redisClient,
-		ServerHandler:    serverHandler,
-		RESTImportExport: restImportExport,
-		OutboxRelay:      outboxRelay,
-		StatusConsumer:   statusConsumer,
-		Authorizer:       authorizer,
+		Config:            cfg,
+		DB:                db,
+		RedisClient:       redisClient,
+		ServerHandler:     serverHandler,
+		RESTImportExport:  restImportExport,
+		OutboxRelay:       outboxRelay,
+		StatusConsumer:    statusConsumer,
+		Authorizer:        authorizer,
 		MethodPermissions: methodPermissions,
 	}, nil
 }

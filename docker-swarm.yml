@@ -295,6 +295,8 @@ services:
       - GRPC_PORT=50053
       - CONSUMER_NAME=reporting_worker
       - DB_URL_FILE=/run/secrets/db_url
+      - REPORTING_WORKER_COUNT=20
+      - REPORTING_JOB_QUEUE_SIZE=5000
     networks:
       - default
     image: whaleplay710/sms-reporting:v1.0.0

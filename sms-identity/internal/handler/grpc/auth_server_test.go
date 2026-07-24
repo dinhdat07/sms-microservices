@@ -1,4 +1,4 @@
-package grpcserver
+package grpc
 
 import (
 	"context"
@@ -13,7 +13,6 @@ import (
 	authv1 "sms-identity/gen/go/auth/v1"
 	"sms-identity/internal/infrastructure/security"
 	"sms-identity/internal/service"
-	"sms-identity/internal/infrastructure/grpcctx"
 )
 
 type mockAuthSvc struct {
@@ -89,7 +88,7 @@ func TestAuthServer_Logout(t *testing.T) {
 	srv := NewAuthServer(svc)
 
 	t.Run("success with principal", func(t *testing.T) {
-		ctx := grpcctx.SetPrincipal(context.Background(), &security.Principal{SessionID: "sess-1"})
+		ctx := security.SetPrincipal(context.Background(), &security.Principal{SessionID: "sess-1"})
 		svc.On("Logout", mock.Anything, "sess-1").Return(nil).Once()
 
 		resp, err := srv.Logout(ctx, &authv1.LogoutRequest{})
@@ -137,7 +136,7 @@ func TestAuthServer_LogoutAll(t *testing.T) {
 	srv := NewAuthServer(svc)
 
 	t.Run("success with valid principal", func(t *testing.T) {
-		ctx := grpcctx.SetPrincipal(context.Background(), &security.Principal{UserID: "1"})
+		ctx := security.SetPrincipal(context.Background(), &security.Principal{UserID: "1"})
 		svc.On("LogoutAll", mock.Anything, uint(1)).Return(nil).Once()
 
 		resp, err := srv.LogoutAll(ctx, &authv1.LogoutAllRequest{})
@@ -146,8 +145,8 @@ func TestAuthServer_LogoutAll(t *testing.T) {
 	})
 
 	t.Run("invalid user ID", func(t *testing.T) {
-		ctx := grpcctx.SetPrincipal(context.Background(), &security.Principal{UserID: "abc"})
-		
+		ctx := security.SetPrincipal(context.Background(), &security.Principal{UserID: "abc"})
+
 		_, err := srv.LogoutAll(ctx, &authv1.LogoutAllRequest{})
 		assert.Error(t, err)
 	})

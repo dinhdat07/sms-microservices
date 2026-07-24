@@ -16,8 +16,8 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	reportingv1 "sms-reporting/gen/go/reporting/v1"
+	"sms-reporting/internal/handler/grpc/middlewares"
 	"sms-reporting/internal/infrastructure/logger"
-	"sms-reporting/internal/infrastructure/middlewares"
 )
 
 func (a *App) Run() error {
@@ -66,7 +66,7 @@ func (a *App) Run() error {
 		}),
 	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	
+
 	// Register the generated handler for gRPC Gateway
 	err = reportingv1.RegisterReportingServiceHandlerFromEndpoint(ctx, gwmux, grpcAddr, opts)
 	if err != nil {
@@ -80,7 +80,7 @@ func (a *App) Run() error {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(fmt.Sprintf("OK from %s\n", hostname)))
 	})
-	
+
 	// Route all API traffic to gRPC gateway
 	mux.Handle("/", gwmux)
 	mux.Handle("/openapi/", http.StripPrefix("/openapi/", http.FileServer(http.Dir("./api/openapi"))))
@@ -101,16 +101,16 @@ func (a *App) Run() error {
 	// Handle graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	
+
 	<-sigChan
 	logger.Log.Info("Shutting down Reporting Service...")
-	
+
 	cancel()
 	a.grpcServer.GracefulStop()
 	httpSrv.Shutdown(ctx)
 	a.worker.Stop()
 	a.scheduler.Stop()
-	
+
 	logger.Log.Info("Reporting Service shutdown complete")
 	return nil
 }

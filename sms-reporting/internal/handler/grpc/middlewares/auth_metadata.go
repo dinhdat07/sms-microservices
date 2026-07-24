@@ -3,7 +3,6 @@ package middlewares
 import (
 	"context"
 
-	"sms-reporting/internal/infrastructure/grpcctx"
 	"sms-reporting/internal/infrastructure/security"
 
 	"google.golang.org/grpc"
@@ -31,7 +30,7 @@ func AuthMetadataInterceptor() grpc.UnaryServerInterceptor {
 		}
 
 		if principal.UserID != "" {
-			ctx = grpcctx.SetPrincipal(ctx, &principal)
+			ctx = security.SetPrincipal(ctx, &principal)
 		}
 
 		return handler(ctx, req)

@@ -3,8 +3,7 @@ package middlewares
 import (
 	"context"
 
-	"sms-management/internal/infrastructure/security"
-	"sms-management/internal/infrastructure/grpcctx"
+	"sms-identity/internal/infrastructure/security"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -23,7 +22,7 @@ func PermissionInterceptor(authorizer *security.Authorizer, methodPermissions ma
 			return handler(ctx, req)
 		}
 
-		principal, ok := grpcctx.GetPrincipal(ctx)
+		principal, ok := security.GetPrincipal(ctx)
 		if !ok || principal == nil {
 			return nil, status.Error(codes.Unauthenticated, "unauthorized")
 		}
