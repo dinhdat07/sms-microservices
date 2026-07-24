@@ -51,12 +51,14 @@ func TestEvaluate_SecondFailureGoesOffline(t *testing.T) {
 	esLogger.On("LogObservation", ctx, serverID, false).Return(nil).Once()
 	
 	payload, _ := json.Marshal(map[string]interface{}{
-		"id": serverID,
+		"server_id": serverID,
 		"status": "OFFLINE",
 		"retry_count": 0,
 	})
 	mockRedis.ExpectXAdd(&redis.XAddArgs{
 		Stream: "sms.events.server_status",
+		MaxLen: 1000000,
+		Approx: true,
 		Values: []interface{}{
 			"server_id", serverID,
 			"event_type", "ServerStatusChanged",
@@ -86,12 +88,14 @@ func TestEvaluate_RedisXAddError(t *testing.T) {
 	esLogger.On("LogObservation", ctx, serverID, true).Return(nil).Once()
 	
 	payload, _ := json.Marshal(map[string]interface{}{
-		"id": serverID,
+		"server_id": serverID,
 		"status": "ONLINE",
 		"retry_count": 0,
 	})
 	mockRedis.ExpectXAdd(&redis.XAddArgs{
 		Stream: "sms.events.server_status",
+		MaxLen: 1000000,
+		Approx: true,
 		Values: []interface{}{
 			"server_id", serverID,
 			"event_type", "ServerStatusChanged",

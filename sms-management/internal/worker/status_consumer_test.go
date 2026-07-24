@@ -52,7 +52,7 @@ func TestStatusConsumer_processMessage(t *testing.T) {
 
 	// 3. Valid event, update server
 	payload, _ := json.Marshal(map[string]interface{}{
-		"id":     "svr-1",
+		"server_id":     "svr-1",
 		"status": "OFFLINE",
 	})
 	msg3 := messagebroker.Message{
@@ -77,7 +77,7 @@ func TestStatusConsumer_processMessage(t *testing.T) {
 	// 4. Server not found (should not error, just debug log)
 	mockRepo.On("GetByID", ctx, "svr-2").Return(nil, errors.New("not found")).Once()
 	payload2, _ := json.Marshal(map[string]interface{}{
-		"id":     "svr-2",
+		"server_id":     "svr-2",
 		"status": "OFFLINE",
 	})
 	msg4 := messagebroker.Message{
@@ -93,7 +93,7 @@ func TestStatusConsumer_processMessage(t *testing.T) {
 	mockRepo.On("GetByID", ctx, "svr-3").Return(&domain.Server{ServerID: "svr-3", CurrentStatus: domain.ServerStatusOnline}, nil).Once()
 	mockRepo.On("Update", ctx, mock.Anything).Return(errors.New("db error")).Once()
 	payload3, _ := json.Marshal(map[string]interface{}{
-		"id":     "svr-3",
+		"server_id":     "svr-3",
 		"status": "OFFLINE",
 	})
 	msg5 := messagebroker.Message{
