@@ -10,7 +10,7 @@ Push-Location "$PSScriptRoot"
 if ($Target -eq 'ci') {
     Write-Host "=== Bringing up Docker Compose stack (CI Mode) ===" -ForegroundColor Cyan
     Push-Location ".."
-    docker-compose up -d
+    docker compose up -d
     Pop-Location
     
     Write-Host "Waiting for services to be ready..." -ForegroundColor Cyan
@@ -35,7 +35,7 @@ $testExitCode = $LASTEXITCODE
 if ($Target -eq 'ci') {
     Write-Host "=== Tearing down Docker Compose stack ===" -ForegroundColor Cyan
     Push-Location ".."
-    docker-compose down -v
+    docker compose down -v
     Pop-Location
 }
 
