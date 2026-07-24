@@ -94,6 +94,7 @@ services:
       - HTTP_PORT=8001
       - GRPC_PORT=50052
       - DB_URL_FILE=/run/secrets/db_url
+      - OUTBOX_STREAM_MAXLEN=1000000
     networks:
       - default
     image: whaleplay710/sms-management:v1.0.0
@@ -268,6 +269,7 @@ services:
       - LOG_LEVEL=info
       - LOG_FORMAT=text
       - DB_URL_FILE=/run/secrets/db_url
+      - STREAM_MAXLEN=1000000
     networks:
       - default
     image: whaleplay710/sms-monitoring-worker:v1.0.0

@@ -23,7 +23,7 @@ func TestEvaluate_FirstFailureStaysOnline(t *testing.T) {
 	stateStore := mockRepo.NewMockServerStateStore(t)
 	db, mockRedis := redismock.NewClientMock()
 	esLogger := esMock.NewObservationLogger(t)
-	publisher := messagebroker.NewRedisPublisher(db)
+	publisher := messagebroker.NewRedisPublisher(db, 1000000)
 	service := NewMonitoringService(publisher, stateStore, esLogger, 2)
 
 	stateStore.On("GetServerState", ctx, serverID).Return(&monitoringDomain.ServerState{Status: "ONLINE", RetryCount: 0}, nil).Once()
@@ -43,7 +43,7 @@ func TestEvaluate_SecondFailureGoesOffline(t *testing.T) {
 	stateStore := mockRepo.NewMockServerStateStore(t)
 	db, mockRedis := redismock.NewClientMock()
 	esLogger := esMock.NewObservationLogger(t)
-	publisher := messagebroker.NewRedisPublisher(db)
+	publisher := messagebroker.NewRedisPublisher(db, 1000000)
 	service := NewMonitoringService(publisher, stateStore, esLogger, 2)
 
 	stateStore.On("GetServerState", ctx, serverID).Return(&monitoringDomain.ServerState{Status: "ONLINE", RetryCount: 1}, nil).Once()
@@ -77,7 +77,7 @@ func TestEvaluate_RedisXAddError(t *testing.T) {
 	stateStore := mockRepo.NewMockServerStateStore(t)
 	db, mockRedis := redismock.NewClientMock()
 	esLogger := esMock.NewObservationLogger(t)
-	publisher := messagebroker.NewRedisPublisher(db)
+	publisher := messagebroker.NewRedisPublisher(db, 1000000)
 	service := NewMonitoringService(publisher, stateStore, esLogger, 2)
 
 	stateStore.On("GetServerState", ctx, serverID).Return(&monitoringDomain.ServerState{Status: "OFFLINE", RetryCount: 0}, nil).Once()

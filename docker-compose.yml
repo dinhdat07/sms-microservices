@@ -92,6 +92,7 @@ services:
       - REDIS_ADDR=redis:6379
       - HTTP_PORT=8001
       - GRPC_PORT=50052
+      - OUTBOX_STREAM_MAXLEN=1000000
     labels:
       - "traefik.enable=true"
       # Route for Management APIs
@@ -234,6 +235,7 @@ services:
       MONITORING_WORKER_LOCK_EXPIRATION: 25s
       SIMULATOR_HOST: simulator
       SIMULATOR_SUBNET: 10.1.0.0/16
+      STREAM_MAXLEN: "1000000"
       LOG_LEVEL: info
       LOG_FORMAT: text
     networks:

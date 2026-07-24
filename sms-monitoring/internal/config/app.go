@@ -9,9 +9,14 @@ type LoggerConfig struct {
 	LogCompress   bool
 }
 
+type PublisherConfig struct {
+	MaxLen int64
+}
+
 type Config struct {
-	Env    string
-	Logger LoggerConfig
+	Env       string
+	Logger    LoggerConfig
+	Publisher PublisherConfig
 }
 
 func Load() (*Config, error) {
@@ -38,6 +43,11 @@ func Load() (*Config, error) {
 		logCompress = true
 	}
 
+	streamMaxLen, err := GetEnvInt("STREAM_MAXLEN", 1000000)
+	if err != nil {
+		streamMaxLen = 1000000
+	}
+
 	cfg := &Config{
 		Env: GetEnvDefault("ENV", "development"),
 		Logger: LoggerConfig{
@@ -47,6 +57,9 @@ func Load() (*Config, error) {
 			LogMaxBackups: logMaxBackups,
 			LogMaxAge:     logMaxAge,
 			LogCompress:   logCompress,
+		},
+		Publisher: PublisherConfig{
+			MaxLen: int64(streamMaxLen),
 		},
 	}
 

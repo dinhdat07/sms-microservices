@@ -33,6 +33,7 @@ type OutboxConfig struct {
 	StreamName string
 	BatchSize  int
 	IntervalMs int // in milliseconds
+	MaxLen     int64
 }
 
 type Config struct {
@@ -109,6 +110,11 @@ func Load() (*Config, error) {
 	if err != nil {
 		outboxIntervalMs = 2000
 	}
+	
+	outboxMaxLen, err := GetEnvInt("OUTBOX_STREAM_MAXLEN", 1000000)
+	if err != nil {
+		outboxMaxLen = 1000000
+	}
 
 	cfg := &Config{
 		GRPCPort:      GetEnvDefault("GRPC_PORT", "50051"),
@@ -148,6 +154,7 @@ func Load() (*Config, error) {
 			StreamName: GetEnvDefault("OUTBOX_STREAM_NAME", "sms.events.server"),
 			BatchSize:  outboxBatchSize,
 			IntervalMs: outboxIntervalMs,
+			MaxLen:     int64(outboxMaxLen),
 		},
 	}
 

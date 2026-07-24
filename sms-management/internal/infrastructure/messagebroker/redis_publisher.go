@@ -11,11 +11,13 @@ import (
 
 type RedisPublisher struct {
 	client redis.UniversalClient
+	maxLen int64
 }
 
-func NewRedisPublisher(client redis.UniversalClient) Publisher {
+func NewRedisPublisher(client redis.UniversalClient, maxLen int64) Publisher {
 	return &RedisPublisher{
 		client: client,
+		maxLen: maxLen,
 	}
 }
 
@@ -28,6 +30,8 @@ func (p *RedisPublisher) PublishOutboxBatch(ctx context.Context, stream string, 
 	for _, event := range events {
 		pipe.XAdd(ctx, &redis.XAddArgs{
 			Stream: stream,
+			MaxLen: p.maxLen,
+			Approx: true,
 			Values: map[string]interface{}{
 				"aggregate_type": event.AggregateType,
 				"aggregate_id":   event.AggregateID,

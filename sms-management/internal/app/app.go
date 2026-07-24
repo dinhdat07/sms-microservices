@@ -73,7 +73,7 @@ func New() (*App, error) {
 	restImportExport := resthandler.NewImportExportHandler(serverSvc)
 
 	// Initialize Publisher
-	publisher := messagebroker.NewRedisPublisher(redisClient)
+	publisher := messagebroker.NewRedisPublisher(redisClient, cfg.Outbox.MaxLen)
 
 	// Initialize Outbox Worker
 	outboxRelay := worker.NewOutboxRelay(outboxRepo, publisher, cfg.Outbox)

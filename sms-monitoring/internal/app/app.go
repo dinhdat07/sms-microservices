@@ -72,7 +72,7 @@ func NewApp() (*App, error) {
 
 	stateStore := impl.NewRedisServerStateStore(redisClient)
 	threshold, _ := config.GetEnvInt("MONITORING_FAILURE_THRESHOLD", 2)
-	publisher := messagebroker.NewRedisPublisher(redisClient)
+	publisher := messagebroker.NewRedisPublisher(redisClient, cfg.Publisher.MaxLen)
 	monService := service.NewMonitoringService(publisher, stateStore, esLogger, threshold)
 
 	tickInterval, _ := config.GetEnvDuration("MONITORING_WORKER_TICK_INTERVAL", 30*time.Second)
