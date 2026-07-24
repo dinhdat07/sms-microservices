@@ -1,0 +1,7 @@
+[submodule "sms-backend"]
+	path = sms-backend
+	url = https://github.com/dinhdat07/server-management-service.git
+
+[submodule "sms-frontend"]
+	path = sms-frontend
+	url = https://github.com/dinhdat07/sms-frontend.git

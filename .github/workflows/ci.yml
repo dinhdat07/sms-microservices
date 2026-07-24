@@ -1,0 +1,83 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - scheduling
+  pull_request:
+    branches:
+      - main
+      - master
+      - scheduling
+
+jobs:
+  lint-and-test:
+    name: Lint & Unit Test (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - sms-identity
+          - sms-management
+          - sms-monitoring
+          - sms-reporting
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ matrix.service }}/go.mod
+
+      - name: Get Go Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.service }}-${{ hashFiles(format('{0}/go.sum', matrix.service)) }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.service }}-
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: ${{ matrix.service }}
+          args: --timeout=10m
+
+      - name: Run Unit Tests with Coverage
+        working-directory: ${{ matrix.service }}
+        run: |
+          go test -coverprofile=c.out ./...
+          echo "mode: set" > core.out
+          grep -E "internal/service|internal/repository/impl|internal/handler/grpc|internal/worker|internal/consumer" c.out | grep -v -E "mock|middlewares" >> core.out || true
+          echo "=== Core Business Logic Coverage ==="
+          go tool cover -func=core.out
+
+  integration-test:
+    name: Integration Test (Bruno)
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run Integration Tests
+        shell: pwsh
+        env:
+          COMPOSE_PROJECT_NAME: sms
+        run: |
+          cd bruno
+          ./run_tests.ps1 -Target ci
