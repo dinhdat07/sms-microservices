@@ -46,6 +46,7 @@ services:
       - GRPC_PORT=50051
       - ADMIN_EMAIL=admin@example.com
       - USER_EMAIL=user@example.com
+      - USER_PASSWORD=user
       - DB_URL_FILE=/run/secrets/db_url
       - ADMIN_PASSWORD_FILE=/run/secrets/admin_password
       - JWT_SECRET_FILE=/run/secrets/jwt_secret

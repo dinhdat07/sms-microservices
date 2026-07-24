@@ -51,12 +51,18 @@ services:
       - GRPC_PORT=50051
       - ADMIN_EMAIL=admin@demo.com
       - ADMIN_PASSWORD=admin
+      - USER_EMAIL=user@example.com
+      - USER_PASSWORD=user
     labels:
       - "traefik.enable=true"
       # Route for Authentication APIs
       - "traefik.http.routers.identity.rule=PathPrefix(`/api/v1/auth/`)"
       - "traefik.http.routers.identity.entrypoints=web"
       - "traefik.http.services.identity.loadbalancer.server.port=8000"
+      # Route for OpenAPI (no auth required)
+      - "traefik.http.routers.identity-openapi.rule=PathPrefix(`/openapi/auth/`)"
+      - "traefik.http.routers.identity-openapi.entrypoints=web"
+      - "traefik.http.routers.identity-openapi.service=identity"
       # Define ForwardAuth Middleware
       - "traefik.http.middlewares.sms-auth.forwardauth.address=http://sms_identity:8000/verify"
       - "traefik.http.middlewares.sms-auth.forwardauth.trustForwardHeader=true"
@@ -94,6 +100,10 @@ services:
       - "traefik.http.services.management.loadbalancer.server.port=8001"
       # Apply ForwardAuth Middleware (from sms-identity)
       - "traefik.http.routers.management.middlewares=sms-auth@docker"
+      # Route for OpenAPI (no auth required)
+      - "traefik.http.routers.management-openapi.rule=PathPrefix(`/openapi/server_management/`)"
+      - "traefik.http.routers.management-openapi.entrypoints=web"
+      - "traefik.http.routers.management-openapi.service=management"
     networks:
       - default
 
@@ -271,6 +281,11 @@ services:
       - "traefik.http.services.reporting.loadbalancer.server.port=8002"
       # Apply ForwardAuth Middleware (from sms-identity)
       - "traefik.http.routers.reporting.middlewares=sms-auth@docker"
+      # Route for OpenAPI (no auth required)
+      - "traefik.http.routers.reporting-openapi.rule=PathPrefix(`/openapi/reporting/`)"
+      - "traefik.http.routers.reporting-openapi.entrypoints=web"
+      - "traefik.http.routers.reporting-openapi.priority=200"
+      - "traefik.http.routers.reporting-openapi.service=reporting"
     networks:
       - default
 
