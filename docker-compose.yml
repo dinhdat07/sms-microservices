@@ -295,9 +295,7 @@ services:
   # SMS Frontend Service
   # ============================================
   sms-frontend:
-    build:
-      context: ./sms-frontend
-      dockerfile: Dockerfile
+    image: whaleplay710/sms-frontend:v1.0.0
     container_name: sms_frontend
     restart: unless-stopped
     labels:
