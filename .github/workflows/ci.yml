@@ -29,20 +29,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Patch Go version for CI
-        run: |
-          sed -i 's/go 1.26.2/go 1.24/g' ${{ matrix.service }}/go.mod
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version-file: ${{ matrix.service }}/go.mod
 
       - name: Go Mod Tidy
         working-directory: ${{ matrix.service }}
-        run: |
-          go mod tidy
-          sed -i -E 's/go 1\.[0-9]+(\.[0-9]+)?/go 1.24/g' go.mod
+        run: go mod tidy
 
       - name: Get Go Cache
         uses: actions/cache@v4
@@ -54,12 +48,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-${{ matrix.service }}-
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          working-directory: ${{ matrix.service }}
-          args: --timeout=10m
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+      - name: Run golangci-lint
+        working-directory: ${{ matrix.service }}
+        run: golangci-lint run --timeout=10m
 
       - name: Run Unit Tests with Coverage
         working-directory: ${{ matrix.service }}
@@ -78,11 +72,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Patch Go version for CI
-        run: |
-          find . -name "go.mod" -exec sed -i 's/go 1.26.2/go 1.24/g' {} +
-          find . -name "Dockerfile" -exec sed -i 's/golang:1.26.2-alpine/golang:1.24-alpine/g' {} +
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
