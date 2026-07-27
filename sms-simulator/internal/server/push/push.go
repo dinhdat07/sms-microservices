@@ -54,9 +54,8 @@ func StartAgentPushWorker(rdb redis.UniversalClient, endpoint string) {
 
 				req, _ := http.NewRequest("POST", endpoint, bytes.NewBuffer(payload))
 				req.Header.Set("Content-Type", "application/json")
-				// We do not require master key here unless the handler requires it.
-				// For now let's add it if the handler enforces it.
-				// Wait, handler might not enforce it if not provided, or does it?
+				
+				req.Header.Set("X-Master-Key", "0123456789abcdef0123456789abcdef")
 
 				go func(r *http.Request) {
 					resp, err := client.Do(r)
