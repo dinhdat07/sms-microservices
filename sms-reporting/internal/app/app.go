@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"google.golang.org/grpc"
 
@@ -29,6 +30,7 @@ type App struct {
 	scheduler         *Scheduler
 	authorizer        *security.Authorizer
 	methodPermissions map[string]security.PermissionCode
+	httpServer        *http.Server
 }
 
 func NewApp() (*App, error) {

@@ -73,21 +73,31 @@ func (a *App) Run() error {
 	agentHandler := rest.NewAgentHandler(a.RedisClient)
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/agent/heartbeat", agentHandler)
-	httpServer := &http.Server{
+	a.httpServer = &http.Server{
 		Addr:    ":8080", // Could be configurable
 		Handler: mux,
 	}
 	go func() {
 		logger.Log.Sugar().Info("Agent Push Server listening on :8080")
-		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Log.Sugar().Errorf("HTTP Server error: %v", err)
 		}
 	}()
 
 	<-sigCh
-	logger.Log.Sugar().Info("Shutting down Monitoring Worker...")
 	cancel()
-	httpServer.Shutdown(context.Background())
+
+	a.Shutdown(context.Background())
+
+	return nil
+}
+
+func (a *App) Shutdown(ctx context.Context) {
+	logger.Log.Sugar().Info("Shutting down Monitoring Worker...")
+
+	if a.httpServer != nil {
+		a.httpServer.Shutdown(ctx)
+	}
 
 	// Wait for running workers to finish
 	time.Sleep(2 * time.Second)
@@ -97,7 +107,6 @@ func (a *App) Run() error {
 	}
 
 	logger.Log.Sugar().Info("Monitoring Worker stopped.")
-	return nil
 }
 
 func (a *App) runProducerCycle(ctx context.Context) {

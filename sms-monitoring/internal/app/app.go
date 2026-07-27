@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -25,6 +26,7 @@ type App struct {
 	Pool        worker.Pool
 	monService  service.MonitoringService
 	esLogger    elasticsearch.ObservationLogger
+	httpServer  *http.Server
 }
 
 func NewApp() (*App, error) {
@@ -100,10 +102,4 @@ func NewApp() (*App, error) {
 		monService:  monService,
 		esLogger:    esLogger,
 	}, nil
-}
-
-func (a *App) Shutdown() {
-	if a.esLogger != nil {
-		a.esLogger.Shutdown()
-	}
 }

@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
 	"gorm.io/gorm"
 
 	"sms-identity/internal/config"
@@ -23,6 +25,8 @@ type App struct {
 	AuthHandler        *authgrpc.AuthServer
 	ForwardAuthHandler *handler.ForwardAuthHandler
 	CSRFManager        *security.CSRFManager
+	grpcServer         *grpc.Server
+	httpServer         *http.Server
 }
 
 func New() (*App, error) {

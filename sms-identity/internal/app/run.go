@@ -26,14 +26,14 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	grpcSrv := grpc.NewServer(
+	a.grpcServer = grpc.NewServer(
 		grpc.UnaryInterceptor(middlewares.CSRFInterceptor(a.CSRFManager)),
 	)
-	authv1.RegisterAuthServiceServer(grpcSrv, a.AuthHandler)
+	authv1.RegisterAuthServiceServer(a.grpcServer, a.AuthHandler)
 
 	go func() {
 		logger.Log.Sugar().Infof("gRPC server listening on %s", grpcAddr)
-		if err := grpcSrv.Serve(lis); err != nil {
+		if err := a.grpcServer.Serve(lis); err != nil {
 			logger.Log.Sugar().Fatalf("Failed to serve gRPC: %v", err)
 		}
 	}()
@@ -71,29 +71,36 @@ func (a *App) Run() error {
 	mux.Handle("/openapi/", http.StripPrefix("/openapi/", http.FileServer(http.Dir("./api/openapi"))))
 
 	httpAddr := fmt.Sprintf(":%s", a.Config.HTTPPort)
-	httpSrv := &http.Server{
+	a.httpServer = &http.Server{
 		Addr:    httpAddr,
 		Handler: mux,
 	}
 
 	go func() {
 		logger.Log.Sugar().Infof("HTTP server listening on %s", httpAddr)
-		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Log.Sugar().Fatalf("Failed to serve HTTP: %v", err)
 		}
 	}()
 
-	// Graceful shutdown
+	// Wait for termination signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
+	a.Shutdown(ctx)
+	return nil
+}
+
+func (a *App) Shutdown(ctx context.Context) {
 	logger.Log.Sugar().Info("Shutting down servers...")
-	grpcSrv.GracefulStop()
-	if err := httpSrv.Shutdown(ctx); err != nil {
-		logger.Log.Sugar().Errorf("HTTP server shutdown failed: %v", err)
+	if a.grpcServer != nil {
+		a.grpcServer.GracefulStop()
+	}
+	if a.httpServer != nil {
+		if err := a.httpServer.Shutdown(ctx); err != nil {
+			logger.Log.Sugar().Errorf("HTTP server shutdown failed: %v", err)
+		}
 	}
 	logger.Log.Sugar().Info("Shutdown complete")
-
-	return nil
 }

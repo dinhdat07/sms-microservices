@@ -11,7 +11,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize monitoring app: %v", err)
 	}
-	defer workerApp.Shutdown()
 
 	if err := workerApp.Run(); err != nil {
 		log.Fatalf("Monitoring App stopped with error: %v", err)

@@ -95,6 +95,7 @@ services:
       - GRPC_PORT=50052
       - DB_URL_FILE=/run/secrets/db_url
       - OUTBOX_STREAM_MAXLEN=1000000
+      - MASTER_KEY_FILE=/run/secrets/master_key
     networks:
       - default
     image: whaleplay710/sms-management:v1.0.0
@@ -122,6 +123,7 @@ services:
         - traefik.http.middlewares.management-health-replace.replacepath.path=/health
     secrets:
       - db_url
+      - master_key
 
   postgres:
     logging: *default-logging
@@ -258,18 +260,23 @@ services:
       - REDIS_ADDR=redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - ELASTICSEARCH_SERVER_INDEX=sms_observation_logs
-      - MONITORING_FAILURE_THRESHOLD=2
+      - MONITORING_FAILURE_THRESHOLD=1
       - MONITORING_WORKER_CONCURRENCY=500
-      - MONITORING_WORKER_PING_TIMEOUT=3s
-      - MONITORING_WORKER_TICK_INTERVAL=30s
+      - MONITORING_ICMP_TIMEOUT=3s
+      - MONITORING_SSH_TIMEOUT=10s
+      - MONITORING_AGENT_PULL_TIMEOUT=10s
+      - MONITORING_AGENT_PUSH_TTL=60
+      - MONITORING_SWEEPER_INTERVAL=10s
+      - MONITORING_WORKER_TICK_INTERVAL=60s
       - MONITORING_WORKER_LOCK_KEY=lock:monitoring_worker
-      - MONITORING_WORKER_LOCK_EXPIRATION=25s
+      - MONITORING_WORKER_LOCK_EXPIRATION=50s
       - SIMULATOR_HOST=simulator
       - SIMULATOR_SUBNET=10.1.0.0/16
       - LOG_LEVEL=info
       - LOG_FORMAT=text
       - DB_URL_FILE=/run/secrets/db_url
       - STREAM_MAXLEN=1000000
+      - MASTER_KEY_FILE=/run/secrets/master_key
     networks:
       - default
     image: whaleplay710/sms-monitoring-worker:v1.0.0
@@ -281,6 +288,7 @@ services:
         order: start-first
     secrets:
       - db_url
+      - master_key
 
   sms-reporting:
     logging: *default-logging
@@ -402,4 +410,6 @@ secrets:
   jwt_secret:
     external: true
   user_password:
+    external: true
+  master_key:
     external: true
