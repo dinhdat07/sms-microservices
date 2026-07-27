@@ -412,9 +412,24 @@ services:
         - traefik.http.services.swagger.loadbalancer.server.port=8080
 
 volumes:
-  sms_postgres_data: null
-  sms_es_data: null
-  sms_redis_data: null
+  sms_postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/sms_data/postgres
+  sms_es_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/sms_data/elasticsearch
+  sms_redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/sms_data/redis
 
 networks:
   default:
