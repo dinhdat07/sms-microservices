@@ -1,18 +1,32 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.26.2-alpine AS builder
 
 WORKDIR /app
 
+# Copy go.mod and go.sum files
 COPY go.mod go.sum ./
+
+# Download dependencies
 RUN go mod download
 
+# Copy the source code
 COPY . .
-RUN go build -o agent-handler cmd/agent-handler/main.go
 
-FROM alpine:latest
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/bin/server ./cmd/agent-handler/main.go
+
+# Create logs dir in builder so we can copy it with correct permissions
+RUN mkdir -p /app/logs
+
+FROM gcr.io/distroless/static-debian12:nonroot
 
 WORKDIR /app
-COPY --from=builder /app/agent-handler .
+
+# Copy the binary and logs dir with nonroot ownership
+COPY --chown=nonroot:nonroot --from=builder /app/bin/server /app/server
+COPY --chown=nonroot:nonroot --from=builder /app/logs /app/logs
+
+USER nonroot:nonroot
 
 EXPOSE 8084
 
-CMD ["./agent-handler"]
+ENTRYPOINT ["/app/server"]
