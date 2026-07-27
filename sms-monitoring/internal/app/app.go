@@ -41,13 +41,9 @@ func NewApp() (*App, error) {
 		logger.Log.Sugar().Errorf("Failed to load redis config: %v", err)
 	}
 
-	// Load workers Configs
-	concurrency := cfg.WorkerConcurrency
-	pingTimeout := cfg.WorkerPingTimeout
-
 	// Ensure Redis pool size is large enough to handle all BLPOP blocking connections
-	if redisCfg != nil && redisCfg.PoolSize < concurrency+50 {
-		redisCfg.PoolSize = concurrency + 50
+	if redisCfg != nil && redisCfg.PoolSize < cfg.WorkerConcurrency+50 {
+		redisCfg.PoolSize = cfg.WorkerConcurrency + 50
 		logger.Log.Sugar().Infof("Adjusted Redis PoolSize to %d to support BLPOP concurrency", redisCfg.PoolSize)
 	}
 
@@ -71,21 +67,18 @@ func NewApp() (*App, error) {
 	// Initialize Dependencies
 
 	stateStore := impl.NewRedisServerStateStore(redisClient)
-	threshold := cfg.FailureThreshold
 	publisher := messagebroker.NewRedisPublisher(redisClient, cfg.Publisher.MaxLen)
-	monService := service.NewMonitoringService(publisher, stateStore, esLogger, threshold)
+	monService := service.NewMonitoringService(publisher, stateStore, esLogger, cfg.FailureThreshold)
 
-	tickInterval := cfg.WorkerTickInterval
-	logger.Log.Info(fmt.Sprintf("Monitoring Worker started. Scanning every %s with failure threshold %d", tickInterval.String(), threshold))
+	logger.Log.Info(fmt.Sprintf("Monitoring Worker started. Scanning every %s with failure threshold %d", cfg.WorkerTickInterval.String(), cfg.FailureThreshold))
 
 	timeouts := checkers.CheckerTimeouts{
-		ICMP:         cfg.ICMPTimeout,
-		SSH:          cfg.SSHTimeout,
-		AgentPull:    cfg.AgentPullTimeout,
-		AgentPushTTL: cfg.AgentPushTTL,
+		ICMP:      cfg.ICMPTimeout,
+		SSH:       cfg.SSHTimeout,
+		AgentPull: cfg.AgentPullTimeout,
 	}
 	factory := checkers.NewHealthCheckerFactory(redisClient, cfg.ICMPPrivileged, timeouts)
-	pool := worker.NewWorkerPool(redisClient, monService, factory, concurrency, pingTimeout)
+	pool := worker.NewWorkerPool(redisClient, monService, factory, cfg.WorkerConcurrency, cfg.WorkerPingTimeout)
 
 	return &App{
 		cfg:         cfg,

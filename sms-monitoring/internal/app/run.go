@@ -2,24 +2,25 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"sms-monitoring/internal/config"
 	"sms-monitoring/internal/handler/rest"
 	"sms-monitoring/internal/infrastructure/database"
 	"sms-monitoring/internal/infrastructure/logger"
 	"sms-monitoring/internal/infrastructure/messagebroker"
+	infraRedis "sms-monitoring/internal/infrastructure/redis"
 	"sms-monitoring/internal/worker/consumers"
 	"sms-monitoring/internal/worker/sweepers"
+
+	"github.com/redis/go-redis/v9"
 )
 
 func (a *App) Run() error {
-	tickInterval, _ := config.GetEnvDuration("MONITORING_WORKER_TICK_INTERVAL", 60*time.Second)
-
 	// Context for graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -34,10 +35,10 @@ func (a *App) Run() error {
 	go streamConsumer.Start(ctx)
 
 	// Start Scheduler
-	ticker := time.NewTicker(tickInterval)
+	ticker := time.NewTicker(a.cfg.WorkerTickInterval)
 	defer ticker.Stop()
 
-	logger.Log.Sugar().Infof("Monitoring Worker started. Scanning every %s\n", tickInterval)
+	logger.Log.Sugar().Infof("Monitoring Worker started. Scanning every %s\n", a.cfg.WorkerTickInterval)
 
 	// Always-on Consumer
 	go func() {
@@ -62,22 +63,21 @@ func (a *App) Run() error {
 		}
 	}()
 
-	sweeperInterval := a.cfg.SweeperInterval
-	pushTTL := int64(a.cfg.AgentPushTTL.Seconds())
-	agentSweeper := sweepers.NewAgentSweeper(a.RedisClient, a.monService, sweeperInterval, pushTTL)
+	agentSweeper := sweepers.NewAgentSweeper(a.RedisClient, a.monService, a.cfg.SweeperInterval, int64(a.cfg.AgentPushTTL.Seconds()))
 	go agentSweeper.Start(ctx)
 
 	// Start HTTP Server for Agent Push
-	agentHandler := rest.NewAgentHandler(a.RedisClient)
+	agentHandler := rest.NewAgentHandler(a.RedisClient, a.monService)
+	agentHandler.Start(ctx)
+
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/agent/heartbeat", agentHandler)
-	agentPort := a.cfg.AgentPort
 	a.httpServer = &http.Server{
-		Addr:    ":" + agentPort,
+		Addr:    ":" + a.cfg.AgentPort,
 		Handler: mux,
 	}
 	go func() {
-		logger.Log.Sugar().Infof("Agent Push Server listening on :%s", agentPort)
+		logger.Log.Sugar().Infof("Agent Push Server listening on :%s", a.cfg.AgentPort)
 		if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Log.Sugar().Errorf("HTTP Server error: %v", err)
 		}
@@ -128,29 +128,46 @@ func (a *App) runProducerCycle(ctx context.Context) {
 		} else {
 			logger.Log.Sugar().Info("[Producer] Lock acquired. Populating work queue...")
 			// Fetch all Server IDs
-			serverIDs, err := a.RedisClient.SMembers(ctx, "server:all_ids").Result()
+			serverIDs, err := a.RedisClient.SMembers(ctx, infraRedis.ServerAllIDsKey).Result()
 			if err == nil && len(serverIDs) > 0 {
-				// Push all servers to queue
-				args := make([]interface{}, len(serverIDs))
-				for i, v := range serverIDs {
-					args[i] = v
+				// Use pipeline to fetch health_check_method for all servers
+				pipe := a.RedisClient.Pipeline()
+				cmds := make(map[string]*redis.StringCmd)
+				for _, id := range serverIDs {
+					redisKey := fmt.Sprintf(infraRedis.ServerInfoKeyFmt, id)
+					cmds[id] = pipe.HGet(ctx, redisKey, "health_check_method")
 				}
-				a.RedisClient.RPush(ctx, "monitoring:queue", args...)
-				logger.Log.Sugar().Infof("[Producer] Pushed %d servers to the queue.", len(serverIDs))
+				_, _ = pipe.Exec(ctx)
 
-				// Track duration for this batch
-				start := time.Now()
-				go func(batchSize int) {
-					for {
-						time.Sleep(1 * time.Second)
-						length, err := a.RedisClient.LLen(context.Background(), "monitoring:queue").Result()
-						if err != nil || length == 0 {
-							duration := time.Since(start)
-							logger.Log.Sugar().Infof("[Consumer] Batch of %d servers processed (Duration: %s)", batchSize, duration)
-							return
-						}
+				// Filter out AGENT_PUSH servers
+				var pollingServers []interface{}
+				for id, cmd := range cmds {
+					method, err := cmd.Result()
+					if err == nil && method != "AGENT_PUSH" {
+						pollingServers = append(pollingServers, id)
 					}
-				}(len(serverIDs))
+				}
+
+				if len(pollingServers) > 0 {
+					a.RedisClient.RPush(ctx, "monitoring:queue", pollingServers...)
+					logger.Log.Sugar().Infof("[Producer] Pushed %d servers to the queue (Ignored %d AGENT_PUSH servers).", len(pollingServers), len(serverIDs)-len(pollingServers))
+
+					// Track duration for this batch
+					start := time.Now()
+					go func(batchSize int) {
+						for {
+							time.Sleep(1 * time.Second)
+							length, err := a.RedisClient.LLen(context.Background(), "monitoring:queue").Result()
+							if err != nil || length == 0 {
+								duration := time.Since(start)
+								logger.Log.Sugar().Infof("[Consumer] Batch of %d servers processed (Duration: %s)", batchSize, duration)
+								return
+							}
+						}
+					}(len(pollingServers))
+				} else {
+					logger.Log.Sugar().Info("[Producer] No polling servers to push.")
+				}
 			}
 		}
 	}

@@ -98,11 +98,6 @@ func (w *workerPool) processServer(ctx context.Context, serverID string) {
 	ipv4 := configMap["ipv4"]
 	method := configMap["health_check_method"]
 
-	if method == "AGENT_PUSH" {
-		// handled by the AgentSweeper, no active polling needed
-		return
-	}
-
 	configMap["server_id"] = serverID
 
 	checker := w.factory.GetChecker(method)

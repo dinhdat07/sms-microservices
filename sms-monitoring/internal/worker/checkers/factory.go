@@ -21,14 +21,12 @@ type checkerFactory struct {
 	icmp      HealthChecker
 	ssh       HealthChecker
 	agentPull HealthChecker
-	agentPush HealthChecker
 }
 
 type CheckerTimeouts struct {
-	ICMP         time.Duration
-	SSH          time.Duration
-	AgentPull    time.Duration
-	AgentPushTTL time.Duration
+	ICMP      time.Duration
+	SSH       time.Duration
+	AgentPull time.Duration
 }
 
 func NewHealthCheckerFactory(rdb redis.UniversalClient, privileged bool, timeouts CheckerTimeouts) HealthCheckerFactory {
@@ -36,7 +34,6 @@ func NewHealthCheckerFactory(rdb redis.UniversalClient, privileged bool, timeout
 		icmp:      NewICMPChecker(privileged, timeouts.ICMP),
 		ssh:       NewSSHChecker(timeouts.SSH),
 		agentPull: NewAgentPullChecker(timeouts.AgentPull),
-		agentPush: NewAgentPushChecker(rdb, timeouts.AgentPushTTL.Seconds()),
 	}
 }
 
@@ -46,8 +43,6 @@ func (f *checkerFactory) GetChecker(method string) HealthChecker {
 		return f.ssh
 	case "AGENT_PULL":
 		return f.agentPull
-	case "AGENT_PUSH":
-		return f.agentPush
 	case "ICMP":
 		fallthrough
 	default:
