@@ -9,6 +9,7 @@ import (
 	"sms-reporting/internal/domain"
 	"sms-reporting/internal/infrastructure/messagebroker"
 	brokerMock "sms-reporting/internal/infrastructure/messagebroker/mock"
+	"sms-reporting/internal/repository"
 	repoMock "sms-reporting/internal/repository/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -258,4 +259,105 @@ func TestEventConsumer_HandleStatusEvent_InvalidJSON(t *testing.T) {
 
 	err := consumer.handleStatusEvent(context.Background(), msg)
 	assert.Error(t, err)
+}
+
+func TestEventConsumer_Start_NilSubscriber(t *testing.T) {
+	consumer := NewEventConsumer(nil, nil, config.ConsumerConfig{})
+	consumer.Start(context.Background()) // Should return early
+}
+
+func TestEventConsumer_Start_SubscribeError(t *testing.T) {
+	subscriber := new(brokerMock.MockSubscriber)
+	cfg := config.ConsumerConfig{
+		Name:               "test_consumer",
+		ServerStream:       "sms.events.server",
+		ServerGroup:        "reporting_group",
+		ServerStatusStream: "sms.events.server_status",
+		ServerStatusGroup:  "reporting_status_group",
+	}
+
+	consumer := NewEventConsumer(subscriber, nil, cfg)
+
+	subscriber.On("Subscribe", mock.Anything, "sms.events.server", "reporting_group", "test_consumer", mock.Anything).Return(assert.AnError)
+	subscriber.On("Subscribe", mock.Anything, "sms.events.server_status", "reporting_status_group", "test_consumer", mock.Anything).Return(assert.AnError)
+
+	consumer.Start(context.Background())
+}
+
+func TestEventConsumer_HandleServerEvent_MissingEventType(t *testing.T) {
+	consumer := NewEventConsumer(nil, nil, config.ConsumerConfig{}).(*eventConsumerImpl)
+
+	msg := messagebroker.Message{
+		Values: map[string]interface{}{
+			"payload": "{}",
+		},
+	}
+
+	err := consumer.handleServerEvent(context.Background(), msg)
+	assert.NoError(t, err)
+}
+
+func TestEventConsumer_HandleServerEvent_Deleted_InvalidJSON(t *testing.T) {
+	consumer := NewEventConsumer(nil, nil, config.ConsumerConfig{}).(*eventConsumerImpl)
+
+	msg := messagebroker.Message{
+		Values: map[string]interface{}{
+			"event_type": "ServerDeleted",
+			"payload":    "{invalid json",
+		},
+	}
+
+	err := consumer.handleServerEvent(context.Background(), msg)
+	assert.Error(t, err)
+}
+
+func TestEventConsumer_HandleStatusEvent_MissingEventType(t *testing.T) {
+	consumer := NewEventConsumer(nil, nil, config.ConsumerConfig{}).(*eventConsumerImpl)
+
+	msg := messagebroker.Message{
+		Values: map[string]interface{}{
+			"payload": "{}",
+		},
+	}
+
+	err := consumer.handleStatusEvent(context.Background(), msg)
+	assert.NoError(t, err)
+}
+
+func TestEventConsumer_HandleStatusEvent_InvalidEventType(t *testing.T) {
+	consumer := NewEventConsumer(nil, nil, config.ConsumerConfig{}).(*eventConsumerImpl)
+
+	msg := messagebroker.Message{
+		Values: map[string]interface{}{
+			"event_type": "InvalidEvent",
+			"payload":    "{}",
+		},
+	}
+
+	err := consumer.handleStatusEvent(context.Background(), msg)
+	assert.NoError(t, err)
+}
+
+func TestEventConsumer_HandleStatusEvent_RecordNotFound(t *testing.T) {
+	subscriber := new(brokerMock.MockSubscriber)
+	repo := new(repoMock.MockReportingRepository)
+	consumer := NewEventConsumer(subscriber, repo, config.ConsumerConfig{}).(*eventConsumerImpl)
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"server_id": "svr-3",
+		"status":    "OFFLINE",
+	})
+
+	msg := messagebroker.Message{
+		Values: map[string]interface{}{
+			"event_type": "ServerStatusChanged",
+			"payload":    string(payload),
+		},
+	}
+
+	repo.On("UpdateReportingServerStatus", context.Background(), "svr-3", "OFFLINE").Return(repository.ErrRecordNotFound)
+
+	err := consumer.handleStatusEvent(context.Background(), msg)
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
 }

@@ -1,4 +1,4 @@
-package service_test
+package service_test
 
 import (
 	"bytes"
@@ -164,4 +164,61 @@ func TestExportServers_Error(t *testing.T) {
 
 	_, _, err := svc.ExportServers(ctx, filter)
 	assert.Error(t, err)
+}
+
+func TestImportServers_EmptyFile(t *testing.T) {
+	ctx := context.Background()
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := service.NewServerService(repo, outbox)
+
+	headers := []string{}
+	data := [][]string{}
+	fileBytes := createExcelBytes(t, headers, data)
+
+	_, err := svc.ImportServers(ctx, fileBytes)
+	assert.ErrorIs(t, err, service.ErrEmptyFile)
+}
+
+func TestImportServers_OutboxError(t *testing.T) {
+	ctx := context.Background()
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := service.NewServerService(repo, outbox)
+	mockTx(repo)
+
+	headers := []string{"Server Name", "IPv4"}
+	data := [][]string{
+		{"srv-1", "10.0.0.1"},
+	}
+	fileBytes := createExcelBytes(t, headers, data)
+
+	outboxErr := errors.New("outbox insert failed")
+	repo.On("FindByNamesOrIPv4s", ctx, []string{"srv-1"}, []string{"10.0.0.1"}).Return([]*domain.Server{}, nil).Once()
+	repo.On("BatchCreate", ctx, mock.Anything).Return(nil).Once()
+	outbox.On("BatchCreate", ctx, mock.Anything).Return(outboxErr).Once()
+
+	_, err := svc.ImportServers(ctx, fileBytes)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to create outbox events")
+}
+
+func TestImportServers_FindByNamesError(t *testing.T) {
+	ctx := context.Background()
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := service.NewServerService(repo, outbox)
+
+	headers := []string{"Server Name", "IPv4"}
+	data := [][]string{
+		{"srv-1", "10.0.0.1"},
+	}
+	fileBytes := createExcelBytes(t, headers, data)
+
+	dbErr := errors.New("db error")
+	repo.On("FindByNamesOrIPv4s", ctx, []string{"srv-1"}, []string{"10.0.0.1"}).Return(nil, dbErr).Once()
+
+	_, err := svc.ImportServers(ctx, fileBytes)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to check existing servers")
 }

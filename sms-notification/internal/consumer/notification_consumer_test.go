@@ -69,6 +69,25 @@ func TestNotificationConsumer_handleNotificationEvent(t *testing.T) {
 	assert.Equal(t, assert.AnError, err)
 
 	sender.AssertExpectations(t)
+	// 5. Missing event_type
+	msgMissingType := messagebroker.Message{
+		Values: map[string]interface{}{
+			"payload": string(payloadBytes),
+		},
+	}
+	err = consumer.handleNotificationEvent(ctx, msgMissingType)
+	assert.NoError(t, err)
+
+	// 6. Missing payload
+	msgMissingPayload := messagebroker.Message{
+		Values: map[string]interface{}{
+			"event_type": domain.EventNotificationRequested,
+		},
+	}
+	err = consumer.handleNotificationEvent(ctx, msgMissingPayload)
+	assert.NoError(t, err)
+
+	sender.AssertExpectations(t)
 }
 
 func TestNotificationConsumer_Start(t *testing.T) {
@@ -86,8 +105,13 @@ func TestNotificationConsumer_Start(t *testing.T) {
 
 	consumer.Start(ctx)
 
-	// In a real scenario, we might need a way to wait for the goroutine,
-	// but here we just verify it doesn't panic and calls Subscribe eventually.
-	// We could use a WaitGroup or a channel to test it deterministically,
-	// but this is enough for basic coverage.
+	// Test nil subscriber
+	consumerNil := NewNotificationConsumer(nil, cfg, nil)
+	consumerNil.Start(ctx) // Should return early and not panic
+
+	// Test subscribe error
+	subscriberErr := new(mbMock.MockSubscriber)
+	consumerErr := NewNotificationConsumer(subscriberErr, cfg, nil)
+	subscriberErr.On("Subscribe", ctx, "test_stream", "test_group", "test_consumer", mock.Anything).Return(assert.AnError).Once()
+	consumerErr.Start(ctx)
 }
