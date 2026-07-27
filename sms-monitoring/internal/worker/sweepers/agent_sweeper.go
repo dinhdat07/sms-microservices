@@ -65,7 +65,7 @@ func (s *AgentSweeper) sweep(ctx context.Context) {
 
 		// Get IP from Hash
 		redisKey := fmt.Sprintf(infraRedis.ServerInfoKeyFmt, serverID)
-		ipv4, err := s.rdb.HGet(ctx, redisKey, "ipv4").Result()
+		ipv4, err := s.rdb.HGet(ctx, redisKey, infraRedis.ServerInfoFieldIPv4).Result()
 		if err != nil {
 			ipv4 = ""
 		}
