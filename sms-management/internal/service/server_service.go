@@ -125,11 +125,7 @@ func (s *serverService) CreateServer(ctx context.Context, input CreateServerInpu
 			return err
 		}
 
-		payloadServer := *server
-		if decryptedKey, err := security.Decrypt(server.SSHKey); err == nil {
-			payloadServer.SSHKey = decryptedKey
-		}
-		payload, _ := json.Marshal(payloadServer)
+		payload, _ := json.Marshal(server)
 		event := domain.NewOutboxEvent("Server", server.ServerID, domain.EventServerCreated, payload)
 		return s.outboxRepo.Create(txCtx, event)
 	})
@@ -225,11 +221,7 @@ func (s *serverService) UpdateServer(ctx context.Context, id string, input Updat
 			return err
 		}
 
-		payloadServer := *server
-		if decryptedKey, err := security.Decrypt(server.SSHKey); err == nil {
-			payloadServer.SSHKey = decryptedKey
-		}
-		payload, _ := json.Marshal(payloadServer)
+		payload, _ := json.Marshal(server)
 		event := domain.NewOutboxEvent("Server", server.ServerID, domain.EventServerUpdated, payload)
 		return s.outboxRepo.Create(txCtx, event)
 	})
