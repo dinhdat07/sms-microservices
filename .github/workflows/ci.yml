@@ -92,6 +92,23 @@ jobs:
                 - "--entrypoints.web.address=:80"
           EOF
 
+      - name: Create Bruno Local Environment for CI
+        run: |
+          mkdir -p bruno/environments
+          cat <<EOF > bruno/environments/local.bru
+          vars {
+            baseURL: http://localhost
+            adminEmail: admin@demo.com
+            adminPassword: admin
+            userEmail: user@example.com
+            userPassword: user
+            testServerName: bruno-test-srv
+            testServerIPv4: 192.168.100.1
+            testServerIPv4Alt: 192.168.100.2
+            testReportEmail: admin@example.com
+          }
+          EOF
+
       - name: Run Integration Tests
         shell: pwsh
         env:
