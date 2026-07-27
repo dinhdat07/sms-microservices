@@ -3,6 +3,7 @@ module sms-monitoring
 go 1.26.2
 
 require (
+	github.com/alicebob/miniredis/v2 v2.38.0
 	github.com/elastic/go-elasticsearch/v8 v8.19.6
 	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/joho/godotenv v1.5.1
@@ -23,6 +24,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect

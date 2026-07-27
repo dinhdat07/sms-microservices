@@ -20,6 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         service:
+          - sms-agent-handler
           - sms-identity
           - sms-management
           - sms-monitoring
@@ -60,7 +61,7 @@ jobs:
         run: |
           go test -coverprofile=c.out ./...
           echo "mode: set" > core.out
-          grep -E "internal/service|internal/repository/impl|internal/handler/grpc|internal/worker|internal/consumer" c.out | grep -v -E "mock|middlewares" >> core.out || true
+          grep -E "internal/service|internal/repository/impl|internal/handler/grpc|internal/handler/rest|internal/worker|internal/consumer" c.out | grep -v -E "mock|middlewares" >> core.out || true
           echo "=== Core Business Logic Coverage ==="
           go tool cover -func=core.out
 
