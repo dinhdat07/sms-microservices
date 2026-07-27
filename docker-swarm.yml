@@ -290,11 +290,7 @@ services:
       - REDIS_ADDR=redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - ELASTICSEARCH_SERVER_INDEX=sms_observation_logs
-      - SMTP_HOST=mailhog
-      - SMTP_PORT=1025
-      - SMTP_USE_AUTH=false
-      - SMTP_USE_TLS=false
-      - SMTP_FROM=reports@sms.local
+      - NOTIFICATION_STREAM=notification_events
       - HTTP_PORT=8002
       - GRPC_PORT=50053
       - CONSUMER_NAME=reporting_worker
@@ -330,6 +326,33 @@ services:
         - traefik.http.middlewares.reporting-health-replace.replacepath.path=/health
     secrets:
       - db_url
+
+  sms-notification:
+    logging: *default-logging
+    environment:
+      - ENV=development
+      - REDIS_ENABLED=true
+      - REDIS_ADDR=redis:6379
+      - NOTIFICATION_STREAM=notification_events
+      - NOTIFICATION_GROUP=notification_workers
+      - CONSUMER_NAME=notification_worker_1
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_USE_AUTH=false
+      - SMTP_USE_TLS=false
+      - SMTP_FROM=reports@sms.local
+      - SMTP_FROM_NAME=SMS Monitoring
+      - LOG_LEVEL=info
+      - LOG_FORMAT=text
+    networks:
+      - default
+    image: whaleplay710/sms-notification:v1.0.0
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
 
   sms-frontend:
     logging: *default-logging

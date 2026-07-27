@@ -266,11 +266,7 @@ services:
       - REDIS_ADDR=redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - ELASTICSEARCH_SERVER_INDEX=sms_observation_logs
-      - SMTP_HOST=mailhog
-      - SMTP_PORT=1025
-      - SMTP_USE_AUTH=false
-      - SMTP_USE_TLS=false
-      - SMTP_FROM=reports@sms.local
+      - NOTIFICATION_STREAM=notification_events
       - HTTP_PORT=8002
       - GRPC_PORT=50053
       - CONSUMER_NAME=reporting_worker
@@ -288,6 +284,38 @@ services:
       - "traefik.http.routers.reporting-openapi.entrypoints=web"
       - "traefik.http.routers.reporting-openapi.priority=200"
       - "traefik.http.routers.reporting-openapi.service=reporting"
+    networks:
+      - default
+
+  # ============================================
+  # SMS Notification Service
+  # ============================================
+  sms-notification:
+    build:
+      context: ./sms-notification
+      dockerfile: Dockerfile
+    container_name: sms_notification
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    environment:
+      - ENV=development
+      - REDIS_ENABLED=true
+      - REDIS_ADDR=redis:6379
+      - NOTIFICATION_STREAM=notification_events
+      - NOTIFICATION_GROUP=notification_workers
+      - CONSUMER_NAME=notification_worker_1
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_USE_AUTH=false
+      - SMTP_USE_TLS=false
+      - SMTP_FROM=reports@sms.local
+      - SMTP_FROM_NAME=SMS Monitoring
+      - LOG_LEVEL=info
+      - LOG_FORMAT=text
     networks:
       - default
 

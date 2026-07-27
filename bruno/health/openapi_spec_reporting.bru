@@ -1,0 +1,16 @@
+meta {
+  name: OpenAPI Spec Reporting
+  type: http
+  seq: 46
+}
+
+get {
+  url: {{baseURL}}/openapi/reporting/v1/reporting.swagger.json
+}
+
+assert {
+  res.status: eq 200
+  res.body.swagger: eq "2.0"
+  res.body.info.title: isString
+  res.body.paths: isJson
+}

@@ -1,0 +1,16 @@
+meta {
+  name: OpenAPI Spec Identity
+  type: http
+  seq: 45
+}
+
+get {
+  url: {{baseURL}}/openapi/auth/v1/auth.swagger.json
+}
+
+assert {
+  res.status: eq 200
+  res.body.swagger: eq "2.0"
+  res.body.info.title: isString
+  res.body.paths: isJson
+}

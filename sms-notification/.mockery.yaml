@@ -1,0 +1,22 @@
+with-expecter: true
+issue-845-fix: true
+
+packages:
+  sms-notification/internal/consumer:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-notification/internal/infrastructure/messagebroker:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"
+  sms-notification/internal/domain:
+    config:
+      all: true
+      dir: "{{.InterfaceDir}}/mock"
+      filename: "mock_{{.InterfaceName | snakecase}}.go"
+      outpkg: "mock"

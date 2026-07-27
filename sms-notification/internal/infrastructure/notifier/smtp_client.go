@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-// Message represents an email message to be sent.
 type Message struct {
 	To       string
 	Subject  string
@@ -25,12 +24,10 @@ type Config struct {
 	UseTLS   bool
 	Username string
 	Password string
-
 	From     string
 	FromName string
 }
 
-// SMTPMailer implements domain.ReportNotifier via SMTP.
 type SMTPMailer struct {
 	cfg Config
 }
@@ -57,8 +54,7 @@ func Ping(ctx context.Context, host string, port string) error {
 	return nil
 }
 
-// SendReportEmail implements domain.ReportNotifier interface.
-func (m *SMTPMailer) SendReportEmail(ctx context.Context, toEmail string, subject string, htmlBody string) error {
+func (m *SMTPMailer) SendEmail(ctx context.Context, toEmail string, subject string, htmlBody string) error {
 	msg := Message{
 		To:       toEmail,
 		Subject:  subject,

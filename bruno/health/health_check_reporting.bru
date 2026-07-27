@@ -1,0 +1,13 @@
+meta {
+  name: Health Check Reporting
+  type: http
+  seq: 44
+}
+
+get {
+  url: {{baseURL}}/health/reporting
+}
+
+assert {
+  res.status: eq 200
+}
