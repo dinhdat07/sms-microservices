@@ -89,19 +89,19 @@ func (c *StreamConsumer) processMessage(ctx context.Context, msg messagebroker.M
 
 		key := fmt.Sprintf(infraRedis.ServerInfoKeyFmt, serverID)
 		if ipv4 != "" {
-			c.rdb.HSet(ctx, key, "ipv4", ipv4)
+			c.rdb.HSet(ctx, key, infraRedis.ServerInfoFieldIPv4, ipv4)
 		}
-		c.rdb.HSet(ctx, key, "status", status)
+		c.rdb.HSet(ctx, key, infraRedis.ServerInfoFieldStatus, status)
 
 		if payload.HealthCheckMethod != "" {
-			c.rdb.HSet(ctx, key, "health_check_method", payload.HealthCheckMethod)
+			c.rdb.HSet(ctx, key, infraRedis.ServerInfoFieldHealthCheckMethod, payload.HealthCheckMethod)
 		} else {
-			c.rdb.HSet(ctx, key, "health_check_method", "ICMP")
+			c.rdb.HSet(ctx, key, infraRedis.ServerInfoFieldHealthCheckMethod, "ICMP")
 		}
-		c.rdb.HSet(ctx, key, "ssh_port", payload.SSHPort)
-		c.rdb.HSet(ctx, key, "ssh_user", payload.SSHUser)
-		c.rdb.HSet(ctx, key, "ssh_key", payload.SSHKey)
-		c.rdb.HSet(ctx, key, "agent_endpoint", payload.AgentEndpoint)
+		c.rdb.HSet(ctx, key, infraRedis.ServerInfoFieldSSHPort, payload.SSHPort)
+		c.rdb.HSet(ctx, key, infraRedis.ServerInfoFieldSSHUser, payload.SSHUser)
+		c.rdb.HSet(ctx, key, infraRedis.ServerInfoFieldSSHKey, payload.SSHKey)
+		c.rdb.HSet(ctx, key, infraRedis.ServerInfoFieldAgentEndpoint, payload.AgentEndpoint)
 
 	case "ServerDeleted":
 		logger.Log.Info("Removing Server from Monitoring Cache", zap.String("id", serverID))

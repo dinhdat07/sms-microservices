@@ -135,7 +135,7 @@ func (a *App) runProducerCycle(ctx context.Context) {
 				cmds := make(map[string]*redis.StringCmd)
 				for _, id := range serverIDs {
 					redisKey := fmt.Sprintf(infraRedis.ServerInfoKeyFmt, id)
-					cmds[id] = pipe.HGet(ctx, redisKey, "health_check_method")
+					cmds[id] = pipe.HGet(ctx, redisKey, infraRedis.ServerInfoFieldHealthCheckMethod)
 				}
 				_, _ = pipe.Exec(ctx)
 

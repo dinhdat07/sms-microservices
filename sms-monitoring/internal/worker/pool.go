@@ -95,8 +95,8 @@ func (w *workerPool) processServer(ctx context.Context, serverID string) {
 		return
 	}
 
-	ipv4 := configMap["ipv4"]
-	method := configMap["health_check_method"]
+	ipv4 := configMap[infraRedis.ServerInfoFieldIPv4]
+	method := configMap[infraRedis.ServerInfoFieldHealthCheckMethod]
 
 	configMap["server_id"] = serverID
 

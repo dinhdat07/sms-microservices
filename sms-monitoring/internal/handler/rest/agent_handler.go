@@ -37,7 +37,7 @@ func (h *AgentHandler) Start(ctx context.Context) {
 			case serverID := <-h.heartbeatCh:
 				// Fetch IP to pass to Evaluate
 				redisKey := fmt.Sprintf(infraRedis.ServerInfoKeyFmt, serverID)
-				ipv4, err := h.rdb.HGet(ctx, redisKey, "ipv4").Result()
+				ipv4, err := h.rdb.HGet(ctx, redisKey, infraRedis.ServerInfoFieldIPv4).Result()
 				if err != nil {
 					ipv4 = "" // fallback
 				}
