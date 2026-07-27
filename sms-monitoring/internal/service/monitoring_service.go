@@ -52,7 +52,7 @@ func (s *monitoringServiceImpl) Evaluate(ctx context.Context, serverID string, i
 	retryCount := state.RetryCount
 
 	// State Machine Evaluation
-	var newStatus serverDomain.ServerStatus
+	newStatus := currentStatus
 	var statusChanged bool
 
 	if pingSuccess {
@@ -80,11 +80,7 @@ func (s *monitoringServiceImpl) Evaluate(ctx context.Context, serverID string, i
 	}
 
 	// Update Redis cache
-	if statusChanged {
-		err = s.stateStore.SetServerState(ctx, serverID, string(newStatus), retryCount)
-	} else {
-		err = s.stateStore.SetServerState(ctx, serverID, string(currentStatus), retryCount)
-	}
+	err = s.stateStore.SetServerState(ctx, serverID, string(newStatus), retryCount)
 	if err != nil {
 		return err
 	}
