@@ -72,7 +72,7 @@ func TestHandler_CreateServer_Success(t *testing.T) {
 	svc := new(mockSvc)
 	h := NewServerManagementServer(svc)
 
-	svc.On("CreateServer", mock.Anything, service.CreateServerInput{ServerName: "srv", IPv4: "1.2.3.4"}).
+	svc.On("CreateServer", mock.Anything, service.CreateServerInput{ServerName: "srv", IPv4: "1.2.3.4", HealthCheckMethod: "ICMP"}).
 		Return(&domain.Server{ServerID: "uuid-1", ServerName: "srv", IPv4: "1.2.3.4", CurrentStatus: domain.ServerStatusOnline}, nil).Once()
 
 	resp, err := h.CreateServer(context.Background(), &server_managementv1.CreateServerRequest{
@@ -129,7 +129,7 @@ func TestHandler_UpdateServer_Success(t *testing.T) {
 	svc := new(mockSvc)
 	h := NewServerManagementServer(svc)
 
-	input := service.UpdateServerInput{ServerName: "new-srv", IPv4: "4.5.6.7"}
+	input := service.UpdateServerInput{ServerName: "new-srv", IPv4: "4.5.6.7", HealthCheckMethod: "ICMP"}
 	svc.On("UpdateServer", mock.Anything, "uuid-1", input).
 		Return(&domain.Server{ServerID: "uuid-1", ServerName: "new-srv", IPv4: "4.5.6.7"}, nil).Once()
 

@@ -48,12 +48,17 @@ func mapServerToPB(server *domain.Server) *server_managementv1.Server {
 		return nil
 	}
 	return &server_managementv1.Server{
-		ServerId:      server.ServerID,
-		ServerName:    server.ServerName,
-		Ipv4:          server.IPv4,
-		CurrentStatus: string(server.CurrentStatus),
-		CreatedAt:     server.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:     server.UpdatedAt.Format(time.RFC3339),
+		ServerId:          server.ServerID,
+		ServerName:        server.ServerName,
+		Ipv4:              server.IPv4,
+		CurrentStatus:     string(server.CurrentStatus),
+		CreatedAt:         server.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:         server.UpdatedAt.Format(time.RFC3339),
+		HealthCheckMethod: string(server.HealthCheckMethod),
+		SshPort:           int32(server.SSHPort),
+		SshUser:           server.SSHUser,
+		SshKey:            "", // never return to frontend
+		AgentEndpoint:     server.AgentEndpoint,
 	}
 }
 
@@ -76,8 +81,16 @@ func (s *ServerManagementServer) CreateServer(ctx context.Context, req *server_m
 	}
 
 	input := service.CreateServerInput{
-		ServerName: req.GetServerName(),
-		IPv4:       req.GetIpv4(),
+		ServerName:        req.GetServerName(),
+		IPv4:              req.GetIpv4(),
+		HealthCheckMethod: domain.HealthCheckMethod(req.GetHealthCheckMethod()),
+		SSHPort:           int(req.GetSshPort()),
+		SSHUser:           req.GetSshUser(),
+		SSHKey:            req.GetSshKey(),
+		AgentEndpoint:     req.GetAgentEndpoint(),
+	}
+	if input.HealthCheckMethod == "" {
+		input.HealthCheckMethod = domain.MethodICMP
 	}
 
 	server, err := s.serverService.CreateServer(ctx, input)
@@ -96,8 +109,16 @@ func (s *ServerManagementServer) UpdateServer(ctx context.Context, req *server_m
 	}
 
 	input := service.UpdateServerInput{
-		ServerName: req.GetServerName(),
-		IPv4:       req.GetIpv4(),
+		ServerName:        req.GetServerName(),
+		IPv4:              req.GetIpv4(),
+		HealthCheckMethod: domain.HealthCheckMethod(req.GetHealthCheckMethod()),
+		SSHPort:           int(req.GetSshPort()),
+		SSHUser:           req.GetSshUser(),
+		SSHKey:            req.GetSshKey(),
+		AgentEndpoint:     req.GetAgentEndpoint(),
+	}
+	if input.HealthCheckMethod == "" {
+		input.HealthCheckMethod = domain.MethodICMP
 	}
 
 	server, err := s.serverService.UpdateServer(ctx, req.GetServerId(), input)

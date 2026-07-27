@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"sms-management/internal/domain"
+	"sms-management/internal/infrastructure/security"
 	"sms-management/internal/repository"
 )
 
@@ -16,13 +18,23 @@ var (
 )
 
 type CreateServerInput struct {
-	ServerName string
-	IPv4       string
+	ServerName        string
+	IPv4              string
+	HealthCheckMethod domain.HealthCheckMethod
+	SSHPort           int
+	SSHUser           string
+	SSHKey            string
+	AgentEndpoint     string
 }
 
 type UpdateServerInput struct {
-	ServerName string
-	IPv4       string
+	ServerName        string
+	IPv4              string
+	HealthCheckMethod domain.HealthCheckMethod
+	SSHPort           int
+	SSHUser           string
+	SSHKey            string
+	AgentEndpoint     string
 }
 
 type ImportResult struct {
@@ -71,22 +83,57 @@ func (s *serverService) CreateServer(ctx context.Context, input CreateServerInpu
 		return nil, ErrIPv4Exists
 	}
 
+	if input.HealthCheckMethod == domain.MethodSSH {
+		if input.SSHPort <= 0 || input.SSHUser == "" || input.SSHKey == "" {
+			return nil, errors.New("ssh_port, ssh_user, and ssh_key are required for SSH health check")
+		}
+	}
+	if input.HealthCheckMethod == domain.MethodAgentPull {
+		if input.AgentEndpoint == "" {
+			return nil, errors.New("agent_endpoint is required for AGENT_PULL health check")
+		}
+	}
+
+	// Clean irrelevant fields
+	if input.HealthCheckMethod != domain.MethodSSH {
+		input.SSHPort = 0
+		input.SSHUser = ""
+		input.SSHKey = ""
+	}
+	if input.HealthCheckMethod != domain.MethodAgentPull {
+		input.AgentEndpoint = ""
+	}
+
+	encryptedKey, err := security.Encrypt(input.SSHKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt ssh key: %w", err)
+	}
+
 	server := &domain.Server{
-		ServerName:    input.ServerName,
-		IPv4:          input.IPv4,
-		CurrentStatus: domain.ServerStatusUnknown,
+		ServerName:        input.ServerName,
+		IPv4:              input.IPv4,
+		CurrentStatus:     domain.ServerStatusUnknown,
+		HealthCheckMethod: input.HealthCheckMethod,
+		SSHPort:           input.SSHPort,
+		SSHUser:           input.SSHUser,
+		SSHKey:            encryptedKey,
+		AgentEndpoint:     input.AgentEndpoint,
 	}
 
 	err = s.repo.ExecuteInTx(ctx, func(txCtx context.Context) error {
 		if err := s.repo.Create(txCtx, server); err != nil {
 			return err
 		}
-		
-		payload, _ := json.Marshal(server)
+
+		payloadServer := *server
+		if decryptedKey, err := security.Decrypt(server.SSHKey); err == nil {
+			payloadServer.SSHKey = decryptedKey
+		}
+		payload, _ := json.Marshal(payloadServer)
 		event := domain.NewOutboxEvent("Server", server.ServerID, domain.EventServerCreated, payload)
 		return s.outboxRepo.Create(txCtx, event)
 	})
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +164,47 @@ func (s *serverService) UpdateServer(ctx context.Context, id string, input Updat
 		server.ServerName = input.ServerName
 	}
 
-	if input.IPv4 != server.IPv4 {
+	if input.SSHPort == 0 {
+		input.SSHPort = server.SSHPort
+	}
+	if input.SSHUser == "" {
+		input.SSHUser = server.SSHUser
+	}
+	if input.AgentEndpoint == "" {
+		input.AgentEndpoint = server.AgentEndpoint
+	}
+
+	if input.HealthCheckMethod == domain.MethodSSH {
+		if input.SSHPort <= 0 || input.SSHUser == "" {
+			return nil, errors.New("ssh_port and ssh_user are required for SSH health check")
+		}
+	}
+	if input.HealthCheckMethod == domain.MethodAgentPull {
+		if input.AgentEndpoint == "" {
+			return nil, errors.New("agent_endpoint is required for AGENT_PULL health check")
+		}
+	}
+
+	var encryptedKey string
+	if input.SSHKey != "" {
+		encryptedKey, err = security.Encrypt(input.SSHKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to encrypt ssh key: %w", err)
+		}
+	} else {
+		encryptedKey = server.SSHKey
+	}
+
+	statusReset := server.HealthCheckMethod != input.HealthCheckMethod
+
+	server.ServerName = input.ServerName
+	server.HealthCheckMethod = input.HealthCheckMethod
+	server.SSHPort = input.SSHPort
+	server.SSHUser = input.SSHUser
+	server.SSHKey = encryptedKey
+	server.AgentEndpoint = input.AgentEndpoint
+
+	if server.IPv4 != input.IPv4 {
 		existingIP, err := s.repo.GetByIPv4(ctx, input.IPv4)
 		if err != nil && !errors.Is(err, repository.ErrNotFound) {
 			return nil, err
@@ -126,15 +213,23 @@ func (s *serverService) UpdateServer(ctx context.Context, id string, input Updat
 			return nil, ErrIPv4Exists
 		}
 		server.IPv4 = input.IPv4
-		server.CurrentStatus = domain.ServerStatusUnknown // Reset status on IP change
+		statusReset = true
+	}
+
+	if statusReset {
+		server.CurrentStatus = domain.ServerStatusUnknown
 	}
 
 	err = s.repo.ExecuteInTx(ctx, func(txCtx context.Context) error {
 		if err := s.repo.Update(txCtx, server); err != nil {
 			return err
 		}
-		
-		payload, _ := json.Marshal(server)
+
+		payloadServer := *server
+		if decryptedKey, err := security.Decrypt(server.SSHKey); err == nil {
+			payloadServer.SSHKey = decryptedKey
+		}
+		payload, _ := json.Marshal(payloadServer)
 		event := domain.NewOutboxEvent("Server", server.ServerID, domain.EventServerUpdated, payload)
 		return s.outboxRepo.Create(txCtx, event)
 	})
@@ -162,7 +257,7 @@ func (s *serverService) DeleteServer(ctx context.Context, id string) error {
 		if err := s.repo.Delete(txCtx, id); err != nil {
 			return err
 		}
-		
+
 		payload := []byte(`{"server_id":"` + id + `"}`)
 		event := domain.NewOutboxEvent("Server", id, domain.EventServerDeleted, payload)
 		return s.outboxRepo.Create(txCtx, event)

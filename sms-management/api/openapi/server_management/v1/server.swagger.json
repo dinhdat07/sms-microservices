@@ -306,6 +306,22 @@
         },
         "ipv4": {
           "type": "string"
+        },
+        "healthCheckMethod": {
+          "type": "string"
+        },
+        "sshPort": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sshUser": {
+          "type": "string"
+        },
+        "sshKey": {
+          "type": "string"
+        },
+        "agentEndpoint": {
+          "type": "string"
         }
       }
     },
@@ -344,6 +360,22 @@
           "type": "string"
         },
         "ipv4": {
+          "type": "string"
+        },
+        "healthCheckMethod": {
+          "type": "string"
+        },
+        "sshPort": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sshUser": {
+          "type": "string"
+        },
+        "sshKey": {
+          "type": "string"
+        },
+        "agentEndpoint": {
           "type": "string"
         }
       }
@@ -432,6 +464,22 @@
           "type": "string"
         },
         "updatedAt": {
+          "type": "string"
+        },
+        "healthCheckMethod": {
+          "type": "string"
+        },
+        "sshPort": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sshUser": {
+          "type": "string"
+        },
+        "sshKey": {
+          "type": "string"
+        },
+        "agentEndpoint": {
           "type": "string"
         }
       }

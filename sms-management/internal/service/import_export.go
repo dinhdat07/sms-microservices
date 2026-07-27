@@ -163,9 +163,10 @@ func (s *serverService) ImportServers(ctx context.Context, fileBytes []byte) (*I
 		}
 
 		batch = append(batch, &domain.Server{
-			ServerName:    name,
-			IPv4:          ipv4,
-			CurrentStatus: domain.ServerStatusUnknown,
+			ServerName:        name,
+			IPv4:              ipv4,
+			CurrentStatus:     domain.ServerStatusUnknown,
+			HealthCheckMethod: domain.MethodICMP,
 		})
 
 		if len(batch) >= batchSize {
