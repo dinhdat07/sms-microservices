@@ -1,5 +1,7 @@
 package config
 
+import "time"
+
 type LoggerConfig struct {
 	Level         string
 	Format        string
@@ -17,6 +19,26 @@ type Config struct {
 	Env       string
 	Logger    LoggerConfig
 	Publisher PublisherConfig
+
+	// Worker Configs
+	WorkerTickInterval time.Duration
+	WorkerConcurrency  int
+	WorkerPingTimeout  time.Duration
+	FailureThreshold   int
+	ProducerLockKey    string
+
+	// Timeout Configs
+	ICMPTimeout      time.Duration
+	SSHTimeout       time.Duration
+	AgentPullTimeout time.Duration
+
+	// ICMP Config
+	ICMPPrivileged bool
+
+	// Agent Push Configs
+	AgentPushTTL    time.Duration
+	AgentPort       string
+	SweeperInterval time.Duration
 }
 
 func Load() (*Config, error) {
@@ -48,6 +70,20 @@ func Load() (*Config, error) {
 		streamMaxLen = 1000000
 	}
 
+	workerTickInterval, _ := GetEnvDuration("MONITORING_WORKER_TICK_INTERVAL", 60*time.Second)
+	workerConcurrency, _ := GetEnvInt("MONITORING_WORKER_CONCURRENCY", 100)
+	workerPingTimeout, _ := GetEnvDuration("MONITORING_WORKER_PING_TIMEOUT", 3*time.Second)
+	failureThreshold, _ := GetEnvInt("MONITORING_FAILURE_THRESHOLD", 1)
+
+	icmpTimeout, _ := GetEnvDuration("MONITORING_ICMP_TIMEOUT", 3*time.Second)
+	sshTimeout, _ := GetEnvDuration("MONITORING_SSH_TIMEOUT", 10*time.Second)
+	agentPullTimeout, _ := GetEnvDuration("MONITORING_AGENT_PULL_TIMEOUT", 10*time.Second)
+
+	icmpPrivileged, _ := GetEnvBool("ICMP_PRIVILEGED", false)
+
+	agentPushTTLSecs, _ := GetEnvInt("MONITORING_AGENT_PUSH_TTL", 60)
+	sweeperInterval, _ := GetEnvDuration("MONITORING_SWEEPER_INTERVAL", 10*time.Second)
+
 	cfg := &Config{
 		Env: GetEnvDefault("ENV", "development"),
 		Logger: LoggerConfig{
@@ -61,6 +97,18 @@ func Load() (*Config, error) {
 		Publisher: PublisherConfig{
 			MaxLen: int64(streamMaxLen),
 		},
+		WorkerTickInterval: workerTickInterval,
+		WorkerConcurrency:  workerConcurrency,
+		WorkerPingTimeout:  workerPingTimeout,
+		FailureThreshold:   failureThreshold,
+		ProducerLockKey:    GetEnvDefault("MONITORING_PRODUCER_LOCK_KEY", "lock:monitoring_producer"),
+		ICMPTimeout:        icmpTimeout,
+		SSHTimeout:         sshTimeout,
+		AgentPullTimeout:   agentPullTimeout,
+		ICMPPrivileged:     icmpPrivileged,
+		AgentPushTTL:       time.Duration(agentPushTTLSecs) * time.Second,
+		AgentPort:          GetEnvDefault("MONITORING_AGENT_PORT", "8084"), // Changed default to 8084 to avoid conflict
+		SweeperInterval:    sweeperInterval,
 	}
 
 	return cfg, nil

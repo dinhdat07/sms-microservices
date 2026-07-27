@@ -62,18 +62,16 @@ func (a *App) Run() error {
 		}
 	}()
 
-	sweeperInterval, _ := config.GetEnvDuration("MONITORING_SWEEPER_INTERVAL", 10*time.Second)
-	pushTTL, _ := config.GetEnvInt("MONITORING_AGENT_PUSH_TTL", 60)
-
-	// Start Agent Push Sweeper
-	agentSweeper := sweepers.NewAgentSweeper(a.RedisClient, a.monService, sweeperInterval, int64(pushTTL))
+	sweeperInterval := a.cfg.SweeperInterval
+	pushTTL := int64(a.cfg.AgentPushTTL.Seconds())
+	agentSweeper := sweepers.NewAgentSweeper(a.RedisClient, a.monService, sweeperInterval, pushTTL)
 	go agentSweeper.Start(ctx)
 
 	// Start HTTP Server for Agent Push
 	agentHandler := rest.NewAgentHandler(a.RedisClient)
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/agent/heartbeat", agentHandler)
-	agentPort := config.GetEnvDefault("MONITORING_AGENT_PORT", "8080")
+	agentPort := a.cfg.AgentPort
 	a.httpServer = &http.Server{
 		Addr:    ":" + agentPort,
 		Handler: mux,
@@ -111,8 +109,8 @@ func (a *App) Shutdown(ctx context.Context) {
 }
 
 func (a *App) runProducerCycle(ctx context.Context) {
-	lockKey := config.GetEnvDefault("MONITORING_PRODUCER_LOCK_KEY", "lock:monitoring_producer")
-	tickInterval, _ := config.GetEnvDuration("MONITORING_WORKER_TICK_INTERVAL", 60*time.Second)
+	lockKey := a.cfg.ProducerLockKey
+	tickInterval := a.cfg.WorkerTickInterval
 
 	// Set lock expiration to slightly less than tick interval to tightly block other workers
 	// but still allow the lock to expire before the next legitimate cycle.

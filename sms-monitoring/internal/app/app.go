@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"strconv"
-	"time"
 
 	"sms-monitoring/internal/config"
 	"sms-monitoring/internal/infrastructure/database"
@@ -22,6 +19,7 @@ import (
 )
 
 type App struct {
+	cfg         *config.Config
 	RedisClient redis.UniversalClient
 	Pool        worker.Pool
 	monService  service.MonitoringService
@@ -43,9 +41,9 @@ func NewApp() (*App, error) {
 		logger.Log.Sugar().Errorf("Failed to load redis config: %v", err)
 	}
 
-	// Settings
-	concurrency, _ := config.GetEnvInt("MONITORING_WORKER_CONCURRENCY", 100)
-	pingTimeout, _ := config.GetEnvDuration("MONITORING_WORKER_PING_TIMEOUT", 3*time.Second)
+	// Load workers Configs
+	concurrency := cfg.WorkerConcurrency
+	pingTimeout := cfg.WorkerPingTimeout
 
 	// Ensure Redis pool size is large enough to handle all BLPOP blocking connections
 	if redisCfg != nil && redisCfg.PoolSize < concurrency+50 {
@@ -73,34 +71,24 @@ func NewApp() (*App, error) {
 	// Initialize Dependencies
 
 	stateStore := impl.NewRedisServerStateStore(redisClient)
-	threshold, _ := config.GetEnvInt("MONITORING_FAILURE_THRESHOLD", 1)
+	threshold := cfg.FailureThreshold
 	publisher := messagebroker.NewRedisPublisher(redisClient, cfg.Publisher.MaxLen)
 	monService := service.NewMonitoringService(publisher, stateStore, esLogger, threshold)
 
-	tickInterval, _ := config.GetEnvDuration("MONITORING_WORKER_TICK_INTERVAL", 30*time.Second)
+	tickInterval := cfg.WorkerTickInterval
 	logger.Log.Info(fmt.Sprintf("Monitoring Worker started. Scanning every %s with failure threshold %d", tickInterval.String(), threshold))
 
-	// Unprivileged ping for non-root environments (Set to true if running as root on Linux)
-	privilegedStr := os.Getenv("ICMP_PRIVILEGED")
-	privileged, _ := strconv.ParseBool(privilegedStr)
-
-	icmpTimeout, _ := config.GetEnvDuration("MONITORING_ICMP_TIMEOUT", 3*time.Second)
-	sshTimeout, _ := config.GetEnvDuration("MONITORING_SSH_TIMEOUT", 10*time.Second)
-	agentPullTimeout, _ := config.GetEnvDuration("MONITORING_AGENT_PULL_TIMEOUT", 10*time.Second)
-
-	agentPushTTLSecs, _ := config.GetEnvInt("MONITORING_AGENT_PUSH_TTL", 60)
-	agentPushTTL := time.Duration(agentPushTTLSecs) * time.Second
-
 	timeouts := checkers.CheckerTimeouts{
-		ICMP:         icmpTimeout,
-		SSH:          sshTimeout,
-		AgentPull:    agentPullTimeout,
-		AgentPushTTL: agentPushTTL,
+		ICMP:         cfg.ICMPTimeout,
+		SSH:          cfg.SSHTimeout,
+		AgentPull:    cfg.AgentPullTimeout,
+		AgentPushTTL: cfg.AgentPushTTL,
 	}
-	factory := checkers.NewHealthCheckerFactory(redisClient, privileged, timeouts)
+	factory := checkers.NewHealthCheckerFactory(redisClient, cfg.ICMPPrivileged, timeouts)
 	pool := worker.NewWorkerPool(redisClient, monService, factory, concurrency, pingTimeout)
 
 	return &App{
+		cfg:         cfg,
 		RedisClient: redisClient,
 		Pool:        pool,
 		monService:  monService,
