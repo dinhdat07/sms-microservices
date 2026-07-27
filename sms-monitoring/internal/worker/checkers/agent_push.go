@@ -11,10 +11,11 @@ import (
 
 type AgentPushChecker struct {
 	rdb redis.UniversalClient
+	ttl float64
 }
 
-func NewAgentPushChecker(rdb redis.UniversalClient) HealthChecker {
-	return &AgentPushChecker{rdb: rdb}
+func NewAgentPushChecker(rdb redis.UniversalClient, ttlSecs float64) HealthChecker {
+	return &AgentPushChecker{rdb: rdb, ttl: ttlSecs}
 }
 
 func (c *AgentPushChecker) Check(ctx context.Context, config ServerConfig) bool {
@@ -32,8 +33,8 @@ func (c *AgentPushChecker) Check(ctx context.Context, config ServerConfig) bool 
 		return false
 	}
 
-	// If heartbeat is older than 60 seconds, consider offline
-	if float64(time.Now().Unix())-score > 60 {
+	// If heartbeat is older than TTL, consider offline
+	if float64(time.Now().Unix())-score > c.ttl {
 		return false
 	}
 

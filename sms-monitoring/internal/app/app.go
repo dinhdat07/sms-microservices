@@ -88,10 +88,14 @@ func NewApp() (*App, error) {
 	sshTimeout, _ := config.GetEnvDuration("MONITORING_SSH_TIMEOUT", 10*time.Second)
 	agentPullTimeout, _ := config.GetEnvDuration("MONITORING_AGENT_PULL_TIMEOUT", 10*time.Second)
 
+	agentPushTTLSecs, _ := config.GetEnvInt("MONITORING_AGENT_PUSH_TTL", 60)
+	agentPushTTL := time.Duration(agentPushTTLSecs) * time.Second
+
 	timeouts := checkers.CheckerTimeouts{
-		ICMP:      icmpTimeout,
-		SSH:       sshTimeout,
-		AgentPull: agentPullTimeout,
+		ICMP:         icmpTimeout,
+		SSH:          sshTimeout,
+		AgentPull:    agentPullTimeout,
+		AgentPushTTL: agentPushTTL,
 	}
 	factory := checkers.NewHealthCheckerFactory(redisClient, privileged, timeouts)
 	pool := worker.NewWorkerPool(redisClient, monService, factory, concurrency, pingTimeout)

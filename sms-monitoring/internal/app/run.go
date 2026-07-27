@@ -73,12 +73,13 @@ func (a *App) Run() error {
 	agentHandler := rest.NewAgentHandler(a.RedisClient)
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/agent/heartbeat", agentHandler)
+	agentPort := config.GetEnvDefault("MONITORING_AGENT_PORT", "8080")
 	a.httpServer = &http.Server{
-		Addr:    ":8080", // Could be configurable
+		Addr:    ":" + agentPort,
 		Handler: mux,
 	}
 	go func() {
-		logger.Log.Sugar().Info("Agent Push Server listening on :8080")
+		logger.Log.Sugar().Infof("Agent Push Server listening on :%s", agentPort)
 		if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Log.Sugar().Errorf("HTTP Server error: %v", err)
 		}
