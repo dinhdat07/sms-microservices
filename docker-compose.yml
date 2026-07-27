@@ -235,7 +235,6 @@ services:
       MONITORING_AGENT_PULL_TIMEOUT: 10s
       MONITORING_AGENT_PUSH_TTL: 60
       MONITORING_SWEEPER_INTERVAL: 10s
-      MONITORING_AGENT_PORT: 8084
       MONITORING_WORKER_TICK_INTERVAL: 60s
       MONITORING_WORKER_LOCK_KEY: lock:monitoring_worker
       MONITORING_WORKER_LOCK_EXPIRATION: 50s
@@ -245,6 +244,29 @@ services:
       STREAM_MAXLEN: "1000000"
       LOG_LEVEL: info
       LOG_FORMAT: text
+    networks:
+      - default
+
+  # ============================================
+  # SMS Agent Handler — Receives push events
+  # ============================================
+  sms-agent-handler:
+    build:
+      context: ./sms-agent-handler
+      dockerfile: Dockerfile
+    container_name: sms_agent_handler
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - PORT=8084
+      - REDIS_URI=redis://redis:6379/0
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agent.rule=PathPrefix(`/api/v1/agent`)"
+      - "traefik.http.routers.agent.entrypoints=web"
+      - "traefik.http.services.agent.loadbalancer.server.port=8084"
     networks:
       - default
 

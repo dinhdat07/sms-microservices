@@ -37,7 +37,6 @@ type Config struct {
 
 	// Agent Push Configs
 	AgentPushTTL    time.Duration
-	AgentPort       string
 	SweeperInterval time.Duration
 }
 
@@ -107,7 +106,6 @@ func Load() (*Config, error) {
 		AgentPullTimeout:   agentPullTimeout,
 		ICMPPrivileged:     icmpPrivileged,
 		AgentPushTTL:       time.Duration(agentPushTTLSecs) * time.Second,
-		AgentPort:          GetEnvDefault("MONITORING_AGENT_PORT", "8084"), // Changed default to 8084 to avoid conflict
 		SweeperInterval:    sweeperInterval,
 	}
 

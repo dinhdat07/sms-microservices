@@ -267,7 +267,6 @@ services:
       - MONITORING_AGENT_PULL_TIMEOUT=10s
       - MONITORING_AGENT_PUSH_TTL=60
       - MONITORING_SWEEPER_INTERVAL=10s
-      - MONITORING_AGENT_PORT=8084
       - MONITORING_WORKER_TICK_INTERVAL=60s
       - MONITORING_WORKER_LOCK_KEY=lock:monitoring_worker
       - MONITORING_WORKER_LOCK_EXPIRATION=50s
@@ -290,6 +289,27 @@ services:
     secrets:
       - db_url
       - master_key
+
+  sms-agent-handler:
+    logging: *default-logging
+    environment:
+      - PORT=8084
+      - REDIS_URI=redis://redis:6379/0
+    networks:
+      - default
+    image: whaleplay710/sms-agent-handler:v1.0.0
+    deploy:
+      replicas: 3
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.agent.rule=PathPrefix(`/api/v1/agent`)"
+        - "traefik.http.routers.agent.entrypoints=web"
+        - "traefik.http.services.agent.loadbalancer.server.port=8084"
+      update_config:
+        parallelism: 1
+        delay: 5s
+      restart_policy:
+        condition: on-failure
 
   sms-reporting:
     logging: *default-logging

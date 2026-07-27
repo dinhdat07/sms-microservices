@@ -3,14 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"sms-monitoring/internal/domain"
-	"sms-monitoring/internal/handler/rest"
 	"sms-monitoring/internal/infrastructure/database"
 	"sms-monitoring/internal/infrastructure/logger"
 	"sms-monitoring/internal/infrastructure/messagebroker"
@@ -67,22 +65,9 @@ func (a *App) Run() error {
 	agentSweeper := sweepers.NewAgentSweeper(a.RedisClient, a.monService, a.cfg.SweeperInterval, int64(a.cfg.AgentPushTTL.Seconds()))
 	go agentSweeper.Start(ctx)
 
-	// Start HTTP Server for Agent Push
-	agentHandler := rest.NewAgentHandler(a.RedisClient, a.monService)
-	agentHandler.Start(ctx)
-
-	mux := http.NewServeMux()
-	mux.Handle("/api/v1/agent/heartbeat", agentHandler)
-	a.httpServer = &http.Server{
-		Addr:    ":" + a.cfg.AgentPort,
-		Handler: mux,
-	}
-	go func() {
-		logger.Log.Sugar().Infof("Agent Push Server listening on :%s", a.cfg.AgentPort)
-		if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Log.Sugar().Errorf("HTTP Server error: %v", err)
-		}
-	}()
+	// Start Heartbeat Consumer
+	heartbeatConsumer := consumers.NewHeartbeatConsumer(subscriber, a.monService, a.RedisClient)
+	go heartbeatConsumer.Start(ctx)
 
 	<-sigCh
 	cancel()
@@ -94,10 +79,6 @@ func (a *App) Run() error {
 
 func (a *App) Shutdown(ctx context.Context) {
 	logger.Log.Sugar().Info("Shutting down Monitoring Worker...")
-
-	if a.httpServer != nil {
-		a.httpServer.Shutdown(ctx)
-	}
 
 	// Wait for running workers to finish
 	time.Sleep(2 * time.Second)

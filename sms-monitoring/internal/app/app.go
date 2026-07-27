@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"sms-monitoring/internal/config"
 	"sms-monitoring/internal/infrastructure/database"
@@ -24,7 +23,6 @@ type App struct {
 	Pool        worker.Pool
 	monService  service.MonitoringService
 	esLogger    elasticsearch.ObservationLogger
-	httpServer  *http.Server
 }
 
 func NewApp() (*App, error) {
