@@ -1,13 +1,13 @@
-package worker
+package consumers
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 
-	infraRedis "sms-monitoring/internal/infrastructure/redis"
 	"sms-monitoring/internal/infrastructure/logger"
 	"sms-monitoring/internal/infrastructure/messagebroker"
+	infraRedis "sms-monitoring/internal/infrastructure/redis"
 
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -60,9 +60,14 @@ func (c *StreamConsumer) processMessage(ctx context.Context, msg messagebroker.M
 	}
 
 	var payload struct {
-		ID            string `json:"server_id"`
-		IPv4          string `json:"ipv4"`
-		CurrentStatus string `json:"current_status"`
+		ID                string `json:"server_id"`
+		IPv4              string `json:"ipv4"`
+		CurrentStatus     string `json:"current_status"`
+		HealthCheckMethod string `json:"health_check_method"`
+		SSHPort           int    `json:"ssh_port"`
+		SSHUser           string `json:"ssh_user"`
+		SSHKey            string `json:"ssh_key"`
+		AgentEndpoint     string `json:"agent_endpoint"`
 	}
 
 	if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
@@ -81,11 +86,22 @@ func (c *StreamConsumer) processMessage(ctx context.Context, msg messagebroker.M
 	case "ServerCreated", "ServerUpdated":
 		logger.Log.Info("Syncing Server to Monitoring Cache", zap.String("event", eventType), zap.String("id", serverID))
 		c.rdb.SAdd(ctx, infraRedis.ServerAllIDsKey, serverID)
-		
+
+		key := fmt.Sprintf(infraRedis.ServerInfoKeyFmt, serverID)
 		if ipv4 != "" {
-			c.rdb.HSet(ctx, fmt.Sprintf(infraRedis.ServerInfoKeyFmt, serverID), "ipv4", ipv4)
+			c.rdb.HSet(ctx, key, "ipv4", ipv4)
 		}
-		c.rdb.HSet(ctx, fmt.Sprintf(infraRedis.ServerInfoKeyFmt, serverID), "status", status)
+		c.rdb.HSet(ctx, key, "status", status)
+
+		if payload.HealthCheckMethod != "" {
+			c.rdb.HSet(ctx, key, "health_check_method", payload.HealthCheckMethod)
+		} else {
+			c.rdb.HSet(ctx, key, "health_check_method", "ICMP")
+		}
+		c.rdb.HSet(ctx, key, "ssh_port", payload.SSHPort)
+		c.rdb.HSet(ctx, key, "ssh_user", payload.SSHUser)
+		c.rdb.HSet(ctx, key, "ssh_key", payload.SSHKey)
+		c.rdb.HSet(ctx, key, "agent_endpoint", payload.AgentEndpoint)
 
 	case "ServerDeleted":
 		logger.Log.Info("Removing Server from Monitoring Cache", zap.String("id", serverID))

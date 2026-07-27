@@ -69,7 +69,7 @@ func (s *RedisSubscriber) Subscribe(ctx context.Context, stream string, group st
 						ID:     msg.ID,
 						Values: msg.Values,
 					}
-					
+
 					// Handle message
 					err := handler(ctx, brokerMsg)
 					if err != nil {
@@ -94,7 +94,7 @@ func (s *RedisSubscriber) recoverPendingMessages(ctx context.Context, stream str
 			Count:    50,
 			Block:    0,
 		}).Result()
-		
+
 		if err != nil && err != redis.Nil {
 			logger.Log.Error("Failed to recover pending messages", zap.Error(err))
 			break

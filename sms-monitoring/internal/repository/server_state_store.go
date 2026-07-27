@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"sms-monitoring/internal/domain"
 	"errors"
+	"sms-monitoring/internal/domain"
 )
 
 var ErrServerStateNotFound = errors.New("server state not found")
@@ -13,5 +13,3 @@ type ServerStateStore interface {
 	GetServerState(ctx context.Context, serverID string) (*domain.ServerState, error)
 	SetServerState(ctx context.Context, serverID string, status string, retryCount int) error
 }
-
-

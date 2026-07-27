@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	
+
 	"sms-monitoring/internal/app"
 )
 
@@ -17,4 +17,3 @@ func main() {
 		log.Fatalf("Monitoring App stopped with error: %v", err)
 	}
 }
-

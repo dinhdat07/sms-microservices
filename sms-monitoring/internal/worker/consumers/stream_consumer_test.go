@@ -1,4 +1,4 @@
-package worker
+package consumers
 
 import (
 	"context"
@@ -25,7 +25,7 @@ func (m *mockSubscriber) Subscribe(ctx context.Context, stream string, group str
 func TestStreamConsumer_Start(t *testing.T) {
 	subscriber := new(mockSubscriber)
 	db, _ := redismock.NewClientMock()
-	
+
 	consumer := NewStreamConsumer(subscriber, db)
 	subscriber.On("Subscribe", mock.Anything, "sms.events.server", "monitoring_group", "monitoring_worker_1", mock.Anything).Return(nil)
 
@@ -104,9 +104,6 @@ func TestStreamConsumer_ProcessMessage_InvalidPayload(t *testing.T) {
 	assert.NoError(t, mockRedis.ExpectationsWereMet())
 }
 
-
-
-
 func TestStreamConsumer_Start_NilRDB(t *testing.T) {
 	consumer := NewStreamConsumer(nil, nil)
 	consumer.Start(context.Background())
@@ -137,4 +134,3 @@ func TestStreamConsumer_ProcessMessage_ServerUpdated_WithIPv4(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, mockRedis.ExpectationsWereMet())
 }
-
