@@ -22,7 +22,7 @@ assert {
   res.status: eq 200
   res.body.server.serverId: isString
   res.body.server.ipv4: eq {{testServerIPv4}}
-  res.body.server.currentStatus: eq ONLINE
+  res.body.server.currentStatus: eq UNKNOWN
 }
 
 script:post-response {
