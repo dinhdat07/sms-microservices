@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"sms-monitoring/internal/domain"
 	"sms-monitoring/internal/handler/rest"
 	"sms-monitoring/internal/infrastructure/database"
 	"sms-monitoring/internal/infrastructure/logger"
@@ -122,7 +123,7 @@ func (a *App) runProducerCycle(ctx context.Context) {
 	// Producer Election
 	acquired, _ := database.AcquireLock(ctx, a.RedisClient, lockKey, lockExpiration)
 	if acquired {
-		queueLen, err := a.RedisClient.LLen(ctx, "monitoring:queue").Result()
+		queueLen, err := a.RedisClient.LLen(ctx, infraRedis.MonitoringQueueKey).Result()
 		if err == nil && queueLen > 0 {
 			logger.Log.Sugar().Warnf("[Producer] Queue still has %d items! Skipping push to avoid snowballing.", queueLen)
 		} else {
@@ -143,13 +144,13 @@ func (a *App) runProducerCycle(ctx context.Context) {
 				var pollingServers []interface{}
 				for id, cmd := range cmds {
 					method, err := cmd.Result()
-					if err == nil && method != "AGENT_PUSH" {
+					if err == nil && method != string(domain.HealthCheckMethodAgentPush) {
 						pollingServers = append(pollingServers, id)
 					}
 				}
 
 				if len(pollingServers) > 0 {
-					a.RedisClient.RPush(ctx, "monitoring:queue", pollingServers...)
+					a.RedisClient.RPush(ctx, infraRedis.MonitoringQueueKey, pollingServers...)
 					logger.Log.Sugar().Infof("[Producer] Pushed %d servers to the queue (Ignored %d AGENT_PUSH servers).", len(pollingServers), len(serverIDs)-len(pollingServers))
 
 					// Track duration for this batch
@@ -157,7 +158,7 @@ func (a *App) runProducerCycle(ctx context.Context) {
 					go func(batchSize int) {
 						for {
 							time.Sleep(1 * time.Second)
-							length, err := a.RedisClient.LLen(context.Background(), "monitoring:queue").Result()
+							length, err := a.RedisClient.LLen(context.Background(), infraRedis.MonitoringQueueKey).Result()
 							if err != nil || length == 0 {
 								duration := time.Since(start)
 								logger.Log.Sugar().Infof("[Consumer] Batch of %d servers processed (Duration: %s)", batchSize, duration)

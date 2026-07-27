@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	infraRedis "sms-monitoring/internal/infrastructure/redis"
 	mockService "sms-monitoring/internal/service/mock"
 	"sms-monitoring/internal/worker/checkers"
 
@@ -45,7 +46,7 @@ func TestWorkerPool_Run(t *testing.T) {
 	pinger.On("GetChecker", "ICMP").Return(checker)
 	checker.On("Check", mock.Anything, checkers.ServerConfig{"ipv4": "1.1.1.1", "health_check_method": "ICMP", "server_id": "id-1"}).Return(true)
 
-	mockRedis.ExpectBLPop(2*time.Second, "monitoring:queue").SetVal([]string{"monitoring:queue", "id-1"})
+	mockRedis.ExpectBLPop(2*time.Second, infraRedis.MonitoringQueueKey).SetVal([]string{infraRedis.MonitoringQueueKey, "id-1"})
 	mockRedis.ExpectHGetAll("server:info:id-1").SetVal(map[string]string{"ipv4": "1.1.1.1", "health_check_method": "ICMP"})
 
 	monService.On("Evaluate", mock.Anything, "id-1", "1.1.1.1", true).Return(nil).Run(func(args mock.Arguments) {
@@ -66,7 +67,7 @@ func TestWorkerPool_Run_EmptyQueue(t *testing.T) {
 	db, mockRedis := redismock.NewClientMock()
 	pool := NewWorkerPool(db, nil, nil, 1, 1*time.Second)
 
-	mockRedis.ExpectBLPop(2*time.Second, "monitoring:queue").SetErr(redis.Nil)
+	mockRedis.ExpectBLPop(2*time.Second, infraRedis.MonitoringQueueKey).SetErr(redis.Nil)
 
 	err := pool.Run(ctx)
 	assert.NoError(t, err)
@@ -79,7 +80,7 @@ func TestWorkerPool_Run_RedisError(t *testing.T) {
 	db, mockRedis := redismock.NewClientMock()
 	pool := NewWorkerPool(db, nil, nil, 1, 1*time.Second)
 
-	mockRedis.ExpectBLPop(2*time.Second, "monitoring:queue").SetErr(errors.New("redis error"))
+	mockRedis.ExpectBLPop(2*time.Second, infraRedis.MonitoringQueueKey).SetErr(errors.New("redis error"))
 
 	err := pool.Run(ctx)
 	assert.NoError(t, err)

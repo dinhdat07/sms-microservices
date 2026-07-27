@@ -57,7 +57,7 @@ func (w *workerPool) Run(ctx context.Context) error {
 
 				// Blocking Pop a server ID from the shared Redis queue
 				// Timeout of 2 seconds allows the loop to frequently check context cancellation
-				result, err := w.rdb.BLPop(ctx, 2*time.Second, "monitoring:queue").Result()
+				result, err := w.rdb.BLPop(ctx, 2*time.Second, infraRedis.MonitoringQueueKey).Result()
 				if err == redis.Nil {
 					// Timeout reached, queue is empty, loop again
 					continue

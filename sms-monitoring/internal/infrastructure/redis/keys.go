@@ -4,6 +4,7 @@ const (
 	ServerAllIDsKey       = "server:all_ids"
 	ServerInfoKeyFmt      = "server:info:%s"
 	AgentHeartbeatZSetKey = "monitoring:agent:heartbeats"
+	MonitoringQueueKey    = "monitoring:queue"
 
 	// Redis Hash Fields for Server Info
 	ServerInfoFieldIPv4              = "ipv4"
