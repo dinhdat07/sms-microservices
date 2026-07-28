@@ -26,13 +26,13 @@ Frontend: [dinhdat07/sms-frontend](https://github.com/dinhdat07/sms-frontend)
 
 ## 1.1 Giới thiệu chung
 
-Hệ thống Quản lý Server (SMS) là giải pháp giám sát tập trung, cho phép Quản trị viên quản lý thông tin và theo dõi trạng thái sống/chết (Uptime) của hàng chục nghìn máy chủ theo thời gian thực thông qua giao thức ICMP (Ping).
+Hệ thống Quản lý Server (SMS) là giải pháp giám sát tập trung, cho phép Quản trị viên quản lý thông tin và theo dõi trạng thái sống/chết (Uptime) của hàng chục nghìn máy chủ theo thời gian thực thông qua 4 phương pháp giám sát đa dạng: ICMP (Ping), SSH, Agent Pull và Agent Push (Heartbeat).
 
 ## 1.2 Các yêu cầu chức năng cốt lõi đã đáp ứng 
 
 Hệ thống giải quyết trọn vẹn các bài toán nghiệp vụ đặt ra, bao gồm:
 
-* **Giám sát trạng thái:** Định kỳ quét (ping) ngầm và cập nhật trạng thái On/Off tập trung cho hàng chục nghìn servers.  
+* **Giám sát trạng thái:** Định kỳ quét ngầm (ICMP, SSH, Agent Pull) và lắng nghe tín hiệu Heartbeat liên tục (Agent Push) để cập nhật trạng thái Online/Offline/Unknown tập trung cho hàng chục nghìn servers.  
 * **Quản lý Dữ liệu:** Tạo, sửa, xóa, tìm kiếm, phân trang và sắp xếp server. Đảm bảo ràng buộc định danh độc nhất và định dạng IPv4 hợp lệ.  
 * **Import / Export:** Xử lý nhập/xuất dữ liệu hàng loạt qua file Excel tốc độ cao, cơ chế tự động bỏ qua bản ghi trùng lặp.  
 * **Báo cáo tự động & Chủ động:** Tiến trình Cronjob tự động gửi báo cáo Uptime hàng ngày qua Email, kết hợp cùng API cho phép quản trị viên chủ động trích xuất báo cáo theo khoảng thời gian tùy chọn.
@@ -43,7 +43,7 @@ Hệ thống được thiết kế và xây dựng tuân thủ nghiêm ngặt c�
 
 * **Kiến trúc Dữ liệu (Polyglot Persistence):**  
   * Sử dụng **PostgreSQL** làm cơ sở dữ liệu chính (Primary DB) để lưu trữ định danh.  
-  * Sử dụng **Redis** làm bộ đệm tốc độ cao (Cache) và khóa phân tán (Distributed Lock).   
+  * Sử dụng **Redis** làm bộ đệm tốc độ cao (Cache), khóa phân tán (Distributed Lock) và luồng sự kiện (Event Bus/Stream).   
   * Sử dụng **Elasticsearch** chuyên biệt để lưu trữ log ping và tính toán tỷ lệ Uptime siêu tốc. 
 
   **![][image1]**  
@@ -96,17 +96,17 @@ Phân hệ này cho phép Admin thao tác trực tiếp với dữ liệu Server
 **2.1. Xem danh sách (View Server)**
 
 * Hệ thống hỗ trợ hiển thị danh sách dưới dạng bảng có **Phân trang (Pagination)**.  
-* Hỗ trợ **Bộ lọc (Filter)** đa dạng: Tìm kiếm thông minh đồng thời theo Tên hoặc IPv4, lọc theo Trạng thái (Online/Offline), và lọc theo **Khoảng thời gian tạo (Created From \- To)**.  
+* Hỗ trợ **Bộ lọc (Filter)** đa dạng: Tìm kiếm thông minh đồng thời theo Tên hoặc IPv4, lọc theo Trạng thái (Online/Offline/Unknown), và lọc theo **Khoảng thời gian tạo (Created From \- To)**.  
 * Hỗ trợ **Sắp xếp (Sort)** dữ liệu linh hoạt.
 
 **![][image8]**
 
-*Hình 8: Giao diện trang Quản trị danh sách Server dưới dạng bảng, hỗ trợ phân trang, bộ lọc tìm kiếm và hiển thị trạng thái On/Off* 
+*Hình 8: Giao diện trang Quản trị danh sách Server dưới dạng bảng, hỗ trợ phân trang, bộ lọc tìm kiếm và hiển thị trạng thái Online/Offline/Unknown* 
 
 **2.2. Thêm mới, Sửa, Xóa (CRUD Server)**
 
-* **Thêm mới (Create):** Nhấn nút "Thêm Server". Yêu cầu server\_name không được trùng lặp và ipv4 phải đúng định dạng chuẩn. ID sẽ được hệ thống tự động sinh (UUID). Admin cũng có thể chọn **Phương thức kiểm tra (Healthcheck Method)** là `ICMP` (mặc định) hoặc `AGENT_PUSH` (yêu cầu cấu hình Agent tại máy đích).
-* **Cập nhật (Update):** Chọn biểu tượng Sửa trên từng dòng dữ liệu.  
+* **Thêm mới (Create):** Nhấn nút "Thêm Server". Yêu cầu `server_name` không được trùng lặp và `ipv4` phải đúng định dạng chuẩn. Tại đây, Quản trị viên có thể tùy chọn 1 trong 4 **Phương thức kiểm tra (Healthcheck Method)** (`ICMP`, `SSH`, `AGENT_PULL`, `AGENT_PUSH`). Tùy vào phương thức được chọn, hệ thống sẽ yêu cầu cung cấp thêm thông tin cấu hình tương ứng (ví dụ: SSH User/Key, hoặc Agent Endpoint).
+* **Cập nhật (Update):** Chọn biểu tượng Sửa trên từng dòng dữ liệu. Quản trị viên có thể thay đổi phương thức giám sát hoặc cập nhật lại các thông tin cấu hình (IPv4, SSH Key, Agent Endpoint, v.v.) mà không làm gián đoạn lịch sử giám sát của server.
 * **Xóa (Delete):** Chọn biểu tượng Xóa. Hệ thống có xác nhận trước khi xóa vĩnh viễn.
 **![][image9]**  
 *Hình 9: Form nhập liệu khi nhấn nút "Thêm Server" (Add New Server), yêu cầu điền Tên Server và địa chỉ IPv4 hợp lệ* 
@@ -148,10 +148,13 @@ Tính năng giúp tiết kiệm thời gian khi làm việc với hàng nghìn S
 
 ### **4\. Giám sát Trạng thái (Real-time Monitoring)**
 
-Đây là tính năng cốt lõi của hệ thống, hoạt động dựa trên 2 phương thức:
-* **ICMP (Quét tự động):** Tiến trình ngầm sẽ định kỳ quét (ping) toàn bộ máy chủ cấu hình ICMP cứ mỗi 30 giây.
-* **AGENT_PUSH (Heartbeat):** Các máy chủ đích sẽ chủ động thu thập trạng thái và đẩy (Push) về hệ thống qua Agent chuyên dụng. Đảm bảo cấu hình đúng `X-Master-Key` trên Agent để gửi dữ liệu thành công.
-* **Cập nhật tập trung:** Bất kỳ sự thay đổi trạng thái nào (Từ On sang Off và ngược lại, hoặc từ Timeout) đều được cập nhật tự động lên giao diện danh sách Server theo thời gian thực. Bất kể là phương thức kiểm tra nào.
+Đây là tính năng cốt lõi của hệ thống, hoạt động linh hoạt dựa trên 4 phương thức giám sát:
+* **ICMP (Ping):** Phương thức cơ bản nhất (mặc định), hệ thống định kỳ gửi các gói tin ICMP để xác định máy chủ còn sống hay không.
+* **SSH (Truy cập từ xa):** Kết nối trực tiếp vào máy chủ qua giao thức SSH (sử dụng User/Key) để kiểm tra trạng thái ở cấp độ OS.
+* **AGENT_PULL (Kéo dữ liệu):** Hệ thống chủ động gọi HTTP API đến Agent đang chạy tại máy đích để lấy trạng thái theo chu kỳ.
+* **AGENT_PUSH (Heartbeat):** Các máy chủ đích sẽ chủ động đẩy (Push) tín hiệu về hệ thống qua Agent chuyên dụng. Đảm bảo cấu hình đúng Header `X-Master-Key` trên Agent để gửi dữ liệu thành công.
+
+* **Cập nhật tập trung:** Bất kỳ sự thay đổi trạng thái nào (ví dụ từ Unknown sang Online, Online sang Offline, v.v.) đều được cập nhật tự động lên giao diện danh sách Server theo thời gian thực. Bất kể là phương thức kiểm tra nào.
 
 ### **5\. Thống kê và Báo cáo (Reporting)**
 
