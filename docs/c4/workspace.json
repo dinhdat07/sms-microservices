@@ -3,56 +3,63 @@
   "description" : "Server Management System",
   "documentation" : { },
   "id" : 1,
-  "lastModifiedDate" : "2026-07-22T07:07:05Z",
+  "lastModifiedDate" : "2026-07-28T16:55:48Z",
   "model" : {
     "deploymentNodes" : [ {
       "children" : [ {
         "containerInstances" : [ {
           "containerId" : "5",
           "environment" : "Production",
-          "id" : "127",
+          "id" : "155",
           "instanceId" : 1,
           "properties" : {
             "structurizr.dsl.identifier" : "gatewayInstance"
           },
           "relationships" : [ {
             "description" : "Routes Auth API requests",
-            "destinationId" : "129",
-            "id" : "130",
-            "linkedRelationshipId" : "54",
-            "sourceId" : "127",
+            "destinationId" : "157",
+            "id" : "158",
+            "linkedRelationshipId" : "65",
+            "sourceId" : "155",
             "technology" : "HTTP/gRPC"
           }, {
             "description" : "Verifies tokens via ForwardAuth (/verify)",
-            "destinationId" : "129",
-            "id" : "131",
-            "linkedRelationshipId" : "55",
-            "sourceId" : "127",
+            "destinationId" : "157",
+            "id" : "159",
+            "linkedRelationshipId" : "66",
+            "sourceId" : "155",
             "technology" : "HTTP"
           }, {
             "description" : "Routes Management API requests (injecting X-User-* headers)",
-            "destinationId" : "132",
-            "id" : "133",
-            "linkedRelationshipId" : "56",
-            "sourceId" : "127",
+            "destinationId" : "160",
+            "id" : "161",
+            "linkedRelationshipId" : "67",
+            "sourceId" : "155",
             "technology" : "HTTP/gRPC"
           }, {
             "description" : "Routes Reporting API requests (injecting X-User-* headers)",
-            "destinationId" : "134",
-            "id" : "135",
-            "linkedRelationshipId" : "57",
-            "sourceId" : "127",
+            "destinationId" : "162",
+            "id" : "163",
+            "linkedRelationshipId" : "68",
+            "sourceId" : "155",
+            "technology" : "HTTP/gRPC"
+          }, {
+            "description" : "Routes Agent Push API requests",
+            "destinationId" : "166",
+            "id" : "167",
+            "linkedRelationshipId" : "79",
+            "sourceId" : "155",
             "technology" : "HTTP/gRPC"
           } ],
           "tags" : "Container Instance"
         } ],
-        "description" : "Traefik must run on manager to listen to Docker socket",
+        "description" : "Constraint: node.role == manager",
         "environment" : "Production",
-        "id" : "126",
+        "id" : "154",
         "instances" : "1",
         "name" : "Manager Node",
         "properties" : {
-          "structurizr.dsl.identifier" : "b330bf83-0ae9-4730-941d-8af8216f22bb"
+          "structurizr.dsl.identifier" : "807b5895-48d1-467e-94c1-221b14eb9839"
         },
         "tags" : "Element,Deployment Node",
         "technology" : "Docker Engine"
@@ -60,220 +67,261 @@
         "containerInstances" : [ {
           "containerId" : "8",
           "environment" : "Production",
-          "id" : "129",
+          "id" : "157",
           "instanceId" : 1,
           "properties" : {
             "structurizr.dsl.identifier" : "identityInstance"
           },
           "relationships" : [ {
             "description" : "Reads/Writes User & Session data",
-            "destinationId" : "142",
-            "id" : "143",
-            "linkedRelationshipId" : "58",
-            "sourceId" : "129",
+            "destinationId" : "173",
+            "id" : "174",
+            "linkedRelationshipId" : "69",
+            "sourceId" : "157",
             "technology" : "TCP/5432"
           }, {
             "description" : "Checks revoked tokens (Anti-Replay)",
-            "destinationId" : "146",
-            "id" : "147",
-            "linkedRelationshipId" : "59",
-            "sourceId" : "129",
+            "destinationId" : "177",
+            "id" : "178",
+            "linkedRelationshipId" : "70",
+            "sourceId" : "157",
             "technology" : "TCP/6379"
           } ],
           "tags" : "Container Instance"
         }, {
           "containerId" : "17",
           "environment" : "Production",
-          "id" : "132",
+          "id" : "160",
           "instanceId" : 1,
           "properties" : {
             "structurizr.dsl.identifier" : "managementInstance"
           },
           "relationships" : [ {
             "description" : "Reads/Writes Server & Outbox data",
-            "destinationId" : "142",
-            "id" : "144",
-            "linkedRelationshipId" : "60",
-            "sourceId" : "132",
+            "destinationId" : "173",
+            "id" : "175",
+            "linkedRelationshipId" : "71",
+            "sourceId" : "160",
             "technology" : "TCP/5432"
           }, {
             "description" : "Publishes Server CRUD events / Consumes Status events",
-            "destinationId" : "146",
-            "id" : "149",
-            "linkedRelationshipId" : "61",
-            "sourceId" : "132",
+            "destinationId" : "177",
+            "id" : "180",
+            "linkedRelationshipId" : "72",
+            "sourceId" : "160",
             "technology" : "Redis Stream"
           } ],
           "tags" : "Container Instance"
         }, {
           "containerId" : "25",
           "environment" : "Production",
-          "id" : "134",
+          "id" : "162",
           "instanceId" : 1,
           "properties" : {
             "structurizr.dsl.identifier" : "reportingInstance"
           },
           "relationships" : [ {
             "description" : "Reads/Writes Report Requests & Synced Servers",
-            "destinationId" : "142",
-            "id" : "145",
-            "linkedRelationshipId" : "62",
-            "sourceId" : "134",
+            "destinationId" : "173",
+            "id" : "176",
+            "linkedRelationshipId" : "73",
+            "sourceId" : "162",
             "technology" : "TCP/5432"
           }, {
-            "description" : "Consumes Server CRUD & Status events",
-            "destinationId" : "146",
-            "id" : "151",
-            "linkedRelationshipId" : "63",
-            "sourceId" : "134",
+            "description" : "Consumes Server CRUD & Status events, Publishes Notification events",
+            "destinationId" : "177",
+            "id" : "182",
+            "linkedRelationshipId" : "74",
+            "sourceId" : "162",
             "technology" : "Redis Stream"
           }, {
             "description" : "Aggregates uptime data from",
-            "destinationId" : "154",
-            "id" : "155",
-            "linkedRelationshipId" : "64",
-            "sourceId" : "134",
+            "destinationId" : "188",
+            "id" : "189",
+            "linkedRelationshipId" : "75",
+            "sourceId" : "162",
             "technology" : "HTTP/9200"
           } ],
           "tags" : "Container Instance"
         }, {
-          "containerId" : "34",
+          "containerId" : "41",
           "environment" : "Production",
-          "id" : "136",
+          "id" : "164",
           "instanceId" : 1,
           "properties" : {
             "structurizr.dsl.identifier" : "monitoringInstance"
           },
           "relationships" : [ {
             "description" : "Reads targets, publishes Status events, consumes CRUD events",
-            "destinationId" : "146",
-            "id" : "153",
-            "linkedRelationshipId" : "66",
-            "sourceId" : "136",
+            "destinationId" : "177",
+            "id" : "184",
+            "linkedRelationshipId" : "81",
+            "sourceId" : "164",
             "technology" : "Redis Stream / Cache"
           }, {
             "description" : "Bulk inserts observation logs to",
-            "destinationId" : "154",
-            "id" : "156",
-            "linkedRelationshipId" : "67",
-            "sourceId" : "136",
+            "destinationId" : "188",
+            "id" : "190",
+            "linkedRelationshipId" : "82",
+            "sourceId" : "164",
             "technology" : "HTTP/9200"
+          } ],
+          "tags" : "Container Instance"
+        }, {
+          "containerId" : "33",
+          "environment" : "Production",
+          "id" : "165",
+          "instanceId" : 1,
+          "properties" : {
+            "structurizr.dsl.identifier" : "notificationInstance"
+          },
+          "relationships" : [ {
+            "description" : "Consumes Notification events",
+            "destinationId" : "177",
+            "id" : "186",
+            "linkedRelationshipId" : "76",
+            "sourceId" : "165",
+            "technology" : "Redis Stream"
+          } ],
+          "tags" : "Container Instance"
+        }, {
+          "containerId" : "37",
+          "environment" : "Production",
+          "id" : "166",
+          "instanceId" : 1,
+          "properties" : {
+            "structurizr.dsl.identifier" : "agentHandlerInstance"
+          },
+          "relationships" : [ {
+            "description" : "Publishes Agent Status events",
+            "destinationId" : "177",
+            "id" : "187",
+            "linkedRelationshipId" : "80",
+            "sourceId" : "166",
+            "technology" : "Redis Stream"
           } ],
           "tags" : "Container Instance"
         }, {
           "containerId" : "6",
           "environment" : "Production",
-          "id" : "137",
+          "id" : "168",
           "instanceId" : 1,
           "properties" : {
             "structurizr.dsl.identifier" : "spaInstance"
           },
           "relationships" : [ {
             "description" : "Consumes APIs via",
-            "destinationId" : "127",
-            "id" : "138",
-            "linkedRelationshipId" : "52",
-            "sourceId" : "137",
+            "destinationId" : "155",
+            "id" : "169",
+            "linkedRelationshipId" : "63",
+            "sourceId" : "168",
             "technology" : "HTTPS/REST"
           } ],
           "tags" : "Container Instance"
         }, {
           "containerId" : "7",
           "environment" : "Production",
-          "id" : "139",
+          "id" : "170",
           "instanceId" : 1,
           "properties" : {
             "structurizr.dsl.identifier" : "swaggerInstance"
           },
           "relationships" : [ {
             "description" : "Fetches OpenAPI specs (/openapi/*) via",
-            "destinationId" : "127",
-            "id" : "140",
-            "linkedRelationshipId" : "53",
-            "sourceId" : "139",
+            "destinationId" : "155",
+            "id" : "171",
+            "linkedRelationshipId" : "64",
+            "sourceId" : "170",
             "technology" : "HTTP/REST"
           } ],
           "tags" : "Container Instance"
         } ],
-        "description" : "Application workloads",
+        "description" : "Stateless Application Workloads (Replicated)",
         "environment" : "Production",
-        "id" : "128",
+        "id" : "156",
         "instances" : "1",
-        "name" : "Worker Nodes",
+        "name" : "Any Node (1, 2, 3)",
         "properties" : {
-          "structurizr.dsl.identifier" : "cda4d1c2-15cd-42c5-8973-b49ddaeb5755"
+          "structurizr.dsl.identifier" : "01093671-196b-40a5-8389-692a599d5ac1"
         },
         "tags" : "Element,Deployment Node",
         "technology" : "Docker Engine"
       }, {
         "containerInstances" : [ {
-          "containerId" : "42",
+          "containerId" : "52",
           "environment" : "Production",
-          "id" : "142",
+          "id" : "173",
           "instanceId" : 1,
           "properties" : {
             "structurizr.dsl.identifier" : "pgInstance"
           },
           "tags" : "Container Instance"
         }, {
-          "containerId" : "43",
+          "containerId" : "53",
           "environment" : "Production",
-          "id" : "146",
+          "id" : "177",
           "instanceId" : 1,
           "properties" : {
             "structurizr.dsl.identifier" : "redisInstance"
           },
           "relationships" : [ {
             "description" : "Delivers stream sms.events.server_status",
-            "destinationId" : "132",
-            "id" : "148",
-            "linkedRelationshipId" : "91",
-            "sourceId" : "146",
+            "destinationId" : "160",
+            "id" : "179",
+            "linkedRelationshipId" : "106",
+            "sourceId" : "177",
             "technology" : "XREADGROUP"
           }, {
             "description" : "Delivers streams sms.events.server & sms.events.server_status",
-            "destinationId" : "134",
-            "id" : "150",
-            "linkedRelationshipId" : "117",
-            "sourceId" : "146",
+            "destinationId" : "162",
+            "id" : "181",
+            "linkedRelationshipId" : "137",
+            "sourceId" : "177",
             "technology" : "XREADGROUP"
           }, {
             "description" : "Delivers stream sms.events.server",
-            "destinationId" : "136",
-            "id" : "152",
-            "linkedRelationshipId" : "96",
-            "sourceId" : "146",
+            "destinationId" : "164",
+            "id" : "183",
+            "linkedRelationshipId" : "111",
+            "sourceId" : "177",
+            "technology" : "XREADGROUP"
+          }, {
+            "description" : "Delivers NotificationRequested event",
+            "destinationId" : "165",
+            "id" : "185",
+            "linkedRelationshipId" : "143",
+            "sourceId" : "177",
             "technology" : "XREADGROUP"
           } ],
           "tags" : "Container Instance"
         }, {
-          "containerId" : "44",
+          "containerId" : "54",
           "environment" : "Production",
-          "id" : "154",
+          "id" : "188",
           "instanceId" : 1,
           "properties" : {
             "structurizr.dsl.identifier" : "esInstance"
           },
           "tags" : "Container Instance"
         } ],
-        "description" : "Databases and Message Brokers",
+        "description" : "Constraint: node.hostname == node-3 (Stateful)",
         "environment" : "Production",
-        "id" : "141",
+        "id" : "172",
         "instances" : "1",
-        "name" : "Stateful Nodes",
+        "name" : "Node-3",
         "properties" : {
-          "structurizr.dsl.identifier" : "92267916-f455-49a4-a2da-2410f56f5056"
+          "structurizr.dsl.identifier" : "ea303565-099a-4369-ac38-1d0b89654400"
         },
         "tags" : "Element,Deployment Node",
         "technology" : "Docker Engine"
       } ],
       "description" : "Manager & Worker Nodes",
       "environment" : "Production",
-      "id" : "125",
+      "id" : "153",
       "instances" : "1",
-      "name" : "Docker Swarm Cluster",
+      "name" : "Docker Swarm Cluster (3 VMs)",
       "properties" : {
-        "structurizr.dsl.identifier" : "d17cbb8c-342a-4423-bb22-bd5e639d143d"
+        "structurizr.dsl.identifier" : "ff0d5cc6-9b68-4323-bbb7-abacc3bfe450"
       },
       "tags" : "Element,Deployment Node",
       "technology" : "Docker Swarm"
@@ -288,27 +336,27 @@
       "relationships" : [ {
         "description" : "Manages servers, requests reports, and views status via",
         "destinationId" : "4",
-        "id" : "45",
+        "id" : "55",
         "sourceId" : "1",
         "tags" : "Relationship"
       }, {
         "description" : "Makes API requests to",
         "destinationId" : "5",
-        "id" : "49",
+        "id" : "60",
         "sourceId" : "1",
         "tags" : "Relationship",
         "technology" : "HTTPS/REST"
       }, {
         "description" : "Loads frontend application from",
         "destinationId" : "6",
-        "id" : "50",
+        "id" : "61",
         "sourceId" : "1",
         "tags" : "Relationship",
         "technology" : "HTTPS"
       }, {
         "description" : "Views API documentation on",
         "destinationId" : "7",
-        "id" : "51",
+        "id" : "62",
         "sourceId" : "1",
         "tags" : "Relationship",
         "technology" : "HTTPS"
@@ -326,7 +374,7 @@
       "relationships" : [ {
         "description" : "Delivers emails to",
         "destinationId" : "1",
-        "id" : "48",
+        "id" : "59",
         "sourceId" : "2",
         "tags" : "Relationship"
       } ],
@@ -339,6 +387,20 @@
       "properties" : {
         "structurizr.dsl.identifier" : "targetServers"
       },
+      "relationships" : [ {
+        "description" : "Pushes telemetry/heartbeat (Agent Push) via",
+        "destinationId" : "4",
+        "id" : "57",
+        "sourceId" : "3",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Pushes heartbeat",
+        "destinationId" : "5",
+        "id" : "78",
+        "sourceId" : "3",
+        "tags" : "Relationship",
+        "technology" : "HTTPS/REST"
+      } ],
       "tags" : "Element,Software System,External"
     }, {
       "containers" : [ {
@@ -352,56 +414,70 @@
         "relationships" : [ {
           "description" : "Routes Auth API requests",
           "destinationId" : "8",
-          "id" : "54",
+          "id" : "65",
           "sourceId" : "5",
           "tags" : "Relationship",
           "technology" : "HTTP/gRPC"
         }, {
           "description" : "Verifies tokens via ForwardAuth (/verify)",
           "destinationId" : "8",
-          "id" : "55",
+          "id" : "66",
           "sourceId" : "5",
           "tags" : "Relationship",
           "technology" : "HTTP"
         }, {
           "description" : "Routes Management API requests (injecting X-User-* headers)",
           "destinationId" : "17",
-          "id" : "56",
+          "id" : "67",
           "sourceId" : "5",
           "tags" : "Relationship",
           "technology" : "HTTP/gRPC"
         }, {
           "description" : "Routes Reporting API requests (injecting X-User-* headers)",
           "destinationId" : "25",
-          "id" : "57",
+          "id" : "68",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "HTTP/gRPC"
+        }, {
+          "description" : "Routes Agent Push API requests",
+          "destinationId" : "37",
+          "id" : "79",
           "sourceId" : "5",
           "tags" : "Relationship",
           "technology" : "HTTP/gRPC"
         }, {
           "description" : "Calls /verify",
           "destinationId" : "9",
-          "id" : "69",
+          "id" : "84",
           "sourceId" : "5",
           "tags" : "Relationship",
           "technology" : "HTTP"
         }, {
           "description" : "Routes /api/v1/auth/*",
           "destinationId" : "10",
-          "id" : "70",
+          "id" : "85",
           "sourceId" : "5",
           "tags" : "Relationship",
           "technology" : "HTTP/gRPC"
         }, {
           "description" : "Routes /api/v1/servers/*",
           "destinationId" : "18",
-          "id" : "82",
+          "id" : "97",
           "sourceId" : "5",
           "tags" : "Relationship",
           "technology" : "HTTP/gRPC"
         }, {
           "description" : "Routes /api/v1/servers/report/*",
           "destinationId" : "26",
-          "id" : "110",
+          "id" : "130",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "HTTP/gRPC"
+        }, {
+          "description" : "Routes /api/v1/agent/*",
+          "destinationId" : "38",
+          "id" : "149",
           "sourceId" : "5",
           "tags" : "Relationship",
           "technology" : "HTTP/gRPC"
@@ -419,7 +495,7 @@
         "relationships" : [ {
           "description" : "Consumes APIs via",
           "destinationId" : "5",
-          "id" : "52",
+          "id" : "63",
           "sourceId" : "6",
           "tags" : "Relationship",
           "technology" : "HTTPS/REST"
@@ -437,7 +513,7 @@
         "relationships" : [ {
           "description" : "Fetches OpenAPI specs (/openapi/*) via",
           "destinationId" : "5",
-          "id" : "53",
+          "id" : "64",
           "sourceId" : "7",
           "tags" : "Relationship",
           "technology" : "HTTP/REST"
@@ -456,7 +532,7 @@
           "relationships" : [ {
             "description" : "Authenticates token",
             "destinationId" : "11",
-            "id" : "71",
+            "id" : "86",
             "sourceId" : "9",
             "tags" : "Relationship"
           } ],
@@ -473,7 +549,7 @@
           "relationships" : [ {
             "description" : "Delegates to",
             "destinationId" : "12",
-            "id" : "72",
+            "id" : "87",
             "sourceId" : "10",
             "tags" : "Relationship"
           } ],
@@ -490,7 +566,7 @@
           "relationships" : [ {
             "description" : "Checks token blacklist in",
             "destinationId" : "16",
-            "id" : "77",
+            "id" : "92",
             "sourceId" : "11",
             "tags" : "Relationship"
           } ],
@@ -507,25 +583,25 @@
           "relationships" : [ {
             "description" : "Uses",
             "destinationId" : "13",
-            "id" : "73",
+            "id" : "88",
             "sourceId" : "12",
             "tags" : "Relationship"
           }, {
             "description" : "Uses",
             "destinationId" : "14",
-            "id" : "74",
+            "id" : "89",
             "sourceId" : "12",
             "tags" : "Relationship"
           }, {
             "description" : "Uses",
             "destinationId" : "15",
-            "id" : "75",
+            "id" : "90",
             "sourceId" : "12",
             "tags" : "Relationship"
           }, {
             "description" : "Blacklists revoked sessions in",
             "destinationId" : "16",
-            "id" : "76",
+            "id" : "91",
             "sourceId" : "12",
             "tags" : "Relationship"
           } ],
@@ -541,8 +617,8 @@
           },
           "relationships" : [ {
             "description" : "Queries",
-            "destinationId" : "42",
-            "id" : "78",
+            "destinationId" : "52",
+            "id" : "93",
             "sourceId" : "13",
             "tags" : "Relationship",
             "technology" : "TCP/5432"
@@ -559,8 +635,8 @@
           },
           "relationships" : [ {
             "description" : "Queries",
-            "destinationId" : "42",
-            "id" : "79",
+            "destinationId" : "52",
+            "id" : "94",
             "sourceId" : "14",
             "tags" : "Relationship",
             "technology" : "TCP/5432"
@@ -577,8 +653,8 @@
           },
           "relationships" : [ {
             "description" : "Queries",
-            "destinationId" : "42",
-            "id" : "80",
+            "destinationId" : "52",
+            "id" : "95",
             "sourceId" : "15",
             "tags" : "Relationship",
             "technology" : "TCP/5432"
@@ -595,8 +671,8 @@
           },
           "relationships" : [ {
             "description" : "Commands",
-            "destinationId" : "43",
-            "id" : "81",
+            "destinationId" : "53",
+            "id" : "96",
             "sourceId" : "16",
             "tags" : "Relationship",
             "technology" : "TCP/6379"
@@ -613,15 +689,15 @@
         },
         "relationships" : [ {
           "description" : "Reads/Writes User & Session data",
-          "destinationId" : "42",
-          "id" : "58",
+          "destinationId" : "52",
+          "id" : "69",
           "sourceId" : "8",
           "tags" : "Relationship",
           "technology" : "TCP/5432"
         }, {
           "description" : "Checks revoked tokens (Anti-Replay)",
-          "destinationId" : "43",
-          "id" : "59",
+          "destinationId" : "53",
+          "id" : "70",
           "sourceId" : "8",
           "tags" : "Relationship",
           "technology" : "TCP/6379"
@@ -640,13 +716,13 @@
           "relationships" : [ {
             "description" : "Checks quota",
             "destinationId" : "24",
-            "id" : "83",
+            "id" : "98",
             "sourceId" : "18",
             "tags" : "Relationship"
           }, {
             "description" : "Delegates to",
             "destinationId" : "19",
-            "id" : "85",
+            "id" : "100",
             "sourceId" : "18",
             "tags" : "Relationship"
           } ],
@@ -663,13 +739,13 @@
           "relationships" : [ {
             "description" : "Writes Server Metadata",
             "destinationId" : "20",
-            "id" : "86",
+            "id" : "101",
             "sourceId" : "19",
             "tags" : "Relationship"
           }, {
             "description" : "Writes Outbox Events (Transactionally)",
             "destinationId" : "21",
-            "id" : "87",
+            "id" : "102",
             "sourceId" : "19",
             "tags" : "Relationship"
           } ],
@@ -685,8 +761,8 @@
           },
           "relationships" : [ {
             "description" : "Queries",
-            "destinationId" : "42",
-            "id" : "93",
+            "destinationId" : "52",
+            "id" : "108",
             "sourceId" : "20",
             "tags" : "Relationship",
             "technology" : "TCP/5432"
@@ -703,8 +779,8 @@
           },
           "relationships" : [ {
             "description" : "Queries",
-            "destinationId" : "42",
-            "id" : "94",
+            "destinationId" : "52",
+            "id" : "109",
             "sourceId" : "21",
             "tags" : "Relationship",
             "technology" : "TCP/5432"
@@ -722,13 +798,13 @@
           "relationships" : [ {
             "description" : "Polls unpublished events",
             "destinationId" : "21",
-            "id" : "88",
+            "id" : "103",
             "sourceId" : "22",
             "tags" : "Relationship"
           }, {
             "description" : "Publishes to stream sms.events.server",
-            "destinationId" : "43",
-            "id" : "89",
+            "destinationId" : "53",
+            "id" : "104",
             "sourceId" : "22",
             "tags" : "Relationship",
             "technology" : "XADD"
@@ -746,7 +822,7 @@
           "relationships" : [ {
             "description" : "Updates Server status",
             "destinationId" : "20",
-            "id" : "92",
+            "id" : "107",
             "sourceId" : "23",
             "tags" : "Relationship"
           } ],
@@ -762,8 +838,8 @@
           },
           "relationships" : [ {
             "description" : "Increments counters",
-            "destinationId" : "43",
-            "id" : "84",
+            "destinationId" : "53",
+            "id" : "99",
             "sourceId" : "24",
             "tags" : "Relationship",
             "technology" : "TCP/6379"
@@ -780,15 +856,15 @@
         },
         "relationships" : [ {
           "description" : "Reads/Writes Server & Outbox data",
-          "destinationId" : "42",
-          "id" : "60",
+          "destinationId" : "52",
+          "id" : "71",
           "sourceId" : "17",
           "tags" : "Relationship",
           "technology" : "TCP/5432"
         }, {
           "description" : "Publishes Server CRUD events / Consumes Status events",
-          "destinationId" : "43",
-          "id" : "61",
+          "destinationId" : "53",
+          "id" : "72",
           "sourceId" : "17",
           "tags" : "Relationship",
           "technology" : "Redis Stream"
@@ -806,8 +882,8 @@
           },
           "relationships" : [ {
             "description" : "Delegates to",
-            "destinationId" : "31",
-            "id" : "113",
+            "destinationId" : "30",
+            "id" : "133",
             "sourceId" : "26",
             "tags" : "Relationship"
           } ],
@@ -823,22 +899,22 @@
           },
           "relationships" : [ {
             "description" : "Acquires lock (SET NX) to prevent duplicate emails",
-            "destinationId" : "43",
-            "id" : "111",
+            "destinationId" : "53",
+            "id" : "131",
             "sourceId" : "27",
             "tags" : "Relationship",
             "technology" : "TCP/6379"
           }, {
             "description" : "Triggers Daily Reporting",
-            "destinationId" : "31",
-            "id" : "112",
+            "destinationId" : "30",
+            "id" : "132",
             "sourceId" : "27",
             "tags" : "Relationship"
           } ],
           "tags" : "Element,Component",
           "technology" : "Go Cron"
         }, {
-          "description" : "Consumes in-memory channel to render HTML templates and generate reports.",
+          "description" : "Consumes in-memory channel to calculate uptime.",
           "documentation" : { },
           "id" : "28",
           "name" : "Report Worker",
@@ -847,55 +923,39 @@
           },
           "relationships" : [ {
             "description" : "Updates request status & reads synced servers",
-            "destinationId" : "33",
-            "id" : "119",
+            "destinationId" : "32",
+            "id" : "139",
             "sourceId" : "28",
             "tags" : "Relationship"
           }, {
             "description" : "Delegates uptime calculation",
-            "destinationId" : "32",
-            "id" : "120",
+            "destinationId" : "31",
+            "id" : "140",
             "sourceId" : "28",
             "tags" : "Relationship"
           }, {
-            "description" : "Delegates email sending",
-            "destinationId" : "29",
-            "id" : "121",
+            "description" : "Publishes NotificationRequested event",
+            "destinationId" : "53",
+            "id" : "141",
             "sourceId" : "28",
-            "tags" : "Relationship"
+            "tags" : "Relationship",
+            "technology" : "XADD"
           } ],
           "tags" : "Element,Component",
           "technology" : "Go Worker"
         }, {
-          "description" : "Builds multipart MIME email and sends it via SMTP.",
+          "description" : "Listens to server and status events to sync local DB. (Decoupled from DB errors)",
           "documentation" : { },
           "id" : "29",
-          "name" : "SMTP Notifier",
-          "properties" : {
-            "structurizr.dsl.identifier" : "notifier"
-          },
-          "relationships" : [ {
-            "description" : "Sends compiled email",
-            "destinationId" : "2",
-            "id" : "123",
-            "sourceId" : "29",
-            "tags" : "Relationship"
-          } ],
-          "tags" : "Element,Component",
-          "technology" : "Go Component"
-        }, {
-          "description" : "Listens to server and status events to sync local DB.",
-          "documentation" : { },
-          "id" : "30",
           "name" : "Event Consumer Worker",
           "properties" : {
             "structurizr.dsl.identifier" : "eventConsumer"
           },
           "relationships" : [ {
             "description" : "Syncs reporting_servers table",
-            "destinationId" : "33",
-            "id" : "118",
-            "sourceId" : "30",
+            "destinationId" : "32",
+            "id" : "138",
+            "sourceId" : "29",
             "tags" : "Relationship"
           } ],
           "tags" : "Element,Component",
@@ -903,22 +963,22 @@
         }, {
           "description" : "Core business logic for report generation.",
           "documentation" : { },
-          "id" : "31",
+          "id" : "30",
           "name" : "Report Service",
           "properties" : {
             "structurizr.dsl.identifier" : "reportService"
           },
           "relationships" : [ {
             "description" : "Creates report request",
-            "destinationId" : "33",
-            "id" : "114",
-            "sourceId" : "31",
+            "destinationId" : "32",
+            "id" : "134",
+            "sourceId" : "30",
             "tags" : "Relationship"
           }, {
             "description" : "Enqueues job",
             "destinationId" : "28",
-            "id" : "115",
-            "sourceId" : "31",
+            "id" : "135",
+            "sourceId" : "30",
             "tags" : "Relationship"
           } ],
           "tags" : "Element,Component",
@@ -926,16 +986,16 @@
         }, {
           "description" : "Calculates uptime by querying observation logs.",
           "documentation" : { },
-          "id" : "32",
+          "id" : "31",
           "name" : "ES Uptime Calculator",
           "properties" : {
             "structurizr.dsl.identifier" : "esUptimeCalc"
           },
           "relationships" : [ {
             "description" : "Queries Aggregation (sms_observation_logs)",
-            "destinationId" : "44",
-            "id" : "122",
-            "sourceId" : "32",
+            "destinationId" : "54",
+            "id" : "145",
+            "sourceId" : "31",
             "tags" : "Relationship",
             "technology" : "HTTP/9200"
           } ],
@@ -944,23 +1004,23 @@
         }, {
           "description" : "Manages report request status and synced server data.",
           "documentation" : { },
-          "id" : "33",
+          "id" : "32",
           "name" : "Reporting Repository (PostgreSQL)",
           "properties" : {
             "structurizr.dsl.identifier" : "reportRepo"
           },
           "relationships" : [ {
             "description" : "Queries",
-            "destinationId" : "42",
-            "id" : "124",
-            "sourceId" : "33",
+            "destinationId" : "52",
+            "id" : "146",
+            "sourceId" : "32",
             "tags" : "Relationship",
             "technology" : "TCP/5432"
           } ],
           "tags" : "Element,Component",
           "technology" : "Go Repository"
         } ],
-        "description" : "Handles async report generation, HTML rendering, and SMTP communication.",
+        "description" : "Handles async report generation.",
         "documentation" : { },
         "id" : "25",
         "name" : "Reporting Service",
@@ -969,30 +1029,100 @@
         },
         "relationships" : [ {
           "description" : "Reads/Writes Report Requests & Synced Servers",
-          "destinationId" : "42",
-          "id" : "62",
+          "destinationId" : "52",
+          "id" : "73",
           "sourceId" : "25",
           "tags" : "Relationship",
           "technology" : "TCP/5432"
         }, {
-          "description" : "Consumes Server CRUD & Status events",
-          "destinationId" : "43",
-          "id" : "63",
+          "description" : "Consumes Server CRUD & Status events, Publishes Notification events",
+          "destinationId" : "53",
+          "id" : "74",
           "sourceId" : "25",
           "tags" : "Relationship",
           "technology" : "Redis Stream"
         }, {
           "description" : "Aggregates uptime data from",
-          "destinationId" : "44",
-          "id" : "64",
+          "destinationId" : "54",
+          "id" : "75",
           "sourceId" : "25",
           "tags" : "Relationship",
           "technology" : "HTTP/9200"
+        } ],
+        "tags" : "Element,Container,Microservice",
+        "technology" : "Go"
+      }, {
+        "components" : [ {
+          "description" : "Consumes Notification events from Redis.",
+          "documentation" : { },
+          "id" : "34",
+          "name" : "Notification Consumer Worker",
+          "properties" : {
+            "structurizr.dsl.identifier" : "notificationConsumer"
+          },
+          "relationships" : [ {
+            "description" : "Delegates email sending",
+            "destinationId" : "35",
+            "id" : "144",
+            "sourceId" : "34",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Go Worker"
+        }, {
+          "description" : "Processes notification jobs.",
+          "documentation" : { },
+          "id" : "35",
+          "name" : "Notification Service",
+          "properties" : {
+            "structurizr.dsl.identifier" : "notificationService"
+          },
+          "relationships" : [ {
+            "description" : "Invokes email building",
+            "destinationId" : "36",
+            "id" : "147",
+            "sourceId" : "35",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Go Service"
+        }, {
+          "description" : "Builds multipart MIME email and sends it via SMTP.",
+          "documentation" : { },
+          "id" : "36",
+          "name" : "SMTP Notifier",
+          "properties" : {
+            "structurizr.dsl.identifier" : "smtpNotifier"
+          },
+          "relationships" : [ {
+            "description" : "Sends compiled email",
+            "destinationId" : "2",
+            "id" : "148",
+            "sourceId" : "36",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Go Component"
+        } ],
+        "description" : "Dedicated service for sending emails and alerts.",
+        "documentation" : { },
+        "id" : "33",
+        "name" : "Notification Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "notification"
+        },
+        "relationships" : [ {
+          "description" : "Consumes Notification events",
+          "destinationId" : "53",
+          "id" : "76",
+          "sourceId" : "33",
+          "tags" : "Relationship",
+          "technology" : "Redis Stream"
         }, {
           "description" : "Sends emails via",
           "destinationId" : "2",
-          "id" : "65",
-          "sourceId" : "25",
+          "id" : "77",
+          "sourceId" : "33",
           "tags" : "Relationship",
           "technology" : "SMTP"
         } ],
@@ -1000,60 +1130,147 @@
         "technology" : "Go"
       }, {
         "components" : [ {
-          "description" : "Pulls targets from queue and pings servers.",
+          "description" : "Accepts heartbeat pushes from agents.",
           "documentation" : { },
-          "id" : "35",
-          "name" : "Ping Worker",
+          "id" : "38",
+          "name" : "Agent gRPC/REST Server",
+          "properties" : {
+            "structurizr.dsl.identifier" : "agentServer"
+          },
+          "relationships" : [ {
+            "description" : "Delegates to",
+            "destinationId" : "39",
+            "id" : "150",
+            "sourceId" : "38",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Go gRPC/HTTP Server"
+        }, {
+          "description" : "Validates X-Master-Key and processes payload.",
+          "documentation" : { },
+          "id" : "39",
+          "name" : "Agent Service",
+          "properties" : {
+            "structurizr.dsl.identifier" : "agentService"
+          },
+          "relationships" : [ {
+            "description" : "Pushes validated state",
+            "destinationId" : "40",
+            "id" : "151",
+            "sourceId" : "39",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Go Service"
+        }, {
+          "description" : "Publishes agent status to Redis streams.",
+          "documentation" : { },
+          "id" : "40",
+          "name" : "Agent Event Publisher",
+          "properties" : {
+            "structurizr.dsl.identifier" : "agentEventPublisher"
+          },
+          "relationships" : [ {
+            "description" : "ZADD monitoring:agent:heartbeats & XADD sms.events.heartbeat",
+            "destinationId" : "53",
+            "id" : "152",
+            "sourceId" : "40",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Go Component"
+        } ],
+        "description" : "Receives telemetry data from agents installed on target servers.",
+        "documentation" : { },
+        "id" : "37",
+        "name" : "Agent Handler Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "agentHandler"
+        },
+        "relationships" : [ {
+          "description" : "Publishes Agent Status events",
+          "destinationId" : "53",
+          "id" : "80",
+          "sourceId" : "37",
+          "tags" : "Relationship",
+          "technology" : "Redis Stream"
+        } ],
+        "tags" : "Element,Container,Microservice",
+        "technology" : "Go"
+      }, {
+        "components" : [ {
+          "description" : "Pulls targets via BLPOP from queue and executes checks.",
+          "documentation" : { },
+          "id" : "42",
+          "name" : "Worker Pool",
           "properties" : {
             "structurizr.dsl.identifier" : "monitorWorker"
           },
           "relationships" : [ {
             "description" : "Pulls targets (BLPOP)",
-            "destinationId" : "41",
-            "id" : "101",
-            "sourceId" : "35",
+            "destinationId" : "51",
+            "id" : "120",
+            "sourceId" : "42",
             "tags" : "Relationship"
           }, {
-            "description" : "Pings",
-            "destinationId" : "3",
-            "id" : "102",
-            "sourceId" : "35",
-            "tags" : "Relationship",
-            "technology" : "ICMP"
+            "description" : "Gets appropriate checker",
+            "destinationId" : "43",
+            "id" : "121",
+            "sourceId" : "42",
+            "tags" : "Relationship"
           }, {
-            "description" : "Evaluates ping result",
-            "destinationId" : "36",
-            "id" : "103",
-            "sourceId" : "35",
+            "description" : "Evaluates check result",
+            "destinationId" : "44",
+            "id" : "123",
+            "sourceId" : "42",
             "tags" : "Relationship"
           } ],
           "tags" : "Element,Component",
           "technology" : "Go Worker"
         }, {
+          "description" : "Provides correct checker (ICMP/SSH/AgentPull) based on target config.",
+          "documentation" : { },
+          "id" : "43",
+          "name" : "HealthChecker Factory",
+          "properties" : {
+            "structurizr.dsl.identifier" : "healthCheckerFactory"
+          },
+          "relationships" : [ {
+            "description" : "Executes health check",
+            "destinationId" : "3",
+            "id" : "122",
+            "sourceId" : "43",
+            "tags" : "Relationship",
+            "technology" : "ICMP/SSH/HTTP"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Go Component"
+        }, {
           "description" : "Evaluates state machine and publishes events.",
           "documentation" : { },
-          "id" : "36",
+          "id" : "44",
           "name" : "Monitoring Service",
           "properties" : {
             "structurizr.dsl.identifier" : "monitoringService"
           },
           "relationships" : [ {
             "description" : "Logs observation",
-            "destinationId" : "37",
-            "id" : "104",
-            "sourceId" : "36",
+            "destinationId" : "45",
+            "id" : "124",
+            "sourceId" : "44",
             "tags" : "Relationship"
           }, {
             "description" : "Gets and Sets Server State",
-            "destinationId" : "39",
-            "id" : "106",
-            "sourceId" : "36",
+            "destinationId" : "49",
+            "id" : "126",
+            "sourceId" : "44",
             "tags" : "Relationship"
           }, {
             "description" : "Publishes to stream sms.events.server_status",
-            "destinationId" : "43",
-            "id" : "107",
-            "sourceId" : "36",
+            "destinationId" : "53",
+            "id" : "127",
+            "sourceId" : "44",
             "tags" : "Relationship",
             "technology" : "XADD"
           } ],
@@ -1062,16 +1279,16 @@
         }, {
           "description" : "Writes logs to Elasticsearch.",
           "documentation" : { },
-          "id" : "37",
+          "id" : "45",
           "name" : "Observation Logger",
           "properties" : {
             "structurizr.dsl.identifier" : "observationLogger"
           },
           "relationships" : [ {
             "description" : "Bulk inserts logs",
-            "destinationId" : "44",
-            "id" : "105",
-            "sourceId" : "37",
+            "destinationId" : "54",
+            "id" : "125",
+            "sourceId" : "45",
             "tags" : "Relationship",
             "technology" : "HTTP/9200"
           } ],
@@ -1080,64 +1297,105 @@
         }, {
           "description" : "Consumes ServerCreated/Updated/Deleted events to update Cache.",
           "documentation" : { },
-          "id" : "38",
+          "id" : "46",
           "name" : "Stream Consumer Worker",
           "properties" : {
             "structurizr.dsl.identifier" : "streamConsumer"
           },
           "relationships" : [ {
             "description" : "Updates targets",
-            "destinationId" : "39",
-            "id" : "97",
-            "sourceId" : "38",
+            "destinationId" : "49",
+            "id" : "112",
+            "sourceId" : "46",
             "tags" : "Relationship"
           } ],
           "tags" : "Element,Component",
           "technology" : "Go Worker"
         }, {
+          "description" : "Consumes heartbeat from Agent Handler to evaluate UP state.",
+          "documentation" : { },
+          "id" : "47",
+          "name" : "Heartbeat Consumer Worker",
+          "properties" : {
+            "structurizr.dsl.identifier" : "heartbeatConsumer"
+          },
+          "relationships" : [ {
+            "description" : "Evaluate(serverID, true)",
+            "destinationId" : "44",
+            "id" : "114",
+            "sourceId" : "47",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Go Worker"
+        }, {
+          "description" : "Cronjob removing timed-out agents and evaluating DOWN state.",
+          "documentation" : { },
+          "id" : "48",
+          "name" : "Agent Sweeper",
+          "properties" : {
+            "structurizr.dsl.identifier" : "agentSweeper"
+          },
+          "relationships" : [ {
+            "description" : "Reads monitoring:agent:heartbeats",
+            "destinationId" : "49",
+            "id" : "115",
+            "sourceId" : "48",
+            "tags" : "Relationship",
+            "technology" : "ZREVRANGEBYSCORE"
+          }, {
+            "description" : "Evaluate(serverID, false) for timeouts",
+            "destinationId" : "44",
+            "id" : "116",
+            "sourceId" : "48",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Go Cron"
+        }, {
           "description" : "Local high-speed access to server targets.",
           "documentation" : { },
-          "id" : "39",
+          "id" : "49",
           "name" : "Monitoring Cache (Redis)",
           "properties" : {
             "structurizr.dsl.identifier" : "cacheRepo"
           },
           "relationships" : [ {
             "description" : "Commands",
-            "destinationId" : "43",
-            "id" : "108",
-            "sourceId" : "39",
+            "destinationId" : "53",
+            "id" : "128",
+            "sourceId" : "49",
             "tags" : "Relationship",
             "technology" : "TCP/6379"
           } ],
           "tags" : "Element,Component",
-          "technology" : "Redis Set"
+          "technology" : "Redis Hash & Set"
         }, {
-          "description" : "Elects leader and pushes ping targets into a shared queue.",
+          "description" : "Elects leader (SET NX) and pushes ping targets into a shared queue.",
           "documentation" : { },
-          "id" : "40",
+          "id" : "50",
           "name" : "Cycle Scheduler",
           "properties" : {
             "structurizr.dsl.identifier" : "scheduler"
           },
           "relationships" : [ {
             "description" : "Acquires dynamic lock (SET NX PX)",
-            "destinationId" : "43",
-            "id" : "98",
-            "sourceId" : "40",
+            "destinationId" : "53",
+            "id" : "117",
+            "sourceId" : "50",
             "tags" : "Relationship",
             "technology" : "TCP/6379"
           }, {
             "description" : "Reads all targets (SMEMBERS)",
-            "destinationId" : "39",
-            "id" : "99",
-            "sourceId" : "40",
+            "destinationId" : "49",
+            "id" : "118",
+            "sourceId" : "50",
             "tags" : "Relationship"
           }, {
             "description" : "Pushes targets (LPUSH)",
-            "destinationId" : "41",
-            "id" : "100",
-            "sourceId" : "40",
+            "destinationId" : "51",
+            "id" : "119",
+            "sourceId" : "50",
             "tags" : "Relationship"
           } ],
           "tags" : "Element,Component",
@@ -1145,48 +1403,48 @@
         }, {
           "description" : "A shared queue storing targets to be pinged in the current cycle.",
           "documentation" : { },
-          "id" : "41",
+          "id" : "51",
           "name" : "Ping Queue (Redis)",
           "properties" : {
             "structurizr.dsl.identifier" : "queueRepo"
           },
           "relationships" : [ {
             "description" : "Commands",
-            "destinationId" : "43",
-            "id" : "109",
-            "sourceId" : "41",
+            "destinationId" : "53",
+            "id" : "129",
+            "sourceId" : "51",
             "tags" : "Relationship",
             "technology" : "TCP/6379"
           } ],
           "tags" : "Element,Component",
           "technology" : "Redis List"
         } ],
-        "description" : "Background pool (500 concurrency) continuously executing ICMP pings against target servers.",
+        "description" : "Background pool continuously executing health checks against target servers.",
         "documentation" : { },
-        "id" : "34",
+        "id" : "41",
         "name" : "Monitoring Worker",
         "properties" : {
           "structurizr.dsl.identifier" : "monitoring"
         },
         "relationships" : [ {
           "description" : "Reads targets, publishes Status events, consumes CRUD events",
-          "destinationId" : "43",
-          "id" : "66",
-          "sourceId" : "34",
+          "destinationId" : "53",
+          "id" : "81",
+          "sourceId" : "41",
           "tags" : "Relationship",
           "technology" : "Redis Stream / Cache"
         }, {
           "description" : "Bulk inserts observation logs to",
-          "destinationId" : "44",
-          "id" : "67",
-          "sourceId" : "34",
+          "destinationId" : "54",
+          "id" : "82",
+          "sourceId" : "41",
           "tags" : "Relationship",
           "technology" : "HTTP/9200"
         }, {
           "description" : "Pings",
           "destinationId" : "3",
-          "id" : "68",
-          "sourceId" : "34",
+          "id" : "83",
+          "sourceId" : "41",
           "tags" : "Relationship",
           "technology" : "ICMP"
         } ],
@@ -1195,7 +1453,7 @@
       }, {
         "description" : "Stores Users, Sessions, and Server Metadata.",
         "documentation" : { },
-        "id" : "42",
+        "id" : "52",
         "name" : "Primary Database",
         "properties" : {
           "structurizr.dsl.identifier" : "postgres"
@@ -1203,9 +1461,9 @@
         "tags" : "Element,Container,Database",
         "technology" : "PostgreSQL 15"
       }, {
-        "description" : "Redis Streams for pub/sub events, token blacklist, and target cache. (Persistent AOF+RDB)",
+        "description" : "Redis Streams for pub/sub events (with MaxLen protection), token blacklist, and target cache. (Persistent AOF+RDB)",
         "documentation" : { },
-        "id" : "43",
+        "id" : "53",
         "name" : "Event Broker & Cache",
         "properties" : {
           "structurizr.dsl.identifier" : "redis"
@@ -1213,44 +1471,65 @@
         "relationships" : [ {
           "description" : "Delivers stream sms.events.server_status",
           "destinationId" : "23",
-          "id" : "90",
-          "sourceId" : "43",
+          "id" : "105",
+          "sourceId" : "53",
           "tags" : "Relationship",
           "technology" : "XREADGROUP"
         }, {
           "description" : "Delivers stream sms.events.server_status",
           "destinationId" : "17",
-          "id" : "91",
-          "linkedRelationshipId" : "90",
-          "sourceId" : "43",
+          "id" : "106",
+          "linkedRelationshipId" : "105",
+          "sourceId" : "53",
           "technology" : "XREADGROUP"
         }, {
           "description" : "Delivers stream sms.events.server",
-          "destinationId" : "38",
-          "id" : "95",
-          "sourceId" : "43",
+          "destinationId" : "46",
+          "id" : "110",
+          "sourceId" : "53",
           "tags" : "Relationship",
           "technology" : "XREADGROUP"
         }, {
           "description" : "Delivers stream sms.events.server",
-          "destinationId" : "34",
-          "id" : "96",
-          "linkedRelationshipId" : "95",
-          "sourceId" : "43",
+          "destinationId" : "41",
+          "id" : "111",
+          "linkedRelationshipId" : "110",
+          "sourceId" : "53",
+          "technology" : "XREADGROUP"
+        }, {
+          "description" : "Delivers stream sms.events.heartbeat",
+          "destinationId" : "47",
+          "id" : "113",
+          "sourceId" : "53",
+          "tags" : "Relationship",
           "technology" : "XREADGROUP"
         }, {
           "description" : "Delivers streams sms.events.server & sms.events.server_status",
-          "destinationId" : "30",
-          "id" : "116",
-          "sourceId" : "43",
+          "destinationId" : "29",
+          "id" : "136",
+          "sourceId" : "53",
           "tags" : "Relationship",
           "technology" : "XREADGROUP"
         }, {
           "description" : "Delivers streams sms.events.server & sms.events.server_status",
           "destinationId" : "25",
-          "id" : "117",
-          "linkedRelationshipId" : "116",
-          "sourceId" : "43",
+          "id" : "137",
+          "linkedRelationshipId" : "136",
+          "sourceId" : "53",
+          "technology" : "XREADGROUP"
+        }, {
+          "description" : "Delivers NotificationRequested event",
+          "destinationId" : "34",
+          "id" : "142",
+          "sourceId" : "53",
+          "tags" : "Relationship",
+          "technology" : "XREADGROUP"
+        }, {
+          "description" : "Delivers NotificationRequested event",
+          "destinationId" : "33",
+          "id" : "143",
+          "linkedRelationshipId" : "142",
+          "sourceId" : "53",
           "technology" : "XREADGROUP"
         } ],
         "tags" : "Element,Container,Message Broker",
@@ -1258,7 +1537,7 @@
       }, {
         "description" : "Stores millions of ICMP Observation Logs for fast uptime aggregation.",
         "documentation" : { },
-        "id" : "44",
+        "id" : "54",
         "name" : "Time-Series DB",
         "properties" : {
           "structurizr.dsl.identifier" : "es"
@@ -1274,15 +1553,15 @@
         "structurizr.dsl.identifier" : "sms"
       },
       "relationships" : [ {
-        "description" : "Pings continuously using ICMP protocol",
+        "description" : "Checks status continuously using ICMP, SSH, and HTTP protocols",
         "destinationId" : "3",
-        "id" : "46",
+        "id" : "56",
         "sourceId" : "4",
         "tags" : "Relationship"
       }, {
         "description" : "Sends email reports and alerts via",
         "destinationId" : "2",
-        "id" : "47",
+        "id" : "58",
         "sourceId" : "4",
         "tags" : "Relationship"
       } ],
@@ -1291,8 +1570,8 @@
   },
   "name" : "SMS Microservices Architecture",
   "properties" : {
-    "structurizr.inspection.error" : "36",
-    "structurizr.dsl" : "d29ya3NwYWNlICJTTVMgTWljcm9zZXJ2aWNlcyBBcmNoaXRlY3R1cmUiICJTZXJ2ZXIgTWFuYWdlbWVudCBTeXN0ZW0iIHsKCiAgICBtb2RlbCB7CiAgICAgICAgYWRtaW4gPSBwZXJzb24gIlN5c3RlbSBBZG1pbmlzdHJhdG9yIiAiUGVyZm9ybXMgYWRtaW5pc3RyYXRpdmUgdGFza3MsIG1hbmFnZXMgc2VydmVycywgdmlld3MgcmVwb3J0cywgYW5kIHJlY2VpdmVzIGFsZXJ0cy4iCiAgICAgICAgc210cCA9IHNvZnR3YXJlU3lzdGVtICJTTVRQIFNlcnZlciIgIkV4dGVybmFsIGVtYWlsIHN5c3RlbSAoZS5nLiwgTWFpbEhvZywgU2VuZEdyaWQpIiAiRXh0ZXJuYWwiCiAgICAgICAgdGFyZ2V0U2VydmVycyA9IHNvZnR3YXJlU3lzdGVtICJUYXJnZXQgU2VydmVycyAoMTBrKykiICJFeHRlcm5hbCBpbmZyYXN0cnVjdHVyZSBzZXJ2ZXJzIG1vbml0b3JlZCB2aWEgSUNNUCIgIkV4dGVybmFsIgoKICAgICAgICBzbXMgPSBzb2Z0d2FyZVN5c3RlbSAiU2VydmVyIE1hbmFnZW1lbnQgU3lzdGVtIChTTVMpIiAiTW9uaXRvcnMgdGFyZ2V0IHNlcnZlcnMsIGNvbGxlY3RzIG9ic2VydmF0aW9uIGRhdGEsIGFuZCBnZW5lcmF0ZXMgdXB0aW1lIHJlcG9ydHMuIiB7CgogICAgICAgICAgICB0cmFlZmlrID0gY29udGFpbmVyICJBUEkgR2F0ZXdheSIgIlRyYWVmaWsgUHJveHk6IFJvdXRlcyB0cmFmZmljLCB0ZXJtaW5hdGVzIFRMUywgZW5mb3JjZXMgUmF0ZSBMaW1pdGluZywgYW5kIHRyaWdnZXJzIEZvcndhcmRBdXRoLiIgIlRyYWVmaWsiICJHYXRld2F5IgogICAgICAgICAgICBzcGEgPSBjb250YWluZXIgIldlYiBBcHBsaWNhdGlvbiIgIlNpbmdsZSBQYWdlIEFwcGxpY2F0aW9uIChGcm9udGVuZCkuIiAiQW5ndWxhciAxOSIgIldlYiBCcm93c2VyIgogICAgICAgICAgICBzd2FnZ2VyVUkgPSBjb250YWluZXIgIlN3YWdnZXIgVUkiICJDZW50cmFsaXplZCBBUEkgRG9jdW1lbnRhdGlvbiBIdWIuIiAiU3dhZ2dlciIgIldlYiBCcm93c2VyIgogICAgICAgICAgICAKICAgICAgICAgICAgaWRlbnRpdHkgPSBjb250YWluZXIgIklkZW50aXR5IFNlcnZpY2UiICJIYW5kbGVzIGF1dGhlbnRpY2F0aW9uLCBKV1QgZ2VuZXJhdGlvbiwgYW5kIHRva2VuIHZlcmlmaWNhdGlvbi4gUHJvdmlkZXMgRm9yd2FyZEF1dGggZm9yIFRyYWVmaWsuIiAiR28iICJNaWNyb3NlcnZpY2UiIHsKICAgICAgICAgICAgICAgIGZvcndhcmRBdXRoSGFuZGxlciA9IGNvbXBvbmVudCAiRm9yd2FyZEF1dGggSGFuZGxlciIgIlByb3ZpZGVzIC92ZXJpZnkgZW5kcG9pbnQgZm9yIFRyYWVmaWsgdG8gdmFsaWRhdGUgdG9rZW5zIGFuZCBpbmplY3QgdXNlciBoZWFkZXJzLiIgIkdvIEhUVFAgSGFuZGxlciIKICAgICAgICAgICAgICAgIGF1dGhTZXJ2ZXIgPSBjb21wb25lbnQgIkF1dGggZ1JQQy9SRVNUIFNlcnZlciIgIlByb3ZpZGVzIGxvZ2luLCBsb2dvdXQsIGFuZCB0b2tlbiByZWZyZXNoIGVuZHBvaW50cy4iICJHbyBnUlBDL0hUVFAgU2VydmVyIgogICAgICAgICAgICAgICAgYXV0aGVudGljYXRvciA9IGNvbXBvbmVudCAiQXV0aGVudGljYXRvciIgIlZhbGlkYXRlcyBKV1QgdG9rZW5zIGFuZCBoYW5kbGVzIENTUkYuIiAiR28gQ29tcG9uZW50IgogICAgICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlID0gY29tcG9uZW50ICJJZGVudGl0eSBTZXJ2aWNlIiAiQ29yZSBidXNpbmVzcyBsb2dpYyBmb3IgdXNlciBhdXRoZW50aWNhdGlvbi4iICJHbyBTZXJ2aWNlIgogICAgICAgICAgICAgICAgdXNlclJlcG8gPSBjb21wb25lbnQgIlVzZXIgUmVwb3NpdG9yeSIgIlByb3ZpZGVzIGFjY2VzcyB0byB1c2VyIHJlY29yZHMuIiAiR28gUmVwb3NpdG9yeSIKICAgICAgICAgICAgICAgIHNlc3Npb25SZXBvID0gY29tcG9uZW50ICJTZXNzaW9uIFJlcG9zaXRvcnkiICJQcm92aWRlcyBhY2Nlc3MgdG8gYXV0aCBzZXNzaW9ucy4iICJHbyBSZXBvc2l0b3J5IgogICAgICAgICAgICAgICAgcmVmcmVzaFJlcG8gPSBjb21wb25lbnQgIlJlZnJlc2ggVG9rZW4gUmVwb3NpdG9yeSIgIlByb3ZpZGVzIGFjY2VzcyB0byByZWZyZXNoIHRva2Vucy4iICJHbyBSZXBvc2l0b3J5IgogICAgICAgICAgICAgICAgcmV2b2NhdGlvblN0b3JlID0gY29tcG9uZW50ICJSZXZvY2F0aW9uIFN0b3JlIChSZWRpcykiICJNYWludGFpbnMgYSBibGFja2xpc3Qgb2YgcmV2b2tlZCBTZXNzaW9uIElEcyB0byBlbmFibGUgZ2xvYmFsIHJldm9jYXRpb24uIiAiR28vUmVkaXMgQ29tcG9uZW50IgogICAgICAgICAgICB9CiAgICAgICAgICAgIAogICAgICAgICAgICBtYW5hZ2VtZW50ID0gY29udGFpbmVyICJNYW5hZ2VtZW50IFNlcnZpY2UiICJIYW5kbGVzIENSVUQgb3BlcmF0aW9ucyBhbmQgQnVsayBJbXBvcnQvRXhwb3J0IGZvciBTZXJ2ZXIgaW52ZW50b3JpZXMuIiAiR28iICJNaWNyb3NlcnZpY2UiIHsKICAgICAgICAgICAgICAgIHNlcnZlclNlcnZlciA9IGNvbXBvbmVudCAiU2VydmVyIGdSUEMvUkVTVCBTZXJ2ZXIiICJQcm92aWRlcyBDUlVEIGFuZCBCdWxrIEltcG9ydC9FeHBvcnQgZW5kcG9pbnRzIGZvciB0YXJnZXQgc2VydmVycy4iICJHbyBnUlBDL0hUVFAgU2VydmVyIgogICAgICAgICAgICAgICAgc2VydmVyU2VydmljZSA9IGNvbXBvbmVudCAiU2VydmVyIFNlcnZpY2UiICJDb3JlIGJ1c2luZXNzIGxvZ2ljIGZvciBzZXJ2ZXIgbWFuYWdlbWVudC4iICJHbyBTZXJ2aWNlIgogICAgICAgICAgICAgICAgc2VydmVyUmVwbyA9IGNvbXBvbmVudCAiU2VydmVyIFJlcG9zaXRvcnkgKFBvc3RncmVTUUwpIiAiUmVhZHMvd3JpdGVzIHNlcnZlciBtZXRhZGF0YS4iICJHbyBSZXBvc2l0b3J5IgogICAgICAgICAgICAgICAgb3V0Ym94UmVwbyA9IGNvbXBvbmVudCAiT3V0Ym94IFJlcG9zaXRvcnkgKFBvc3RncmVTUUwpIiAiU3RvcmVzIGRvbWFpbiBldmVudHMgZm9yIHJlbGlhYmxlIHB1Ymxpc2hpbmcuIiAiR28gUmVwb3NpdG9yeSIKICAgICAgICAgICAgICAgIG91dGJveFJlbGF5ID0gY29tcG9uZW50ICJPdXRib3ggUmVsYXkgV29ya2VyIiAiUG9sbHMgb3V0Ym94IGFuZCBwdWJsaXNoZXMgZXZlbnRzIHRvIFJlZGlzIFN0cmVhbS4iICJHbyBXb3JrZXIiCiAgICAgICAgICAgICAgICBzdGF0dXNDb25zdW1lciA9IGNvbXBvbmVudCAiU3RhdHVzIENvbnN1bWVyIFdvcmtlciIgIkNvbnN1bWVzIFNlcnZlclN0YXR1c0NoYW5nZWQgZXZlbnRzIHRvIHVwZGF0ZSBEQi4iICJHbyBXb3JrZXIiCiAgICAgICAgICAgICAgICByYXRlTGltaXRlciA9IGNvbXBvbmVudCAiUmF0ZSBMaW1pdGVyIiAiQXBwbGljYXRpb24tbGV2ZWwgcmF0ZSBsaW1pdGVyIHRvIHByb3RlY3QgaGVhdnkgb3BlcmF0aW9ucy4iICJHby9SZWRpcyBDb21wb25lbnQiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgCiAgICAgICAgICAgIHJlcG9ydGluZyA9IGNvbnRhaW5lciAiUmVwb3J0aW5nIFNlcnZpY2UiICJIYW5kbGVzIGFzeW5jIHJlcG9ydCBnZW5lcmF0aW9uLCBIVE1MIHJlbmRlcmluZywgYW5kIFNNVFAgY29tbXVuaWNhdGlvbi4iICJHbyIgIk1pY3Jvc2VydmljZSIgewogICAgICAgICAgICAgICAgcmVwb3J0SGFuZGxlciA9IGNvbXBvbmVudCAiUmVwb3J0IEhhbmRsZXIiICJBY2NlcHRzIHJlcG9ydCByZXF1ZXN0cyB2aWEgQVBJLiIgIkdvIGdSUEMvSFRUUCBTZXJ2ZXIiCiAgICAgICAgICAgICAgICBkYWlseVNjaGVkdWxlciA9IGNvbXBvbmVudCAiRGFpbHkgU2NoZWR1bGVyIiAiQ3JvbmpvYiB0cmlnZ2VyaW5nIGRhaWx5IHJlcG9ydCBnZW5lcmF0aW9uLiIgIkdvIENyb24iCiAgICAgICAgICAgICAgICByZXBvcnRXb3JrZXIgPSBjb21wb25lbnQgIlJlcG9ydCBXb3JrZXIiICJDb25zdW1lcyBpbi1tZW1vcnkgY2hhbm5lbCB0byByZW5kZXIgSFRNTCB0ZW1wbGF0ZXMgYW5kIGdlbmVyYXRlIHJlcG9ydHMuIiAiR28gV29ya2VyIgogICAgICAgICAgICAgICAgbm90aWZpZXIgPSBjb21wb25lbnQgIlNNVFAgTm90aWZpZXIiICJCdWlsZHMgbXVsdGlwYXJ0IE1JTUUgZW1haWwgYW5kIHNlbmRzIGl0IHZpYSBTTVRQLiIgIkdvIENvbXBvbmVudCIKICAgICAgICAgICAgICAgIGV2ZW50Q29uc3VtZXIgPSBjb21wb25lbnQgIkV2ZW50IENvbnN1bWVyIFdvcmtlciIgIkxpc3RlbnMgdG8gc2VydmVyIGFuZCBzdGF0dXMgZXZlbnRzIHRvIHN5bmMgbG9jYWwgREIuIiAiR28gV29ya2VyIgogICAgICAgICAgICAgICAgcmVwb3J0U2VydmljZSA9IGNvbXBvbmVudCAiUmVwb3J0IFNlcnZpY2UiICJDb3JlIGJ1c2luZXNzIGxvZ2ljIGZvciByZXBvcnQgZ2VuZXJhdGlvbi4iICJHbyBTZXJ2aWNlIgogICAgICAgICAgICAgICAgZXNVcHRpbWVDYWxjID0gY29tcG9uZW50ICJFUyBVcHRpbWUgQ2FsY3VsYXRvciIgIkNhbGN1bGF0ZXMgdXB0aW1lIGJ5IHF1ZXJ5aW5nIG9ic2VydmF0aW9uIGxvZ3MuIiAiR28gQ29tcG9uZW50IgogICAgICAgICAgICAgICAgcmVwb3J0UmVwbyA9IGNvbXBvbmVudCAiUmVwb3J0aW5nIFJlcG9zaXRvcnkgKFBvc3RncmVTUUwpIiAiTWFuYWdlcyByZXBvcnQgcmVxdWVzdCBzdGF0dXMgYW5kIHN5bmNlZCBzZXJ2ZXIgZGF0YS4iICJHbyBSZXBvc2l0b3J5IgogICAgICAgICAgICB9CiAgICAgICAgICAgIAogICAgICAgICAgICBtb25pdG9yaW5nID0gY29udGFpbmVyICJNb25pdG9yaW5nIFdvcmtlciIgIkJhY2tncm91bmQgcG9vbCAoNTAwIGNvbmN1cnJlbmN5KSBjb250aW51b3VzbHkgZXhlY3V0aW5nIElDTVAgcGluZ3MgYWdhaW5zdCB0YXJnZXQgc2VydmVycy4iICJHbyIgIldvcmtlciIgewogICAgICAgICAgICAgICAgbW9uaXRvcldvcmtlciA9IGNvbXBvbmVudCAiUGluZyBXb3JrZXIiICJQdWxscyB0YXJnZXRzIGZyb20gcXVldWUgYW5kIHBpbmdzIHNlcnZlcnMuIiAiR28gV29ya2VyIgogICAgICAgICAgICAgICAgbW9uaXRvcmluZ1NlcnZpY2UgPSBjb21wb25lbnQgIk1vbml0b3JpbmcgU2VydmljZSIgIkV2YWx1YXRlcyBzdGF0ZSBtYWNoaW5lIGFuZCBwdWJsaXNoZXMgZXZlbnRzLiIgIkdvIFNlcnZpY2UiCiAgICAgICAgICAgICAgICBvYnNlcnZhdGlvbkxvZ2dlciA9IGNvbXBvbmVudCAiT2JzZXJ2YXRpb24gTG9nZ2VyIiAiV3JpdGVzIGxvZ3MgdG8gRWxhc3RpY3NlYXJjaC4iICJHbyBDb21wb25lbnQiCiAgICAgICAgICAgICAgICBzdHJlYW1Db25zdW1lciA9IGNvbXBvbmVudCAiU3RyZWFtIENvbnN1bWVyIFdvcmtlciIgIkNvbnN1bWVzIFNlcnZlckNyZWF0ZWQvVXBkYXRlZC9EZWxldGVkIGV2ZW50cyB0byB1cGRhdGUgQ2FjaGUuIiAiR28gV29ya2VyIgogICAgICAgICAgICAgICAgY2FjaGVSZXBvID0gY29tcG9uZW50ICJNb25pdG9yaW5nIENhY2hlIChSZWRpcykiICJMb2NhbCBoaWdoLXNwZWVkIGFjY2VzcyB0byBzZXJ2ZXIgdGFyZ2V0cy4iICJSZWRpcyBTZXQiCiAgICAgICAgICAgICAgICBzY2hlZHVsZXIgPSBjb21wb25lbnQgIkN5Y2xlIFNjaGVkdWxlciIgIkVsZWN0cyBsZWFkZXIgYW5kIHB1c2hlcyBwaW5nIHRhcmdldHMgaW50byBhIHNoYXJlZCBxdWV1ZS4iICJHbyBDb21wb25lbnQiCiAgICAgICAgICAgICAgICBxdWV1ZVJlcG8gPSBjb21wb25lbnQgIlBpbmcgUXVldWUgKFJlZGlzKSIgIkEgc2hhcmVkIHF1ZXVlIHN0b3JpbmcgdGFyZ2V0cyB0byBiZSBwaW5nZWQgaW4gdGhlIGN1cnJlbnQgY3ljbGUuIiAiUmVkaXMgTGlzdCIKICAgICAgICAgICAgfQogICAgICAgICAgICAKICAgICAgICAgICAgcG9zdGdyZXMgPSBjb250YWluZXIgIlByaW1hcnkgRGF0YWJhc2UiICJTdG9yZXMgVXNlcnMsIFNlc3Npb25zLCBhbmQgU2VydmVyIE1ldGFkYXRhLiIgIlBvc3RncmVTUUwgMTUiICJEYXRhYmFzZSIKICAgICAgICAgICAgcmVkaXMgPSBjb250YWluZXIgIkV2ZW50IEJyb2tlciAmIENhY2hlIiAiUmVkaXMgU3RyZWFtcyBmb3IgcHViL3N1YiBldmVudHMsIHRva2VuIGJsYWNrbGlzdCwgYW5kIHRhcmdldCBjYWNoZS4gKFBlcnNpc3RlbnQgQU9GK1JEQikiICJSZWRpcyA3IiAiTWVzc2FnZSBCcm9rZXIiCiAgICAgICAgICAgIGVzID0gY29udGFpbmVyICJUaW1lLVNlcmllcyBEQiIgIlN0b3JlcyBtaWxsaW9ucyBvZiBJQ01QIE9ic2VydmF0aW9uIExvZ3MgZm9yIGZhc3QgdXB0aW1lIGFnZ3JlZ2F0aW9uLiIgIkVsYXN0aWNzZWFyY2ggOCIgIkRhdGFiYXNlIgogICAgICAgIH0KCiAgICAgICAgIyBDb250ZXh0IGxldmVsIHJlbGF0aW9uc2hpcHMKICAgICAgICBhZG1pbiAtPiBzbXMgIk1hbmFnZXMgc2VydmVycywgcmVxdWVzdHMgcmVwb3J0cywgYW5kIHZpZXdzIHN0YXR1cyB2aWEiCiAgICAgICAgc21zIC0+IHRhcmdldFNlcnZlcnMgIlBpbmdzIGNvbnRpbnVvdXNseSB1c2luZyBJQ01QIHByb3RvY29sIgogICAgICAgIHNtcyAtPiBzbXRwICJTZW5kcyBlbWFpbCByZXBvcnRzIGFuZCBhbGVydHMgdmlhIgogICAgICAgIHNtdHAgLT4gYWRtaW4gIkRlbGl2ZXJzIGVtYWlscyB0byIKCiAgICAgICAgIyBDb250YWluZXIgbGV2ZWwgcmVsYXRpb25zaGlwcwogICAgICAgIGFkbWluIC0+IHRyYWVmaWsgIk1ha2VzIEFQSSByZXF1ZXN0cyB0byIgIkhUVFBTL1JFU1QiCiAgICAgICAgYWRtaW4gLT4gc3BhICJMb2FkcyBmcm9udGVuZCBhcHBsaWNhdGlvbiBmcm9tIiAiSFRUUFMiCiAgICAgICAgYWRtaW4gLT4gc3dhZ2dlclVJICJWaWV3cyBBUEkgZG9jdW1lbnRhdGlvbiBvbiIgIkhUVFBTIgogICAgICAgIHNwYSAtPiB0cmFlZmlrICJDb25zdW1lcyBBUElzIHZpYSIgIkhUVFBTL1JFU1QiCiAgICAgICAgc3dhZ2dlclVJIC0+IHRyYWVmaWsgIkZldGNoZXMgT3BlbkFQSSBzcGVjcyAoL29wZW5hcGkvKikgdmlhIiAiSFRUUC9SRVNUIgoKICAgICAgICB0cmFlZmlrIC0+IGlkZW50aXR5ICJSb3V0ZXMgQXV0aCBBUEkgcmVxdWVzdHMiICJIVFRQL2dSUEMiCiAgICAgICAgdHJhZWZpayAtPiBpZGVudGl0eSAiVmVyaWZpZXMgdG9rZW5zIHZpYSBGb3J3YXJkQXV0aCAoL3ZlcmlmeSkiICJIVFRQIgogICAgICAgIHRyYWVmaWsgLT4gbWFuYWdlbWVudCAiUm91dGVzIE1hbmFnZW1lbnQgQVBJIHJlcXVlc3RzIChpbmplY3RpbmcgWC1Vc2VyLSogaGVhZGVycykiICJIVFRQL2dSUEMiCiAgICAgICAgdHJhZWZpayAtPiByZXBvcnRpbmcgIlJvdXRlcyBSZXBvcnRpbmcgQVBJIHJlcXVlc3RzIChpbmplY3RpbmcgWC1Vc2VyLSogaGVhZGVycykiICJIVFRQL2dSUEMiCgogICAgICAgIGlkZW50aXR5IC0+IHBvc3RncmVzICJSZWFkcy9Xcml0ZXMgVXNlciAmIFNlc3Npb24gZGF0YSIgIlRDUC81NDMyIgogICAgICAgIGlkZW50aXR5IC0+IHJlZGlzICJDaGVja3MgcmV2b2tlZCB0b2tlbnMgKEFudGktUmVwbGF5KSIgIlRDUC82Mzc5IgoKICAgICAgICBtYW5hZ2VtZW50IC0+IHBvc3RncmVzICJSZWFkcy9Xcml0ZXMgU2VydmVyICYgT3V0Ym94IGRhdGEiICJUQ1AvNTQzMiIKICAgICAgICBtYW5hZ2VtZW50IC0+IHJlZGlzICJQdWJsaXNoZXMgU2VydmVyIENSVUQgZXZlbnRzIC8gQ29uc3VtZXMgU3RhdHVzIGV2ZW50cyIgIlJlZGlzIFN0cmVhbSIKCiAgICAgICAgcmVwb3J0aW5nIC0+IHBvc3RncmVzICJSZWFkcy9Xcml0ZXMgUmVwb3J0IFJlcXVlc3RzICYgU3luY2VkIFNlcnZlcnMiICJUQ1AvNTQzMiIKICAgICAgICByZXBvcnRpbmcgLT4gcmVkaXMgIkNvbnN1bWVzIFNlcnZlciBDUlVEICYgU3RhdHVzIGV2ZW50cyIgIlJlZGlzIFN0cmVhbSIKICAgICAgICByZXBvcnRpbmcgLT4gZXMgIkFnZ3JlZ2F0ZXMgdXB0aW1lIGRhdGEgZnJvbSIgIkhUVFAvOTIwMCIKICAgICAgICByZXBvcnRpbmcgLT4gc210cCAiU2VuZHMgZW1haWxzIHZpYSIgIlNNVFAiCgogICAgICAgIG1vbml0b3JpbmcgLT4gcmVkaXMgIlJlYWRzIHRhcmdldHMsIHB1Ymxpc2hlcyBTdGF0dXMgZXZlbnRzLCBjb25zdW1lcyBDUlVEIGV2ZW50cyIgIlJlZGlzIFN0cmVhbSAvIENhY2hlIgogICAgICAgIG1vbml0b3JpbmcgLT4gZXMgIkJ1bGsgaW5zZXJ0cyBvYnNlcnZhdGlvbiBsb2dzIHRvIiAiSFRUUC85MjAwIgogICAgICAgIG1vbml0b3JpbmcgLT4gdGFyZ2V0U2VydmVycyAiUGluZ3MiICJJQ01QIgogICAgICAgIAogICAgICAgICMgQ29tcG9uZW50IGxldmVsIHJlbGF0aW9uc2hpcHMgKElkZW50aXR5KQogICAgICAgIHRyYWVmaWsgLT4gZm9yd2FyZEF1dGhIYW5kbGVyICJDYWxscyAvdmVyaWZ5IiAiSFRUUCIKICAgICAgICB0cmFlZmlrIC0+IGF1dGhTZXJ2ZXIgIlJvdXRlcyAvYXBpL3YxL2F1dGgvKiIgIkhUVFAvZ1JQQyIKICAgICAgICBmb3J3YXJkQXV0aEhhbmRsZXIgLT4gYXV0aGVudGljYXRvciAiQXV0aGVudGljYXRlcyB0b2tlbiIKICAgICAgICBhdXRoU2VydmVyIC0+IGlkZW50aXR5U2VydmljZSAiRGVsZWdhdGVzIHRvIgogICAgICAgIGlkZW50aXR5U2VydmljZSAtPiB1c2VyUmVwbyAiVXNlcyIKICAgICAgICBpZGVudGl0eVNlcnZpY2UgLT4gc2Vzc2lvblJlcG8gIlVzZXMiCiAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHJlZnJlc2hSZXBvICJVc2VzIgogICAgICAgIGlkZW50aXR5U2VydmljZSAtPiByZXZvY2F0aW9uU3RvcmUgIkJsYWNrbGlzdHMgcmV2b2tlZCBzZXNzaW9ucyBpbiIKICAgICAgICBhdXRoZW50aWNhdG9yIC0+IHJldm9jYXRpb25TdG9yZSAiQ2hlY2tzIHRva2VuIGJsYWNrbGlzdCBpbiIKICAgICAgICB1c2VyUmVwbyAtPiBwb3N0Z3JlcyAiUXVlcmllcyIgIlRDUC81NDMyIgogICAgICAgIHNlc3Npb25SZXBvIC0+IHBvc3RncmVzICJRdWVyaWVzIiAiVENQLzU0MzIiCiAgICAgICAgcmVmcmVzaFJlcG8gLT4gcG9zdGdyZXMgIlF1ZXJpZXMiICJUQ1AvNTQzMiIKICAgICAgICByZXZvY2F0aW9uU3RvcmUgLT4gcmVkaXMgIkNvbW1hbmRzIiAiVENQLzYzNzkiCiAgICAgICAgCiAgICAgICAgIyBDb21wb25lbnQgbGV2ZWwgcmVsYXRpb25zaGlwcyAoTWFuYWdlbWVudCkKICAgICAgICB0cmFlZmlrIC0+IHNlcnZlclNlcnZlciAiUm91dGVzIC9hcGkvdjEvc2VydmVycy8qIiAiSFRUUC9nUlBDIgogICAgICAgIHNlcnZlclNlcnZlciAtPiByYXRlTGltaXRlciAiQ2hlY2tzIHF1b3RhIgogICAgICAgIHJhdGVMaW1pdGVyIC0+IHJlZGlzICJJbmNyZW1lbnRzIGNvdW50ZXJzIiAiVENQLzYzNzkiCiAgICAgICAgc2VydmVyU2VydmVyIC0+IHNlcnZlclNlcnZpY2UgIkRlbGVnYXRlcyB0byIKICAgICAgICBzZXJ2ZXJTZXJ2aWNlIC0+IHNlcnZlclJlcG8gIldyaXRlcyBTZXJ2ZXIgTWV0YWRhdGEiCiAgICAgICAgc2VydmVyU2VydmljZSAtPiBvdXRib3hSZXBvICJXcml0ZXMgT3V0Ym94IEV2ZW50cyAoVHJhbnNhY3Rpb25hbGx5KSIKICAgICAgICBvdXRib3hSZWxheSAtPiBvdXRib3hSZXBvICJQb2xscyB1bnB1Ymxpc2hlZCBldmVudHMiCiAgICAgICAgb3V0Ym94UmVsYXkgLT4gcmVkaXMgIlB1Ymxpc2hlcyB0byBzdHJlYW0gc21zLmV2ZW50cy5zZXJ2ZXIiICJYQUREIgogICAgICAgIHJlZGlzIC0+IHN0YXR1c0NvbnN1bWVyICJEZWxpdmVycyBzdHJlYW0gc21zLmV2ZW50cy5zZXJ2ZXJfc3RhdHVzIiAiWFJFQURHUk9VUCIKICAgICAgICBzdGF0dXNDb25zdW1lciAtPiBzZXJ2ZXJSZXBvICJVcGRhdGVzIFNlcnZlciBzdGF0dXMiCiAgICAgICAgc2VydmVyUmVwbyAtPiBwb3N0Z3JlcyAiUXVlcmllcyIgIlRDUC81NDMyIgogICAgICAgIG91dGJveFJlcG8gLT4gcG9zdGdyZXMgIlF1ZXJpZXMiICJUQ1AvNTQzMiIKCiAgICAgICAgIyBDb21wb25lbnQgbGV2ZWwgcmVsYXRpb25zaGlwcyAoTW9uaXRvcmluZykKICAgICAgICByZWRpcyAtPiBzdHJlYW1Db25zdW1lciAiRGVsaXZlcnMgc3RyZWFtIHNtcy5ldmVudHMuc2VydmVyIiAiWFJFQURHUk9VUCIKICAgICAgICBzdHJlYW1Db25zdW1lciAtPiBjYWNoZVJlcG8gIlVwZGF0ZXMgdGFyZ2V0cyIKICAgICAgICBzY2hlZHVsZXIgLT4gcmVkaXMgIkFjcXVpcmVzIGR5bmFtaWMgbG9jayAoU0VUIE5YIFBYKSIgIlRDUC82Mzc5IgogICAgICAgIHNjaGVkdWxlciAtPiBjYWNoZVJlcG8gIlJlYWRzIGFsbCB0YXJnZXRzIChTTUVNQkVSUykiCiAgICAgICAgc2NoZWR1bGVyIC0+IHF1ZXVlUmVwbyAiUHVzaGVzIHRhcmdldHMgKExQVVNIKSIKICAgICAgICBtb25pdG9yV29ya2VyIC0+IHF1ZXVlUmVwbyAiUHVsbHMgdGFyZ2V0cyAoQkxQT1ApIgogICAgICAgIG1vbml0b3JXb3JrZXIgLT4gdGFyZ2V0U2VydmVycyAiUGluZ3MiICJJQ01QIgogICAgICAgIG1vbml0b3JXb3JrZXIgLT4gbW9uaXRvcmluZ1NlcnZpY2UgIkV2YWx1YXRlcyBwaW5nIHJlc3VsdCIKICAgICAgICBtb25pdG9yaW5nU2VydmljZSAtPiBvYnNlcnZhdGlvbkxvZ2dlciAiTG9ncyBvYnNlcnZhdGlvbiIKICAgICAgICBvYnNlcnZhdGlvbkxvZ2dlciAtPiBlcyAiQnVsayBpbnNlcnRzIGxvZ3MiICJIVFRQLzkyMDAiCiAgICAgICAgbW9uaXRvcmluZ1NlcnZpY2UgLT4gY2FjaGVSZXBvICJHZXRzIGFuZCBTZXRzIFNlcnZlciBTdGF0ZSIKICAgICAgICBtb25pdG9yaW5nU2VydmljZSAtPiByZWRpcyAiUHVibGlzaGVzIHRvIHN0cmVhbSBzbXMuZXZlbnRzLnNlcnZlcl9zdGF0dXMiICJYQUREIgogICAgICAgIGNhY2hlUmVwbyAtPiByZWRpcyAiQ29tbWFuZHMiICJUQ1AvNjM3OSIKICAgICAgICBxdWV1ZVJlcG8gLT4gcmVkaXMgIkNvbW1hbmRzIiAiVENQLzYzNzkiCgogICAgICAgICMgQ29tcG9uZW50IGxldmVsIHJlbGF0aW9uc2hpcHMgKFJlcG9ydGluZykKICAgICAgICB0cmFlZmlrIC0+IHJlcG9ydEhhbmRsZXIgIlJvdXRlcyAvYXBpL3YxL3NlcnZlcnMvcmVwb3J0LyoiICJIVFRQL2dSUEMiCiAgICAgICAgZGFpbHlTY2hlZHVsZXIgLT4gcmVkaXMgIkFjcXVpcmVzIGxvY2sgKFNFVCBOWCkgdG8gcHJldmVudCBkdXBsaWNhdGUgZW1haWxzIiAiVENQLzYzNzkiCiAgICAgICAgZGFpbHlTY2hlZHVsZXIgLT4gcmVwb3J0U2VydmljZSAiVHJpZ2dlcnMgRGFpbHkgUmVwb3J0aW5nIgogICAgICAgIHJlcG9ydEhhbmRsZXIgLT4gcmVwb3J0U2VydmljZSAiRGVsZWdhdGVzIHRvIgogICAgICAgIHJlcG9ydFNlcnZpY2UgLT4gcmVwb3J0UmVwbyAiQ3JlYXRlcyByZXBvcnQgcmVxdWVzdCIKICAgICAgICByZXBvcnRTZXJ2aWNlIC0+IHJlcG9ydFdvcmtlciAiRW5xdWV1ZXMgam9iIgogICAgICAgIHJlZGlzIC0+IGV2ZW50Q29uc3VtZXIgIkRlbGl2ZXJzIHN0cmVhbXMgc21zLmV2ZW50cy5zZXJ2ZXIgJiBzbXMuZXZlbnRzLnNlcnZlcl9zdGF0dXMiICJYUkVBREdST1VQIgogICAgICAgIGV2ZW50Q29uc3VtZXIgLT4gcmVwb3J0UmVwbyAiU3luY3MgcmVwb3J0aW5nX3NlcnZlcnMgdGFibGUiCiAgICAgICAgcmVwb3J0V29ya2VyIC0+IHJlcG9ydFJlcG8gIlVwZGF0ZXMgcmVxdWVzdCBzdGF0dXMgJiByZWFkcyBzeW5jZWQgc2VydmVycyIKICAgICAgICByZXBvcnRXb3JrZXIgLT4gZXNVcHRpbWVDYWxjICJEZWxlZ2F0ZXMgdXB0aW1lIGNhbGN1bGF0aW9uIgogICAgICAgIHJlcG9ydFdvcmtlciAtPiBub3RpZmllciAiRGVsZWdhdGVzIGVtYWlsIHNlbmRpbmciCiAgICAgICAgZXNVcHRpbWVDYWxjIC0+IGVzICJRdWVyaWVzIEFnZ3JlZ2F0aW9uIChzbXNfb2JzZXJ2YXRpb25fbG9ncykiICJIVFRQLzkyMDAiCiAgICAgICAgbm90aWZpZXIgLT4gc210cCAiU2VuZHMgY29tcGlsZWQgZW1haWwiCiAgICAgICAgcmVwb3J0UmVwbyAtPiBwb3N0Z3JlcyAiUXVlcmllcyIgIlRDUC81NDMyIgogICAgICAgIAogICAgICAgICMgRGVwbG95bWVudCBFbnZpcm9ubWVudCAoRG9ja2VyIFN3YXJtKQogICAgICAgIGRlcGxveW1lbnRFbnZpcm9ubWVudCAiUHJvZHVjdGlvbiIgewogICAgICAgICAgICBkZXBsb3ltZW50Tm9kZSAiRG9ja2VyIFN3YXJtIENsdXN0ZXIiICJNYW5hZ2VyICYgV29ya2VyIE5vZGVzIiAiRG9ja2VyIFN3YXJtIiB7CiAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgIGRlcGxveW1lbnROb2RlICJNYW5hZ2VyIE5vZGUiICJUcmFlZmlrIG11c3QgcnVuIG9uIG1hbmFnZXIgdG8gbGlzdGVuIHRvIERvY2tlciBzb2NrZXQiICJEb2NrZXIgRW5naW5lIiB7CiAgICAgICAgICAgICAgICAgICAgZ2F0ZXdheUluc3RhbmNlID0gY29udGFpbmVySW5zdGFuY2UgdHJhZWZpawogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICBkZXBsb3ltZW50Tm9kZSAiV29ya2VyIE5vZGVzIiAiQXBwbGljYXRpb24gd29ya2xvYWRzIiAiRG9ja2VyIEVuZ2luZSIgewogICAgICAgICAgICAgICAgICAgIGlkZW50aXR5SW5zdGFuY2UgPSBjb250YWluZXJJbnN0YW5jZSBpZGVudGl0eQogICAgICAgICAgICAgICAgICAgIG1hbmFnZW1lbnRJbnN0YW5jZSA9IGNvbnRhaW5lckluc3RhbmNlIG1hbmFnZW1lbnQKICAgICAgICAgICAgICAgICAgICByZXBvcnRpbmdJbnN0YW5jZSA9IGNvbnRhaW5lckluc3RhbmNlIHJlcG9ydGluZwogICAgICAgICAgICAgICAgICAgIG1vbml0b3JpbmdJbnN0YW5jZSA9IGNvbnRhaW5lckluc3RhbmNlIG1vbml0b3JpbmcKICAgICAgICAgICAgICAgICAgICBzcGFJbnN0YW5jZSA9IGNvbnRhaW5lckluc3RhbmNlIHNwYQogICAgICAgICAgICAgICAgICAgIHN3YWdnZXJJbnN0YW5jZSA9IGNvbnRhaW5lckluc3RhbmNlIHN3YWdnZXJVSQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICBkZXBsb3ltZW50Tm9kZSAiU3RhdGVmdWwgTm9kZXMiICJEYXRhYmFzZXMgYW5kIE1lc3NhZ2UgQnJva2VycyIgIkRvY2tlciBFbmdpbmUiIHsKICAgICAgICAgICAgICAgICAgICBwZ0luc3RhbmNlID0gY29udGFpbmVySW5zdGFuY2UgcG9zdGdyZXMKICAgICAgICAgICAgICAgICAgICByZWRpc0luc3RhbmNlID0gY29udGFpbmVySW5zdGFuY2UgcmVkaXMKICAgICAgICAgICAgICAgICAgICBlc0luc3RhbmNlID0gY29udGFpbmVySW5zdGFuY2UgZXMKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KCiAgICB2aWV3cyB7CiAgICAgICAgc3lzdGVtQ29udGV4dCBzbXMgIlN5c3RlbUNvbnRleHQiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGNvbnRhaW5lciBzbXMgIkNvbnRhaW5lcnMiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICAgICAgCiAgICAgICAgY29tcG9uZW50IGlkZW50aXR5ICJJZGVudGl0eUNvbXBvbmVudHMiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICAgICAgCiAgICAgICAgY29tcG9uZW50IG1hbmFnZW1lbnQgIk1hbmFnZW1lbnRDb21wb25lbnRzIiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICBjb21wb25lbnQgbW9uaXRvcmluZyAiTW9uaXRvcmluZ0NvbXBvbmVudHMiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGNvbXBvbmVudCByZXBvcnRpbmcgIlJlcG9ydGluZ0NvbXBvbmVudHMiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGRlcGxveW1lbnQgc21zICJQcm9kdWN0aW9uIiAiU3dhcm1EZXBsb3ltZW50IiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICBkeW5hbWljIGlkZW50aXR5ICJJZGVudGl0eV9Mb2dpbiIgIkRldGFpbGVkIHNlcXVlbmNlIGZvciB1c2VyIGxvZ2luIiB7CiAgICAgICAgICAgIHNwYSAtPiB0cmFlZmlrICIxLiBQT1NUIC9hcGkvdjEvYXV0aC9sb2dpbiIKICAgICAgICAgICAgdHJhZWZpayAtPiBhdXRoU2VydmVyICIyLiBSb3V0ZXMgcmVxdWVzdCIKICAgICAgICAgICAgYXV0aFNlcnZlciAtPiBpZGVudGl0eVNlcnZpY2UgIjMuIExvZ2luKGVtYWlsLCBwYXNzd29yZCkiCiAgICAgICAgICAgIGlkZW50aXR5U2VydmljZSAtPiB1c2VyUmVwbyAiNC4gRmluZEJ5RW1haWwoZW1haWwpIgogICAgICAgICAgICB1c2VyUmVwbyAtPiBwb3N0Z3JlcyAiNS4gU0VMRUNUIEZST00gdXNlcnMiCiAgICAgICAgICAgIGlkZW50aXR5U2VydmljZSAtPiBzZXNzaW9uUmVwbyAiNi4gQ3JlYXRlKHNlc3Npb24pIgogICAgICAgICAgICBzZXNzaW9uUmVwbyAtPiBwb3N0Z3JlcyAiNy4gSU5TRVJUIElOVE8gYXV0aF9zZXNzaW9ucyIKICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHJlZnJlc2hSZXBvICI4LiBDcmVhdGUocmVmcmVzaFRva2VuKSIKICAgICAgICAgICAgcmVmcmVzaFJlcG8gLT4gcG9zdGdyZXMgIjkuIElOU0VSVCBJTlRPIHJlZnJlc2hfdG9rZW5zIgogICAgICAgICAgICBpZGVudGl0eVNlcnZpY2UgLT4gYXV0aFNlcnZlciAiMTAuIFJldHVybiBUb2tlbnMiCiAgICAgICAgICAgIGF1dGhTZXJ2ZXIgLT4gdHJhZWZpayAiMTEuIFJldHVybiAyMDAgT0siCiAgICAgICAgICAgIHRyYWVmaWsgLT4gc3BhICIxMi4gUmV0dXJuIEpXVCArIFNldC1Db29raWUiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICAgICAgCiAgICAgICAgZHluYW1pYyBpZGVudGl0eSAiSWRlbnRpdHlfVmVyaWZ5IiAiRGV0YWlsZWQgc2VxdWVuY2UgZm9yIEZvcndhcmRBdXRoIHZhbGlkYXRpb24iIHsKICAgICAgICAgICAgc3BhIC0+IHRyYWVmaWsgIjEuIFJlcXVlc3QgUHJvdGVjdGVkIEFQSSIKICAgICAgICAgICAgdHJhZWZpayAtPiBmb3J3YXJkQXV0aEhhbmRsZXIgIjIuIEdFVCAvdmVyaWZ5IChQYXNzZXMgSGVhZGVycy9Db29raWVzKSIKICAgICAgICAgICAgZm9yd2FyZEF1dGhIYW5kbGVyIC0+IGF1dGhlbnRpY2F0b3IgIjMuIFZhbGlkYXRlVG9rZW4oand0KSIKICAgICAgICAgICAgYXV0aGVudGljYXRvciAtPiByZXZvY2F0aW9uU3RvcmUgIjQuIENoZWNrIGlmIHNlc3Npb24gaXMgcmV2b2tlZCIKICAgICAgICAgICAgcmV2b2NhdGlvblN0b3JlIC0+IHJlZGlzICI1LiBFWElTVFMgcmV2b2tlZF9zZXNzaW9uOntpZH0iCiAgICAgICAgICAgIGF1dGhlbnRpY2F0b3IgLT4gZm9yd2FyZEF1dGhIYW5kbGVyICI2LiBSZXR1cm4gUHJpbmNpcGFsIgogICAgICAgICAgICBmb3J3YXJkQXV0aEhhbmRsZXIgLT4gdHJhZWZpayAiNy4gUmV0dXJuIDIwMCBPSyArIEluamVjdCBYLVVzZXIgSGVhZGVycyIKICAgICAgICAgICAgdHJhZWZpayAtPiBtYW5hZ2VtZW50ICI4LiBGb3J3YXJkIHJlcXVlc3QgdG8gZG93bnN0cmVhbSBzZXJ2aWNlIgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICBkeW5hbWljIG1hbmFnZW1lbnQgIk1hbmFnZW1lbnRfQ3JlYXRlIiAiRGV0YWlsZWQgc2VxdWVuY2UgZm9yIGNyZWF0aW5nIGEgc2VydmVyIHdpdGggT3V0Ym94IFBhdHRlcm4iIHsKICAgICAgICAgICAgc3BhIC0+IHRyYWVmaWsgIjEuIFBPU1QgL2FwaS92MS9zZXJ2ZXJzIgogICAgICAgICAgICB0cmFlZmlrIC0+IHNlcnZlclNlcnZlciAiMi4gUm91dGVzIHJlcXVlc3QiCiAgICAgICAgICAgIHNlcnZlclNlcnZlciAtPiByYXRlTGltaXRlciAiMy4gQ2hlY2sgcXVvdGEiCiAgICAgICAgICAgIHJhdGVMaW1pdGVyIC0+IHJlZGlzICI0LiBJTkNSIgogICAgICAgICAgICBzZXJ2ZXJTZXJ2ZXIgLT4gc2VydmVyU2VydmljZSAiNS4gQ3JlYXRlU2VydmVyKGlucHV0KSIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBzZXJ2ZXJSZXBvICI2LiBCRUdJTiBUcmFuc2FjdGlvbiIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBzZXJ2ZXJSZXBvICI3LiBJTlNFUlQgSU5UTyBzZXJ2ZXJzIgogICAgICAgICAgICBzZXJ2ZXJSZXBvIC0+IHBvc3RncmVzICI4LiBFeGVjdXRlIFNRTCIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBvdXRib3hSZXBvICI5LiBJTlNFUlQgSU5UTyBvdXRib3hfZXZlbnRzIChTZXJ2ZXJDcmVhdGVkKSIKICAgICAgICAgICAgb3V0Ym94UmVwbyAtPiBwb3N0Z3JlcyAiMTAuIEV4ZWN1dGUgU1FMIgogICAgICAgICAgICBzZXJ2ZXJTZXJ2aWNlIC0+IHNlcnZlclJlcG8gIjExLiBDT01NSVQgVHJhbnNhY3Rpb24iCiAgICAgICAgICAgIHNlcnZlclNlcnZpY2UgLT4gc2VydmVyU2VydmVyICIxMi4gUmV0dXJuIFN1Y2Nlc3MiCiAgICAgICAgICAgIHNlcnZlclNlcnZlciAtPiB0cmFlZmlrICIxMy4gUmV0dXJuIDIwMSBDcmVhdGVkIgogICAgICAgICAgICB0cmFlZmlrIC0+IHNwYSAiMTQuIFJldHVybiBSZXNwb25zZSIKICAgICAgICAgICAgCiAgICAgICAgICAgIG91dGJveFJlbGF5IC0+IG91dGJveFJlcG8gIjE1LiBbQXN5bmNdIEZldGNoIHVucHVibGlzaGVkIGV2ZW50cyIKICAgICAgICAgICAgb3V0Ym94UmVwbyAtPiBwb3N0Z3JlcyAiMTYuIFNFTEVDVCBGUk9NIG91dGJveF9ldmVudHMiCiAgICAgICAgICAgIG91dGJveFJlbGF5IC0+IHJlZGlzICIxNy4gWEFERCBzbXMuZXZlbnRzLnNlcnZlciIKICAgICAgICAgICAgb3V0Ym94UmVsYXkgLT4gb3V0Ym94UmVwbyAiMTguIE1hcmsgYXMgcHVibGlzaGVkIgogICAgICAgICAgICBvdXRib3hSZXBvIC0+IHBvc3RncmVzICIxOS4gVVBEQVRFIG91dGJveF9ldmVudHMiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGR5bmFtaWMgbW9uaXRvcmluZyAiTW9uaXRvcmluZ19DeWNsZSIgIkRldGFpbGVkIHNlcXVlbmNlIGZvciBkaXN0cmlidXRlZCBJQ01QIHBpbmcgY3ljbGUiIHsKICAgICAgICAgICAgc2NoZWR1bGVyIC0+IHJlZGlzICIxLiBTRVROWCBsb2NrOm1vbml0b3JpbmdfcHJvZHVjZXIgKExlYWRlciBFbGVjdGlvbikiCiAgICAgICAgICAgIHNjaGVkdWxlciAtPiBjYWNoZVJlcG8gIjIuIFNNRU1CRVJTIHNlcnZlcjphbGxfaWRzIgogICAgICAgICAgICBjYWNoZVJlcG8gLT4gcmVkaXMgIjMuIEZldGNoIHRhcmdldHMiCiAgICAgICAgICAgIHNjaGVkdWxlciAtPiBxdWV1ZVJlcG8gIjQuIFJQVVNIIG1vbml0b3Jpbmc6cXVldWUiCiAgICAgICAgICAgIHF1ZXVlUmVwbyAtPiByZWRpcyAiNS4gRW5xdWV1ZSB0YXJnZXRzIgogICAgICAgICAgICAKICAgICAgICAgICAgbW9uaXRvcldvcmtlciAtPiBxdWV1ZVJlcG8gIjYuIEJMUE9QIG1vbml0b3Jpbmc6cXVldWUgKENvbnN1bWUgSm9iKSIKICAgICAgICAgICAgcXVldWVSZXBvIC0+IHJlZGlzICI3LiBEZXF1ZXVlIHRhcmdldCIKICAgICAgICAgICAgbW9uaXRvcldvcmtlciAtPiB0YXJnZXRTZXJ2ZXJzICI4LiBJQ01QIFBpbmciCiAgICAgICAgICAgIG1vbml0b3JXb3JrZXIgLT4gbW9uaXRvcmluZ1NlcnZpY2UgIjkuIEV2YWx1YXRlKHNlcnZlcklELCBzdWNjZXNzKSIKICAgICAgICAgICAgbW9uaXRvcmluZ1NlcnZpY2UgLT4gb2JzZXJ2YXRpb25Mb2dnZXIgIjEwLiBMb2dPYnNlcnZhdGlvbiBbZmlyZS1hbmQtZm9yZ2V0XSIKICAgICAgICAgICAgb2JzZXJ2YXRpb25Mb2dnZXIgLT4gZXMgIjExLiBCdWZmZXJlZCBCdWxrIFdyaXRlIgogICAgICAgICAgICBtb25pdG9yaW5nU2VydmljZSAtPiBjYWNoZVJlcG8gIjEyLiBHZXQgJiBTZXQgU2VydmVyU3RhdGUiCiAgICAgICAgICAgIGNhY2hlUmVwbyAtPiByZWRpcyAiMTMuIEhHRVQgLyBIU0VUIgogICAgICAgICAgICBtb25pdG9yaW5nU2VydmljZSAtPiByZWRpcyAiMTQuIFtJZiBTdGF0ZSBDaGFuZ2VkXSBYQUREIHNtcy5ldmVudHMuc2VydmVyX3N0YXR1cyIKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KCiAgICAgICAgZHluYW1pYyByZXBvcnRpbmcgIlJlcG9ydGluZ19HZW5lcmF0ZSIgIkRldGFpbGVkIHNlcXVlbmNlIGZvciBhdXRvbWF0ZWQgcmVwb3J0IGdlbmVyYXRpb24iIHsKICAgICAgICAgICAgZGFpbHlTY2hlZHVsZXIgLT4gcmVwb3J0U2VydmljZSAiMS4gVHJpZ2dlciBkYWlseSByZXBvcnQiCiAgICAgICAgICAgIHJlcG9ydFNlcnZpY2UgLT4gcmVwb3J0UmVwbyAiMi4gQ3JlYXRlUmVwb3J0UmVxdWVzdChQRU5ESU5HKSIKICAgICAgICAgICAgcmVwb3J0UmVwbyAtPiBwb3N0Z3JlcyAiMy4gSU5TRVJUIgogICAgICAgICAgICByZXBvcnRTZXJ2aWNlIC0+IHJlcG9ydFdvcmtlciAiNC4gRW5xdWV1ZSB0byBqb2JRdWV1ZSAoSW4tbWVtb3J5IENoYW5uZWwpIgogICAgICAgICAgICAKICAgICAgICAgICAgcmVwb3J0V29ya2VyIC0+IHJlcG9ydFJlcG8gIjUuIERlcXVldWUgam9iICYgVXBkYXRlUmVwb3J0U3RhdHVzKFBST0NFU1NJTkcpIgogICAgICAgICAgICByZXBvcnRSZXBvIC0+IHBvc3RncmVzICI2LiBVUERBVEUgcmVwb3J0X3JlcXVlc3RzIgogICAgICAgICAgICByZXBvcnRXb3JrZXIgLT4gcmVwb3J0UmVwbyAiNy4gR2V0U2VydmVyQ291bnRCeVN0YXR1cygpIgogICAgICAgICAgICByZXBvcnRSZXBvIC0+IHBvc3RncmVzICI4LiBTRUxFQ1QgRlJPTSByZXBvcnRpbmdfc2VydmVycyIKICAgICAgICAgICAgcmVwb3J0V29ya2VyIC0+IGVzVXB0aW1lQ2FsYyAiOS4gQ2FsY3VsYXRlVXB0aW1lKCkiCiAgICAgICAgICAgIGVzVXB0aW1lQ2FsYyAtPiBlcyAiMTAuIEVsYXN0aWNzZWFyY2ggQWdncmVnYXRpb24gUXVlcnkiCiAgICAgICAgICAgIHJlcG9ydFdvcmtlciAtPiBub3RpZmllciAiMTEuIFNlbmRSZXBvcnRFbWFpbChSZW5kZXIgSFRNTCkiCiAgICAgICAgICAgIG5vdGlmaWVyIC0+IHNtdHAgIjEyLiBTZW5kIFNNVFAgRW1haWwiCiAgICAgICAgICAgIHJlcG9ydFdvcmtlciAtPiByZXBvcnRSZXBvICIxMy4gVXBkYXRlUmVwb3J0U3RhdHVzKENPTVBMRVRFRCkiCiAgICAgICAgICAgIHJlcG9ydFJlcG8gLT4gcG9zdGdyZXMgIjE0LiBVUERBVEUgcmVwb3J0X3JlcXVlc3RzIgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICAKICAgICAgICBkeW5hbWljIGlkZW50aXR5ICJJZGVudGl0eV9SZWZyZXNoVG9rZW4iICJEZXRhaWxlZCBzZXF1ZW5jZSBmb3IgVG9rZW4gUmVmcmVzaCIgewogICAgICAgICAgICBzcGEgLT4gdHJhZWZpayAiMS4gUE9TVCAvYXBpL3YxL2F1dGgvcmVmcmVzaCAoQ29va2llKSIKICAgICAgICAgICAgdHJhZWZpayAtPiBhdXRoU2VydmVyICIyLiBSb3V0ZXMgcmVxdWVzdCIKICAgICAgICAgICAgYXV0aFNlcnZlciAtPiBpZGVudGl0eVNlcnZpY2UgIjMuIFJlZnJlc2hUb2tlbihqd3QpIgogICAgICAgICAgICBpZGVudGl0eVNlcnZpY2UgLT4gcmVmcmVzaFJlcG8gIjQuIFZhbGlkYXRlIFJlZnJlc2ggVG9rZW4iCiAgICAgICAgICAgIHJlZnJlc2hSZXBvIC0+IHBvc3RncmVzICI1LiBTRUxFQ1QgRlJPTSByZWZyZXNoX3Rva2VucyIKICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHJldm9jYXRpb25TdG9yZSAiNi4gQ2hlY2sgUmV2b2NhdGlvbiIKICAgICAgICAgICAgcmV2b2NhdGlvblN0b3JlIC0+IHJlZGlzICI3LiBFWElTVFMgcmV2b2tlZF9zZXNzaW9uOntpZH0iCiAgICAgICAgICAgIGlkZW50aXR5U2VydmljZSAtPiBzZXNzaW9uUmVwbyAiOC4gUmV2b2tlIFNlc3Npb24gKGlmIHRoZWZ0IGRldGVjdGVkKSIKICAgICAgICAgICAgc2Vzc2lvblJlcG8gLT4gcG9zdGdyZXMgIjkuIFVQREFURSBhdXRoX3Nlc3Npb25zIgogICAgICAgICAgICBpZGVudGl0eVNlcnZpY2UgLT4gcmV2b2NhdGlvblN0b3JlICIxMC4gQWRkIFNlc3Npb24gdG8gQmxhY2tsaXN0IgogICAgICAgICAgICByZXZvY2F0aW9uU3RvcmUgLT4gcmVkaXMgIjExLiBTRVQgcmV2b2tlZF9zZXNzaW9uOntpZH0gPSB0cnVlIgogICAgICAgICAgICBpZGVudGl0eVNlcnZpY2UgLT4gYXV0aFNlcnZlciAiMTIuIFNpZ24gbmV3IEpXVCIKICAgICAgICAgICAgYXV0aFNlcnZlciAtPiB0cmFlZmlrICIxMy4gUmV0dXJuIDIwMCBPSyAoTmV3IFRva2VucykiCiAgICAgICAgICAgIHRyYWVmaWsgLT4gc3BhICIxNC4gUmV0dXJuIEpXVCArIFNldC1Db29raWUiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGR5bmFtaWMgaWRlbnRpdHkgIklkZW50aXR5X0xvZ291dF9SZXZvY2F0aW9uIiAiRGV0YWlsZWQgc2VxdWVuY2UgZm9yIExvZ291dCBhbmQgU2Vzc2lvbiBSZXZvY2F0aW9uIiB7CiAgICAgICAgICAgIHNwYSAtPiB0cmFlZmlrICIxLiBQT1NUIC9hcGkvdjEvYXV0aC9sb2dvdXQiCiAgICAgICAgICAgIHRyYWVmaWsgLT4gYXV0aFNlcnZlciAiMi4gUm91dGVzIHJlcXVlc3QiCiAgICAgICAgICAgIGF1dGhTZXJ2ZXIgLT4gaWRlbnRpdHlTZXJ2aWNlICIzLiBMb2dvdXQoKSIKICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHNlc3Npb25SZXBvICI0LiBVcGRhdGUgQXV0aFNlc3Npb24gKFJldm9rZWRBdCA9IE5vdykiCiAgICAgICAgICAgIHNlc3Npb25SZXBvIC0+IHBvc3RncmVzICI1LiBVUERBVEUgYXV0aF9zZXNzaW9ucyIKICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHJldm9jYXRpb25TdG9yZSAiNi4gQWRkIFNlc3Npb24gdG8gQmxhY2tsaXN0IgogICAgICAgICAgICByZXZvY2F0aW9uU3RvcmUgLT4gcmVkaXMgIjcuIFNFVCByZXZva2VkX3Nlc3Npb246e2lkfSA9IHRydWUiCiAgICAgICAgICAgIGlkZW50aXR5U2VydmljZSAtPiBhdXRoU2VydmVyICI4LiBSZXR1cm4gU3VjY2VzcyIKICAgICAgICAgICAgYXV0aFNlcnZlciAtPiB0cmFlZmlrICI5LiBSZXR1cm4gMjAwIE9LIChDbGVhciBDb29raWVzKSIKICAgICAgICAgICAgdHJhZWZpayAtPiBzcGEgIjEwLiBDbGVhciBDbGllbnQgQ29va2llcyIKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KCiAgICAgICAgZHluYW1pYyBtYW5hZ2VtZW50ICJNYW5hZ2VtZW50X0J1bGtfSW1wb3J0IiAiRGV0YWlsZWQgc2VxdWVuY2UgZm9yIEJ1bGsgQ1NWIEltcG9ydCIgewogICAgICAgICAgICBzcGEgLT4gdHJhZWZpayAiMS4gUE9TVCAvYXBpL3YxL3NlcnZlcnMvaW1wb3J0IgogICAgICAgICAgICB0cmFlZmlrIC0+IHNlcnZlclNlcnZlciAiMi4gUm91dGVzIHJlcXVlc3QiCiAgICAgICAgICAgIHNlcnZlclNlcnZlciAtPiBzZXJ2ZXJTZXJ2aWNlICIzLiBQYXJzZSBDU1YgJiBWYWxpZGF0ZSIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBzZXJ2ZXJSZXBvICI0LiBCRUdJTiBUcmFuc2FjdGlvbiAoQmF0Y2ggb2YgMTAwKSIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBzZXJ2ZXJSZXBvICI1LiBCdWxrIElOU0VSVCBTRVJWRVJTIgogICAgICAgICAgICBzZXJ2ZXJSZXBvIC0+IHBvc3RncmVzICI2LiBFeGVjdXRlIFNRTCBCYXRjaCIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBvdXRib3hSZXBvICI3LiBCdWxrIElOU0VSVCBPVVRCT1hfRVZFTlRTIgogICAgICAgICAgICBvdXRib3hSZXBvIC0+IHBvc3RncmVzICI4LiBFeGVjdXRlIFNRTCBCYXRjaCIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBzZXJ2ZXJSZXBvICI5LiBDT01NSVQgVHJhbnNhY3Rpb24iCiAgICAgICAgICAgIHNlcnZlclNlcnZpY2UgLT4gc2VydmVyU2VydmVyICIxMC4gUmV0dXJuIEltcG9ydCBTdW1tYXJ5IgogICAgICAgICAgICBzZXJ2ZXJTZXJ2ZXIgLT4gdHJhZWZpayAiMTEuIFJldHVybiAyMDAgT0siCiAgICAgICAgICAgIHRyYWVmaWsgLT4gc3BhICIxMi4gUmV0dXJuIFJlc3BvbnNlIgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICBkeW5hbWljIG1hbmFnZW1lbnQgIk1hbmFnZW1lbnRfQnVsa19FeHBvcnQiICJEZXRhaWxlZCBzZXF1ZW5jZSBmb3IgQnVsayBDU1YgRXhwb3J0IiB7CiAgICAgICAgICAgIHNwYSAtPiB0cmFlZmlrICIxLiBHRVQgL2FwaS92MS9zZXJ2ZXJzL2V4cG9ydCIKICAgICAgICAgICAgdHJhZWZpayAtPiBzZXJ2ZXJTZXJ2ZXIgIjIuIFJvdXRlcyByZXF1ZXN0IgogICAgICAgICAgICBzZXJ2ZXJTZXJ2ZXIgLT4gc2VydmVyU2VydmljZSAiMy4gRXhwb3J0U2VydmVycygpIgogICAgICAgICAgICBzZXJ2ZXJTZXJ2aWNlIC0+IHNlcnZlclJlcG8gIjQuIFF1ZXJ5IGN1cnNvciAoQ2h1bmtpbmcpIgogICAgICAgICAgICBzZXJ2ZXJSZXBvIC0+IHBvc3RncmVzICI1LiBTRUxFQ1QgU3RyZWFtIgogICAgICAgICAgICAgICAgICAgICAgICBzZXJ2ZXJTZXJ2aWNlIC0+IHNlcnZlclNlcnZlciAiNy4gRm9ybWF0IHRvIENTViBjaHVuayIKICAgICAgICAgICAgc2VydmVyU2VydmVyIC0+IHRyYWVmaWsgIjguIEhUVFAgQ2h1bmtlZCBSZXNwb25zZSIKICAgICAgICAgICAgdHJhZWZpayAtPiBzcGEgIjkuIFN0cmVhbSB0byBmaWxlIgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICBkeW5hbWljIG1hbmFnZW1lbnQgIk1hbmFnZW1lbnRfU3RhdHVzX0NvbnN1bWVyIiAiV29ya2VyIHVwZGF0aW5nIERCIGZyb20gTW9uaXRvcmluZyBFdmVudHMiIHsKICAgICAgICAgICAgICAgICAgICAgICAgcmVkaXMgLT4gc3RhdHVzQ29uc3VtZXIgIjEuIERlbGl2ZXJzIFNlcnZlclN0YXR1c0NoYW5nZWQgZXZlbnQgdmlhIFhSRUFEIgogICAgICAgICAgICBzdGF0dXNDb25zdW1lciAtPiBzZXJ2ZXJSZXBvICIzLiBVcGRhdGVTZXJ2ZXJTdGF0dXMoc2VydmVyX2lkLCBzdGF0dXMpIgogICAgICAgICAgICBzZXJ2ZXJSZXBvIC0+IHBvc3RncmVzICI0LiBVUERBVEUgU0VSVkVSUyBTRVQgY3VycmVudF9zdGF0dXMiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGR5bmFtaWMgcmVwb3J0aW5nICJSZXBvcnRpbmdfRGFpbHlfU2NoZWR1bGVyIiAiQ3JvbmpvYiB0cmlnZ2VyaW5nIGRhaWx5IHJlcG9ydHMiIHsKICAgICAgICAgICAgZGFpbHlTY2hlZHVsZXIgLT4gcmVkaXMgIjEuIFNFVE5YIGxvY2s6ZGFpbHlfcmVwb3J0IChMZWFkZXIgRWxlY3Rpb24pIgogICAgICAgICAgICBkYWlseVNjaGVkdWxlciAtPiByZXBvcnRTZXJ2aWNlICIyLiBUcmlnZ2VyIFJlcG9ydCBHZW5lcmF0aW9uIGZvciBhbGwgQWRtaW5zIgogICAgICAgICAgICByZXBvcnRTZXJ2aWNlIC0+IHJlcG9ydFJlcG8gIjMuIEZldGNoIHRhcmdldHMvYWRtaW5zIgogICAgICAgICAgICByZXBvcnRSZXBvIC0+IHBvc3RncmVzICI0LiBTRUxFQ1QiCiAgICAgICAgICAgIHJlcG9ydFNlcnZpY2UgLT4gcmVwb3J0V29ya2VyICI1LiBFbnF1ZXVlIHRvIGpvYlF1ZXVlIgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICBkeW5hbWljIHJlcG9ydGluZyAiUmVwb3J0aW5nX0V2ZW50X0NvbnN1bWVyIiAiRGF0YSByZXBsaWNhdGlvbiBmcm9tIE1hbmFnZW1lbnQgdmlhIEV2ZW50IEJ1cyIgewogICAgICAgICAgICAgICAgICAgICAgICByZWRpcyAtPiBldmVudENvbnN1bWVyICIxLiBEZWxpdmVycyBTZXJ2ZXJDcmVhdGVkL0RlbGV0ZWQgZXZlbnQgdmlhIFhSRUFEIgogICAgICAgICAgICBldmVudENvbnN1bWVyIC0+IHJlcG9ydFJlcG8gIjMuIFN5bmMgU2VydmVyIERhdGEiCiAgICAgICAgICAgIHJlcG9ydFJlcG8gLT4gcG9zdGdyZXMgIjQuIElOU0VSVC9ERUxFVEUgUkVQT1JUSU5HX1NFUlZFUlMiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIHN0eWxlcyB7CiAgICAgICAgICAgIGVsZW1lbnQgIlBlcnNvbiIgewogICAgICAgICAgICAgICAgY29sb3IgI2ZmZmZmZgogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjMDg0MjdiCiAgICAgICAgICAgICAgICBzaGFwZSBQZXJzb24KICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJTb2Z0d2FyZSBTeXN0ZW0iIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzExNjhiZAogICAgICAgICAgICAgICAgY29sb3IgI2ZmZmZmZgogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsZW1lbnQgIkNvbnRhaW5lciIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjNDM4ZGQ1CiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiRGF0YWJhc2UiIHsKICAgICAgICAgICAgICAgIHNoYXBlIEN5bGluZGVyCiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICMyMjY0OWIKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJHYXRld2F5IiB7CiAgICAgICAgICAgICAgICBzaGFwZSBQaXBlCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiV29ya2VyIiB7CiAgICAgICAgICAgICAgICBzaGFwZSBIZXhhZ29uCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiTWVzc2FnZSBCcm9rZXIiIHsKICAgICAgICAgICAgICAgIHNoYXBlIFBpcGUKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgI2ZmOTkwMAogICAgICAgICAgICAgICAgY29sb3IgIzAwMDAwMAogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsZW1lbnQgIkNvbXBvbmVudCIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjODViYmYwCiAgICAgICAgICAgICAgICBjb2xvciAjMDAwMDAwCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiRXh0ZXJuYWwiIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzk5OTk5OQogICAgICAgICAgICAgICAgY29sb3IgI2ZmZmZmZgogICAgICAgICAgICB9CiAgICAgICAgfQogICAgfQp9",
+    "structurizr.inspection.error" : "44",
+    "structurizr.dsl" : "d29ya3NwYWNlICJTTVMgTWljcm9zZXJ2aWNlcyBBcmNoaXRlY3R1cmUiICJTZXJ2ZXIgTWFuYWdlbWVudCBTeXN0ZW0iIHsKCiAgICBtb2RlbCB7CiAgICAgICAgYWRtaW4gPSBwZXJzb24gIlN5c3RlbSBBZG1pbmlzdHJhdG9yIiAiUGVyZm9ybXMgYWRtaW5pc3RyYXRpdmUgdGFza3MsIG1hbmFnZXMgc2VydmVycywgdmlld3MgcmVwb3J0cywgYW5kIHJlY2VpdmVzIGFsZXJ0cy4iCiAgICAgICAgc210cCA9IHNvZnR3YXJlU3lzdGVtICJTTVRQIFNlcnZlciIgIkV4dGVybmFsIGVtYWlsIHN5c3RlbSAoZS5nLiwgTWFpbEhvZywgU2VuZEdyaWQpIiAiRXh0ZXJuYWwiCiAgICAgICAgdGFyZ2V0U2VydmVycyA9IHNvZnR3YXJlU3lzdGVtICJUYXJnZXQgU2VydmVycyAoMTBrKykiICJFeHRlcm5hbCBpbmZyYXN0cnVjdHVyZSBzZXJ2ZXJzIG1vbml0b3JlZCB2aWEgSUNNUCIgIkV4dGVybmFsIgoKICAgICAgICBzbXMgPSBzb2Z0d2FyZVN5c3RlbSAiU2VydmVyIE1hbmFnZW1lbnQgU3lzdGVtIChTTVMpIiAiTW9uaXRvcnMgdGFyZ2V0IHNlcnZlcnMsIGNvbGxlY3RzIG9ic2VydmF0aW9uIGRhdGEsIGFuZCBnZW5lcmF0ZXMgdXB0aW1lIHJlcG9ydHMuIiB7CgogICAgICAgICAgICB0cmFlZmlrID0gY29udGFpbmVyICJBUEkgR2F0ZXdheSIgIlRyYWVmaWsgUHJveHk6IFJvdXRlcyB0cmFmZmljLCB0ZXJtaW5hdGVzIFRMUywgZW5mb3JjZXMgUmF0ZSBMaW1pdGluZywgYW5kIHRyaWdnZXJzIEZvcndhcmRBdXRoLiIgIlRyYWVmaWsiICJHYXRld2F5IgogICAgICAgICAgICBzcGEgPSBjb250YWluZXIgIldlYiBBcHBsaWNhdGlvbiIgIlNpbmdsZSBQYWdlIEFwcGxpY2F0aW9uIChGcm9udGVuZCkuIiAiQW5ndWxhciAxOSIgIldlYiBCcm93c2VyIgogICAgICAgICAgICBzd2FnZ2VyVUkgPSBjb250YWluZXIgIlN3YWdnZXIgVUkiICJDZW50cmFsaXplZCBBUEkgRG9jdW1lbnRhdGlvbiBIdWIuIiAiU3dhZ2dlciIgIldlYiBCcm93c2VyIgogICAgICAgICAgICAKICAgICAgICAgICAgaWRlbnRpdHkgPSBjb250YWluZXIgIklkZW50aXR5IFNlcnZpY2UiICJIYW5kbGVzIGF1dGhlbnRpY2F0aW9uLCBKV1QgZ2VuZXJhdGlvbiwgYW5kIHRva2VuIHZlcmlmaWNhdGlvbi4gUHJvdmlkZXMgRm9yd2FyZEF1dGggZm9yIFRyYWVmaWsuIiAiR28iICJNaWNyb3NlcnZpY2UiIHsKICAgICAgICAgICAgICAgIGZvcndhcmRBdXRoSGFuZGxlciA9IGNvbXBvbmVudCAiRm9yd2FyZEF1dGggSGFuZGxlciIgIlByb3ZpZGVzIC92ZXJpZnkgZW5kcG9pbnQgZm9yIFRyYWVmaWsgdG8gdmFsaWRhdGUgdG9rZW5zIGFuZCBpbmplY3QgdXNlciBoZWFkZXJzLiIgIkdvIEhUVFAgSGFuZGxlciIKICAgICAgICAgICAgICAgIGF1dGhTZXJ2ZXIgPSBjb21wb25lbnQgIkF1dGggZ1JQQy9SRVNUIFNlcnZlciIgIlByb3ZpZGVzIGxvZ2luLCBsb2dvdXQsIGFuZCB0b2tlbiByZWZyZXNoIGVuZHBvaW50cy4iICJHbyBnUlBDL0hUVFAgU2VydmVyIgogICAgICAgICAgICAgICAgYXV0aGVudGljYXRvciA9IGNvbXBvbmVudCAiQXV0aGVudGljYXRvciIgIlZhbGlkYXRlcyBKV1QgdG9rZW5zIGFuZCBoYW5kbGVzIENTUkYuIiAiR28gQ29tcG9uZW50IgogICAgICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlID0gY29tcG9uZW50ICJJZGVudGl0eSBTZXJ2aWNlIiAiQ29yZSBidXNpbmVzcyBsb2dpYyBmb3IgdXNlciBhdXRoZW50aWNhdGlvbi4iICJHbyBTZXJ2aWNlIgogICAgICAgICAgICAgICAgdXNlclJlcG8gPSBjb21wb25lbnQgIlVzZXIgUmVwb3NpdG9yeSIgIlByb3ZpZGVzIGFjY2VzcyB0byB1c2VyIHJlY29yZHMuIiAiR28gUmVwb3NpdG9yeSIKICAgICAgICAgICAgICAgIHNlc3Npb25SZXBvID0gY29tcG9uZW50ICJTZXNzaW9uIFJlcG9zaXRvcnkiICJQcm92aWRlcyBhY2Nlc3MgdG8gYXV0aCBzZXNzaW9ucy4iICJHbyBSZXBvc2l0b3J5IgogICAgICAgICAgICAgICAgcmVmcmVzaFJlcG8gPSBjb21wb25lbnQgIlJlZnJlc2ggVG9rZW4gUmVwb3NpdG9yeSIgIlByb3ZpZGVzIGFjY2VzcyB0byByZWZyZXNoIHRva2Vucy4iICJHbyBSZXBvc2l0b3J5IgogICAgICAgICAgICAgICAgcmV2b2NhdGlvblN0b3JlID0gY29tcG9uZW50ICJSZXZvY2F0aW9uIFN0b3JlIChSZWRpcykiICJNYWludGFpbnMgYSBibGFja2xpc3Qgb2YgcmV2b2tlZCBTZXNzaW9uIElEcyB0byBlbmFibGUgZ2xvYmFsIHJldm9jYXRpb24uIiAiR28vUmVkaXMgQ29tcG9uZW50IgogICAgICAgICAgICB9CiAgICAgICAgICAgIAogICAgICAgICAgICBtYW5hZ2VtZW50ID0gY29udGFpbmVyICJNYW5hZ2VtZW50IFNlcnZpY2UiICJIYW5kbGVzIENSVUQgb3BlcmF0aW9ucyBhbmQgQnVsayBJbXBvcnQvRXhwb3J0IGZvciBTZXJ2ZXIgaW52ZW50b3JpZXMuIiAiR28iICJNaWNyb3NlcnZpY2UiIHsKICAgICAgICAgICAgICAgIHNlcnZlclNlcnZlciA9IGNvbXBvbmVudCAiU2VydmVyIGdSUEMvUkVTVCBTZXJ2ZXIiICJQcm92aWRlcyBDUlVEIGFuZCBCdWxrIEltcG9ydC9FeHBvcnQgZW5kcG9pbnRzIGZvciB0YXJnZXQgc2VydmVycy4iICJHbyBnUlBDL0hUVFAgU2VydmVyIgogICAgICAgICAgICAgICAgc2VydmVyU2VydmljZSA9IGNvbXBvbmVudCAiU2VydmVyIFNlcnZpY2UiICJDb3JlIGJ1c2luZXNzIGxvZ2ljIGZvciBzZXJ2ZXIgbWFuYWdlbWVudC4iICJHbyBTZXJ2aWNlIgogICAgICAgICAgICAgICAgc2VydmVyUmVwbyA9IGNvbXBvbmVudCAiU2VydmVyIFJlcG9zaXRvcnkgKFBvc3RncmVTUUwpIiAiUmVhZHMvd3JpdGVzIHNlcnZlciBtZXRhZGF0YS4iICJHbyBSZXBvc2l0b3J5IgogICAgICAgICAgICAgICAgb3V0Ym94UmVwbyA9IGNvbXBvbmVudCAiT3V0Ym94IFJlcG9zaXRvcnkgKFBvc3RncmVTUUwpIiAiU3RvcmVzIGRvbWFpbiBldmVudHMgZm9yIHJlbGlhYmxlIHB1Ymxpc2hpbmcuIiAiR28gUmVwb3NpdG9yeSIKICAgICAgICAgICAgICAgIG91dGJveFJlbGF5ID0gY29tcG9uZW50ICJPdXRib3ggUmVsYXkgV29ya2VyIiAiUG9sbHMgb3V0Ym94IGFuZCBwdWJsaXNoZXMgZXZlbnRzIHRvIFJlZGlzIFN0cmVhbS4iICJHbyBXb3JrZXIiCiAgICAgICAgICAgICAgICBzdGF0dXNDb25zdW1lciA9IGNvbXBvbmVudCAiU3RhdHVzIENvbnN1bWVyIFdvcmtlciIgIkNvbnN1bWVzIFNlcnZlclN0YXR1c0NoYW5nZWQgZXZlbnRzIHRvIHVwZGF0ZSBEQi4iICJHbyBXb3JrZXIiCiAgICAgICAgICAgICAgICByYXRlTGltaXRlciA9IGNvbXBvbmVudCAiUmF0ZSBMaW1pdGVyIiAiQXBwbGljYXRpb24tbGV2ZWwgcmF0ZSBsaW1pdGVyIHRvIHByb3RlY3QgaGVhdnkgb3BlcmF0aW9ucy4iICJHby9SZWRpcyBDb21wb25lbnQiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgCiAgICAgICAgICAgIHJlcG9ydGluZyA9IGNvbnRhaW5lciAiUmVwb3J0aW5nIFNlcnZpY2UiICJIYW5kbGVzIGFzeW5jIHJlcG9ydCBnZW5lcmF0aW9uLiIgIkdvIiAiTWljcm9zZXJ2aWNlIiB7CiAgICAgICAgICAgICAgICByZXBvcnRIYW5kbGVyID0gY29tcG9uZW50ICJSZXBvcnQgSGFuZGxlciIgIkFjY2VwdHMgcmVwb3J0IHJlcXVlc3RzIHZpYSBBUEkuIiAiR28gZ1JQQy9IVFRQIFNlcnZlciIKICAgICAgICAgICAgICAgIGRhaWx5U2NoZWR1bGVyID0gY29tcG9uZW50ICJEYWlseSBTY2hlZHVsZXIiICJDcm9uam9iIHRyaWdnZXJpbmcgZGFpbHkgcmVwb3J0IGdlbmVyYXRpb24uIiAiR28gQ3JvbiIKICAgICAgICAgICAgICAgIHJlcG9ydFdvcmtlciA9IGNvbXBvbmVudCAiUmVwb3J0IFdvcmtlciIgIkNvbnN1bWVzIGluLW1lbW9yeSBjaGFubmVsIHRvIGNhbGN1bGF0ZSB1cHRpbWUuIiAiR28gV29ya2VyIgogICAgICAgICAgICAgICAgZXZlbnRDb25zdW1lciA9IGNvbXBvbmVudCAiRXZlbnQgQ29uc3VtZXIgV29ya2VyIiAiTGlzdGVucyB0byBzZXJ2ZXIgYW5kIHN0YXR1cyBldmVudHMgdG8gc3luYyBsb2NhbCBEQi4gKERlY291cGxlZCBmcm9tIERCIGVycm9ycykiICJHbyBXb3JrZXIiCiAgICAgICAgICAgICAgICByZXBvcnRTZXJ2aWNlID0gY29tcG9uZW50ICJSZXBvcnQgU2VydmljZSIgIkNvcmUgYnVzaW5lc3MgbG9naWMgZm9yIHJlcG9ydCBnZW5lcmF0aW9uLiIgIkdvIFNlcnZpY2UiCiAgICAgICAgICAgICAgICBlc1VwdGltZUNhbGMgPSBjb21wb25lbnQgIkVTIFVwdGltZSBDYWxjdWxhdG9yIiAiQ2FsY3VsYXRlcyB1cHRpbWUgYnkgcXVlcnlpbmcgb2JzZXJ2YXRpb24gbG9ncy4iICJHbyBDb21wb25lbnQiCiAgICAgICAgICAgICAgICByZXBvcnRSZXBvID0gY29tcG9uZW50ICJSZXBvcnRpbmcgUmVwb3NpdG9yeSAoUG9zdGdyZVNRTCkiICJNYW5hZ2VzIHJlcG9ydCByZXF1ZXN0IHN0YXR1cyBhbmQgc3luY2VkIHNlcnZlciBkYXRhLiIgIkdvIFJlcG9zaXRvcnkiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgCiAgICAgICAgICAgIG5vdGlmaWNhdGlvbiA9IGNvbnRhaW5lciAiTm90aWZpY2F0aW9uIFNlcnZpY2UiICJEZWRpY2F0ZWQgc2VydmljZSBmb3Igc2VuZGluZyBlbWFpbHMgYW5kIGFsZXJ0cy4iICJHbyIgIk1pY3Jvc2VydmljZSIgewogICAgICAgICAgICAgICAgbm90aWZpY2F0aW9uQ29uc3VtZXIgPSBjb21wb25lbnQgIk5vdGlmaWNhdGlvbiBDb25zdW1lciBXb3JrZXIiICJDb25zdW1lcyBOb3RpZmljYXRpb24gZXZlbnRzIGZyb20gUmVkaXMuIiAiR28gV29ya2VyIgogICAgICAgICAgICAgICAgbm90aWZpY2F0aW9uU2VydmljZSA9IGNvbXBvbmVudCAiTm90aWZpY2F0aW9uIFNlcnZpY2UiICJQcm9jZXNzZXMgbm90aWZpY2F0aW9uIGpvYnMuIiAiR28gU2VydmljZSIKICAgICAgICAgICAgICAgIHNtdHBOb3RpZmllciA9IGNvbXBvbmVudCAiU01UUCBOb3RpZmllciIgIkJ1aWxkcyBtdWx0aXBhcnQgTUlNRSBlbWFpbCBhbmQgc2VuZHMgaXQgdmlhIFNNVFAuIiAiR28gQ29tcG9uZW50IgogICAgICAgICAgICB9CgogICAgICAgICAgICBhZ2VudEhhbmRsZXIgPSBjb250YWluZXIgIkFnZW50IEhhbmRsZXIgU2VydmljZSIgIlJlY2VpdmVzIHRlbGVtZXRyeSBkYXRhIGZyb20gYWdlbnRzIGluc3RhbGxlZCBvbiB0YXJnZXQgc2VydmVycy4iICJHbyIgIk1pY3Jvc2VydmljZSIgewogICAgICAgICAgICAgICAgYWdlbnRTZXJ2ZXIgPSBjb21wb25lbnQgIkFnZW50IGdSUEMvUkVTVCBTZXJ2ZXIiICJBY2NlcHRzIGhlYXJ0YmVhdCBwdXNoZXMgZnJvbSBhZ2VudHMuIiAiR28gZ1JQQy9IVFRQIFNlcnZlciIKICAgICAgICAgICAgICAgIGFnZW50U2VydmljZSA9IGNvbXBvbmVudCAiQWdlbnQgU2VydmljZSIgIlZhbGlkYXRlcyBYLU1hc3Rlci1LZXkgYW5kIHByb2Nlc3NlcyBwYXlsb2FkLiIgIkdvIFNlcnZpY2UiCiAgICAgICAgICAgICAgICBhZ2VudEV2ZW50UHVibGlzaGVyID0gY29tcG9uZW50ICJBZ2VudCBFdmVudCBQdWJsaXNoZXIiICJQdWJsaXNoZXMgYWdlbnQgc3RhdHVzIHRvIFJlZGlzIHN0cmVhbXMuIiAiR28gQ29tcG9uZW50IgogICAgICAgICAgICB9CiAgICAgICAgICAgIAogICAgICAgICAgICBtb25pdG9yaW5nID0gY29udGFpbmVyICJNb25pdG9yaW5nIFdvcmtlciIgIkJhY2tncm91bmQgcG9vbCBjb250aW51b3VzbHkgZXhlY3V0aW5nIGhlYWx0aCBjaGVja3MgYWdhaW5zdCB0YXJnZXQgc2VydmVycy4iICJHbyIgIldvcmtlciIgewogICAgICAgICAgICAgICAgbW9uaXRvcldvcmtlciA9IGNvbXBvbmVudCAiV29ya2VyIFBvb2wiICJQdWxscyB0YXJnZXRzIHZpYSBCTFBPUCBmcm9tIHF1ZXVlIGFuZCBleGVjdXRlcyBjaGVja3MuIiAiR28gV29ya2VyIgogICAgICAgICAgICAgICAgaGVhbHRoQ2hlY2tlckZhY3RvcnkgPSBjb21wb25lbnQgIkhlYWx0aENoZWNrZXIgRmFjdG9yeSIgIlByb3ZpZGVzIGNvcnJlY3QgY2hlY2tlciAoSUNNUC9TU0gvQWdlbnRQdWxsKSBiYXNlZCBvbiB0YXJnZXQgY29uZmlnLiIgIkdvIENvbXBvbmVudCIKICAgICAgICAgICAgICAgIG1vbml0b3JpbmdTZXJ2aWNlID0gY29tcG9uZW50ICJNb25pdG9yaW5nIFNlcnZpY2UiICJFdmFsdWF0ZXMgc3RhdGUgbWFjaGluZSBhbmQgcHVibGlzaGVzIGV2ZW50cy4iICJHbyBTZXJ2aWNlIgogICAgICAgICAgICAgICAgb2JzZXJ2YXRpb25Mb2dnZXIgPSBjb21wb25lbnQgIk9ic2VydmF0aW9uIExvZ2dlciIgIldyaXRlcyBsb2dzIHRvIEVsYXN0aWNzZWFyY2guIiAiR28gQ29tcG9uZW50IgogICAgICAgICAgICAgICAgc3RyZWFtQ29uc3VtZXIgPSBjb21wb25lbnQgIlN0cmVhbSBDb25zdW1lciBXb3JrZXIiICJDb25zdW1lcyBTZXJ2ZXJDcmVhdGVkL1VwZGF0ZWQvRGVsZXRlZCBldmVudHMgdG8gdXBkYXRlIENhY2hlLiIgIkdvIFdvcmtlciIKICAgICAgICAgICAgICAgIGhlYXJ0YmVhdENvbnN1bWVyID0gY29tcG9uZW50ICJIZWFydGJlYXQgQ29uc3VtZXIgV29ya2VyIiAiQ29uc3VtZXMgaGVhcnRiZWF0IGZyb20gQWdlbnQgSGFuZGxlciB0byBldmFsdWF0ZSBVUCBzdGF0ZS4iICJHbyBXb3JrZXIiCiAgICAgICAgICAgICAgICBhZ2VudFN3ZWVwZXIgPSBjb21wb25lbnQgIkFnZW50IFN3ZWVwZXIiICJDcm9uam9iIHJlbW92aW5nIHRpbWVkLW91dCBhZ2VudHMgYW5kIGV2YWx1YXRpbmcgRE9XTiBzdGF0ZS4iICJHbyBDcm9uIgogICAgICAgICAgICAgICAgY2FjaGVSZXBvID0gY29tcG9uZW50ICJNb25pdG9yaW5nIENhY2hlIChSZWRpcykiICJMb2NhbCBoaWdoLXNwZWVkIGFjY2VzcyB0byBzZXJ2ZXIgdGFyZ2V0cy4iICJSZWRpcyBIYXNoICYgU2V0IgogICAgICAgICAgICAgICAgc2NoZWR1bGVyID0gY29tcG9uZW50ICJDeWNsZSBTY2hlZHVsZXIiICJFbGVjdHMgbGVhZGVyIChTRVQgTlgpIGFuZCBwdXNoZXMgcGluZyB0YXJnZXRzIGludG8gYSBzaGFyZWQgcXVldWUuIiAiR28gQ29tcG9uZW50IgogICAgICAgICAgICAgICAgcXVldWVSZXBvID0gY29tcG9uZW50ICJQaW5nIFF1ZXVlIChSZWRpcykiICJBIHNoYXJlZCBxdWV1ZSBzdG9yaW5nIHRhcmdldHMgdG8gYmUgcGluZ2VkIGluIHRoZSBjdXJyZW50IGN5Y2xlLiIgIlJlZGlzIExpc3QiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgCiAgICAgICAgICAgIHBvc3RncmVzID0gY29udGFpbmVyICJQcmltYXJ5IERhdGFiYXNlIiAiU3RvcmVzIFVzZXJzLCBTZXNzaW9ucywgYW5kIFNlcnZlciBNZXRhZGF0YS4iICJQb3N0Z3JlU1FMIDE1IiAiRGF0YWJhc2UiCiAgICAgICAgICAgIHJlZGlzID0gY29udGFpbmVyICJFdmVudCBCcm9rZXIgJiBDYWNoZSIgIlJlZGlzIFN0cmVhbXMgZm9yIHB1Yi9zdWIgZXZlbnRzICh3aXRoIE1heExlbiBwcm90ZWN0aW9uKSwgdG9rZW4gYmxhY2tsaXN0LCBhbmQgdGFyZ2V0IGNhY2hlLiAoUGVyc2lzdGVudCBBT0YrUkRCKSIgIlJlZGlzIDciICJNZXNzYWdlIEJyb2tlciIKICAgICAgICAgICAgZXMgPSBjb250YWluZXIgIlRpbWUtU2VyaWVzIERCIiAiU3RvcmVzIG1pbGxpb25zIG9mIElDTVAgT2JzZXJ2YXRpb24gTG9ncyBmb3IgZmFzdCB1cHRpbWUgYWdncmVnYXRpb24uIiAiRWxhc3RpY3NlYXJjaCA4IiAiRGF0YWJhc2UiCiAgICAgICAgfQoKICAgICAgICAjIENvbnRleHQgbGV2ZWwgcmVsYXRpb25zaGlwcwogICAgICAgIGFkbWluIC0+IHNtcyAiTWFuYWdlcyBzZXJ2ZXJzLCByZXF1ZXN0cyByZXBvcnRzLCBhbmQgdmlld3Mgc3RhdHVzIHZpYSIKICAgICAgICBzbXMgLT4gdGFyZ2V0U2VydmVycyAiQ2hlY2tzIHN0YXR1cyBjb250aW51b3VzbHkgdXNpbmcgSUNNUCwgU1NILCBhbmQgSFRUUCBwcm90b2NvbHMiCiAgICAgICAgdGFyZ2V0U2VydmVycyAtPiBzbXMgIlB1c2hlcyB0ZWxlbWV0cnkvaGVhcnRiZWF0IChBZ2VudCBQdXNoKSB2aWEiCiAgICAgICAgc21zIC0+IHNtdHAgIlNlbmRzIGVtYWlsIHJlcG9ydHMgYW5kIGFsZXJ0cyB2aWEiCiAgICAgICAgc210cCAtPiBhZG1pbiAiRGVsaXZlcnMgZW1haWxzIHRvIgoKICAgICAgICAjIENvbnRhaW5lciBsZXZlbCByZWxhdGlvbnNoaXBzCiAgICAgICAgYWRtaW4gLT4gdHJhZWZpayAiTWFrZXMgQVBJIHJlcXVlc3RzIHRvIiAiSFRUUFMvUkVTVCIKICAgICAgICBhZG1pbiAtPiBzcGEgIkxvYWRzIGZyb250ZW5kIGFwcGxpY2F0aW9uIGZyb20iICJIVFRQUyIKICAgICAgICBhZG1pbiAtPiBzd2FnZ2VyVUkgIlZpZXdzIEFQSSBkb2N1bWVudGF0aW9uIG9uIiAiSFRUUFMiCiAgICAgICAgc3BhIC0+IHRyYWVmaWsgIkNvbnN1bWVzIEFQSXMgdmlhIiAiSFRUUFMvUkVTVCIKICAgICAgICBzd2FnZ2VyVUkgLT4gdHJhZWZpayAiRmV0Y2hlcyBPcGVuQVBJIHNwZWNzICgvb3BlbmFwaS8qKSB2aWEiICJIVFRQL1JFU1QiCgogICAgICAgIHRyYWVmaWsgLT4gaWRlbnRpdHkgIlJvdXRlcyBBdXRoIEFQSSByZXF1ZXN0cyIgIkhUVFAvZ1JQQyIKICAgICAgICB0cmFlZmlrIC0+IGlkZW50aXR5ICJWZXJpZmllcyB0b2tlbnMgdmlhIEZvcndhcmRBdXRoICgvdmVyaWZ5KSIgIkhUVFAiCiAgICAgICAgdHJhZWZpayAtPiBtYW5hZ2VtZW50ICJSb3V0ZXMgTWFuYWdlbWVudCBBUEkgcmVxdWVzdHMgKGluamVjdGluZyBYLVVzZXItKiBoZWFkZXJzKSIgIkhUVFAvZ1JQQyIKICAgICAgICB0cmFlZmlrIC0+IHJlcG9ydGluZyAiUm91dGVzIFJlcG9ydGluZyBBUEkgcmVxdWVzdHMgKGluamVjdGluZyBYLVVzZXItKiBoZWFkZXJzKSIgIkhUVFAvZ1JQQyIKCiAgICAgICAgaWRlbnRpdHkgLT4gcG9zdGdyZXMgIlJlYWRzL1dyaXRlcyBVc2VyICYgU2Vzc2lvbiBkYXRhIiAiVENQLzU0MzIiCiAgICAgICAgaWRlbnRpdHkgLT4gcmVkaXMgIkNoZWNrcyByZXZva2VkIHRva2VucyAoQW50aS1SZXBsYXkpIiAiVENQLzYzNzkiCgogICAgICAgIG1hbmFnZW1lbnQgLT4gcG9zdGdyZXMgIlJlYWRzL1dyaXRlcyBTZXJ2ZXIgJiBPdXRib3ggZGF0YSIgIlRDUC81NDMyIgogICAgICAgIG1hbmFnZW1lbnQgLT4gcmVkaXMgIlB1Ymxpc2hlcyBTZXJ2ZXIgQ1JVRCBldmVudHMgLyBDb25zdW1lcyBTdGF0dXMgZXZlbnRzIiAiUmVkaXMgU3RyZWFtIgoKICAgICAgICByZXBvcnRpbmcgLT4gcG9zdGdyZXMgIlJlYWRzL1dyaXRlcyBSZXBvcnQgUmVxdWVzdHMgJiBTeW5jZWQgU2VydmVycyIgIlRDUC81NDMyIgogICAgICAgIHJlcG9ydGluZyAtPiByZWRpcyAiQ29uc3VtZXMgU2VydmVyIENSVUQgJiBTdGF0dXMgZXZlbnRzLCBQdWJsaXNoZXMgTm90aWZpY2F0aW9uIGV2ZW50cyIgIlJlZGlzIFN0cmVhbSIKICAgICAgICByZXBvcnRpbmcgLT4gZXMgIkFnZ3JlZ2F0ZXMgdXB0aW1lIGRhdGEgZnJvbSIgIkhUVFAvOTIwMCIKCiAgICAgICAgbm90aWZpY2F0aW9uIC0+IHJlZGlzICJDb25zdW1lcyBOb3RpZmljYXRpb24gZXZlbnRzIiAiUmVkaXMgU3RyZWFtIgogICAgICAgIG5vdGlmaWNhdGlvbiAtPiBzbXRwICJTZW5kcyBlbWFpbHMgdmlhIiAiU01UUCIKCiAgICAgICAgdGFyZ2V0U2VydmVycyAtPiB0cmFlZmlrICJQdXNoZXMgaGVhcnRiZWF0IiAiSFRUUFMvUkVTVCIKICAgICAgICB0cmFlZmlrIC0+IGFnZW50SGFuZGxlciAiUm91dGVzIEFnZW50IFB1c2ggQVBJIHJlcXVlc3RzIiAiSFRUUC9nUlBDIgogICAgICAgIGFnZW50SGFuZGxlciAtPiByZWRpcyAiUHVibGlzaGVzIEFnZW50IFN0YXR1cyBldmVudHMiICJSZWRpcyBTdHJlYW0iCgogICAgICAgIG1vbml0b3JpbmcgLT4gcmVkaXMgIlJlYWRzIHRhcmdldHMsIHB1Ymxpc2hlcyBTdGF0dXMgZXZlbnRzLCBjb25zdW1lcyBDUlVEIGV2ZW50cyIgIlJlZGlzIFN0cmVhbSAvIENhY2hlIgogICAgICAgIG1vbml0b3JpbmcgLT4gZXMgIkJ1bGsgaW5zZXJ0cyBvYnNlcnZhdGlvbiBsb2dzIHRvIiAiSFRUUC85MjAwIgogICAgICAgIG1vbml0b3JpbmcgLT4gdGFyZ2V0U2VydmVycyAiUGluZ3MiICJJQ01QIgogICAgICAgIAogICAgICAgICMgQ29tcG9uZW50IGxldmVsIHJlbGF0aW9uc2hpcHMgKElkZW50aXR5KQogICAgICAgIHRyYWVmaWsgLT4gZm9yd2FyZEF1dGhIYW5kbGVyICJDYWxscyAvdmVyaWZ5IiAiSFRUUCIKICAgICAgICB0cmFlZmlrIC0+IGF1dGhTZXJ2ZXIgIlJvdXRlcyAvYXBpL3YxL2F1dGgvKiIgIkhUVFAvZ1JQQyIKICAgICAgICBmb3J3YXJkQXV0aEhhbmRsZXIgLT4gYXV0aGVudGljYXRvciAiQXV0aGVudGljYXRlcyB0b2tlbiIKICAgICAgICBhdXRoU2VydmVyIC0+IGlkZW50aXR5U2VydmljZSAiRGVsZWdhdGVzIHRvIgogICAgICAgIGlkZW50aXR5U2VydmljZSAtPiB1c2VyUmVwbyAiVXNlcyIKICAgICAgICBpZGVudGl0eVNlcnZpY2UgLT4gc2Vzc2lvblJlcG8gIlVzZXMiCiAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHJlZnJlc2hSZXBvICJVc2VzIgogICAgICAgIGlkZW50aXR5U2VydmljZSAtPiByZXZvY2F0aW9uU3RvcmUgIkJsYWNrbGlzdHMgcmV2b2tlZCBzZXNzaW9ucyBpbiIKICAgICAgICBhdXRoZW50aWNhdG9yIC0+IHJldm9jYXRpb25TdG9yZSAiQ2hlY2tzIHRva2VuIGJsYWNrbGlzdCBpbiIKICAgICAgICB1c2VyUmVwbyAtPiBwb3N0Z3JlcyAiUXVlcmllcyIgIlRDUC81NDMyIgogICAgICAgIHNlc3Npb25SZXBvIC0+IHBvc3RncmVzICJRdWVyaWVzIiAiVENQLzU0MzIiCiAgICAgICAgcmVmcmVzaFJlcG8gLT4gcG9zdGdyZXMgIlF1ZXJpZXMiICJUQ1AvNTQzMiIKICAgICAgICByZXZvY2F0aW9uU3RvcmUgLT4gcmVkaXMgIkNvbW1hbmRzIiAiVENQLzYzNzkiCiAgICAgICAgCiAgICAgICAgIyBDb21wb25lbnQgbGV2ZWwgcmVsYXRpb25zaGlwcyAoTWFuYWdlbWVudCkKICAgICAgICB0cmFlZmlrIC0+IHNlcnZlclNlcnZlciAiUm91dGVzIC9hcGkvdjEvc2VydmVycy8qIiAiSFRUUC9nUlBDIgogICAgICAgIHNlcnZlclNlcnZlciAtPiByYXRlTGltaXRlciAiQ2hlY2tzIHF1b3RhIgogICAgICAgIHJhdGVMaW1pdGVyIC0+IHJlZGlzICJJbmNyZW1lbnRzIGNvdW50ZXJzIiAiVENQLzYzNzkiCiAgICAgICAgc2VydmVyU2VydmVyIC0+IHNlcnZlclNlcnZpY2UgIkRlbGVnYXRlcyB0byIKICAgICAgICBzZXJ2ZXJTZXJ2aWNlIC0+IHNlcnZlclJlcG8gIldyaXRlcyBTZXJ2ZXIgTWV0YWRhdGEiCiAgICAgICAgc2VydmVyU2VydmljZSAtPiBvdXRib3hSZXBvICJXcml0ZXMgT3V0Ym94IEV2ZW50cyAoVHJhbnNhY3Rpb25hbGx5KSIKICAgICAgICBvdXRib3hSZWxheSAtPiBvdXRib3hSZXBvICJQb2xscyB1bnB1Ymxpc2hlZCBldmVudHMiCiAgICAgICAgb3V0Ym94UmVsYXkgLT4gcmVkaXMgIlB1Ymxpc2hlcyB0byBzdHJlYW0gc21zLmV2ZW50cy5zZXJ2ZXIiICJYQUREIgogICAgICAgIHJlZGlzIC0+IHN0YXR1c0NvbnN1bWVyICJEZWxpdmVycyBzdHJlYW0gc21zLmV2ZW50cy5zZXJ2ZXJfc3RhdHVzIiAiWFJFQURHUk9VUCIKICAgICAgICBzdGF0dXNDb25zdW1lciAtPiBzZXJ2ZXJSZXBvICJVcGRhdGVzIFNlcnZlciBzdGF0dXMiCiAgICAgICAgc2VydmVyUmVwbyAtPiBwb3N0Z3JlcyAiUXVlcmllcyIgIlRDUC81NDMyIgogICAgICAgIG91dGJveFJlcG8gLT4gcG9zdGdyZXMgIlF1ZXJpZXMiICJUQ1AvNTQzMiIKCiAgICAgICAgIyBDb21wb25lbnQgbGV2ZWwgcmVsYXRpb25zaGlwcyAoTW9uaXRvcmluZykKICAgICAgICByZWRpcyAtPiBzdHJlYW1Db25zdW1lciAiRGVsaXZlcnMgc3RyZWFtIHNtcy5ldmVudHMuc2VydmVyIiAiWFJFQURHUk9VUCIKICAgICAgICBzdHJlYW1Db25zdW1lciAtPiBjYWNoZVJlcG8gIlVwZGF0ZXMgdGFyZ2V0cyIKICAgICAgICByZWRpcyAtPiBoZWFydGJlYXRDb25zdW1lciAiRGVsaXZlcnMgc3RyZWFtIHNtcy5ldmVudHMuaGVhcnRiZWF0IiAiWFJFQURHUk9VUCIKICAgICAgICBoZWFydGJlYXRDb25zdW1lciAtPiBtb25pdG9yaW5nU2VydmljZSAiRXZhbHVhdGUoc2VydmVySUQsIHRydWUpIgogICAgICAgIGFnZW50U3dlZXBlciAtPiBjYWNoZVJlcG8gIlJlYWRzIG1vbml0b3Jpbmc6YWdlbnQ6aGVhcnRiZWF0cyIgIlpSRVZSQU5HRUJZU0NPUkUiCiAgICAgICAgYWdlbnRTd2VlcGVyIC0+IG1vbml0b3JpbmdTZXJ2aWNlICJFdmFsdWF0ZShzZXJ2ZXJJRCwgZmFsc2UpIGZvciB0aW1lb3V0cyIKICAgICAgICBzY2hlZHVsZXIgLT4gcmVkaXMgIkFjcXVpcmVzIGR5bmFtaWMgbG9jayAoU0VUIE5YIFBYKSIgIlRDUC82Mzc5IgogICAgICAgIHNjaGVkdWxlciAtPiBjYWNoZVJlcG8gIlJlYWRzIGFsbCB0YXJnZXRzIChTTUVNQkVSUykiCiAgICAgICAgc2NoZWR1bGVyIC0+IHF1ZXVlUmVwbyAiUHVzaGVzIHRhcmdldHMgKExQVVNIKSIKICAgICAgICBtb25pdG9yV29ya2VyIC0+IHF1ZXVlUmVwbyAiUHVsbHMgdGFyZ2V0cyAoQkxQT1ApIgogICAgICAgIG1vbml0b3JXb3JrZXIgLT4gaGVhbHRoQ2hlY2tlckZhY3RvcnkgIkdldHMgYXBwcm9wcmlhdGUgY2hlY2tlciIKICAgICAgICBoZWFsdGhDaGVja2VyRmFjdG9yeSAtPiB0YXJnZXRTZXJ2ZXJzICJFeGVjdXRlcyBoZWFsdGggY2hlY2siICJJQ01QL1NTSC9IVFRQIgogICAgICAgIG1vbml0b3JXb3JrZXIgLT4gbW9uaXRvcmluZ1NlcnZpY2UgIkV2YWx1YXRlcyBjaGVjayByZXN1bHQiCiAgICAgICAgbW9uaXRvcmluZ1NlcnZpY2UgLT4gb2JzZXJ2YXRpb25Mb2dnZXIgIkxvZ3Mgb2JzZXJ2YXRpb24iCiAgICAgICAgb2JzZXJ2YXRpb25Mb2dnZXIgLT4gZXMgIkJ1bGsgaW5zZXJ0cyBsb2dzIiAiSFRUUC85MjAwIgogICAgICAgIG1vbml0b3JpbmdTZXJ2aWNlIC0+IGNhY2hlUmVwbyAiR2V0cyBhbmQgU2V0cyBTZXJ2ZXIgU3RhdGUiCiAgICAgICAgbW9uaXRvcmluZ1NlcnZpY2UgLT4gcmVkaXMgIlB1Ymxpc2hlcyB0byBzdHJlYW0gc21zLmV2ZW50cy5zZXJ2ZXJfc3RhdHVzIiAiWEFERCIKCiAgICAgICAgY2FjaGVSZXBvIC0+IHJlZGlzICJDb21tYW5kcyIgIlRDUC82Mzc5IgogICAgICAgIHF1ZXVlUmVwbyAtPiByZWRpcyAiQ29tbWFuZHMiICJUQ1AvNjM3OSIKCiAgICAgICAgIyBDb21wb25lbnQgbGV2ZWwgcmVsYXRpb25zaGlwcyAoUmVwb3J0aW5nICYgTm90aWZpY2F0aW9uICYgQWdlbnQpCiAgICAgICAgdHJhZWZpayAtPiByZXBvcnRIYW5kbGVyICJSb3V0ZXMgL2FwaS92MS9zZXJ2ZXJzL3JlcG9ydC8qIiAiSFRUUC9nUlBDIgogICAgICAgIGRhaWx5U2NoZWR1bGVyIC0+IHJlZGlzICJBY3F1aXJlcyBsb2NrIChTRVQgTlgpIHRvIHByZXZlbnQgZHVwbGljYXRlIGVtYWlscyIgIlRDUC82Mzc5IgogICAgICAgIGRhaWx5U2NoZWR1bGVyIC0+IHJlcG9ydFNlcnZpY2UgIlRyaWdnZXJzIERhaWx5IFJlcG9ydGluZyIKICAgICAgICByZXBvcnRIYW5kbGVyIC0+IHJlcG9ydFNlcnZpY2UgIkRlbGVnYXRlcyB0byIKICAgICAgICByZXBvcnRTZXJ2aWNlIC0+IHJlcG9ydFJlcG8gIkNyZWF0ZXMgcmVwb3J0IHJlcXVlc3QiCiAgICAgICAgcmVwb3J0U2VydmljZSAtPiByZXBvcnRXb3JrZXIgIkVucXVldWVzIGpvYiIKICAgICAgICByZWRpcyAtPiBldmVudENvbnN1bWVyICJEZWxpdmVycyBzdHJlYW1zIHNtcy5ldmVudHMuc2VydmVyICYgc21zLmV2ZW50cy5zZXJ2ZXJfc3RhdHVzIiAiWFJFQURHUk9VUCIKICAgICAgICBldmVudENvbnN1bWVyIC0+IHJlcG9ydFJlcG8gIlN5bmNzIHJlcG9ydGluZ19zZXJ2ZXJzIHRhYmxlIgogICAgICAgIHJlcG9ydFdvcmtlciAtPiByZXBvcnRSZXBvICJVcGRhdGVzIHJlcXVlc3Qgc3RhdHVzICYgcmVhZHMgc3luY2VkIHNlcnZlcnMiCiAgICAgICAgcmVwb3J0V29ya2VyIC0+IGVzVXB0aW1lQ2FsYyAiRGVsZWdhdGVzIHVwdGltZSBjYWxjdWxhdGlvbiIKICAgICAgICByZXBvcnRXb3JrZXIgLT4gcmVkaXMgIlB1Ymxpc2hlcyBOb3RpZmljYXRpb25SZXF1ZXN0ZWQgZXZlbnQiICJYQUREIgogICAgICAgIHJlZGlzIC0+IG5vdGlmaWNhdGlvbkNvbnN1bWVyICJEZWxpdmVycyBOb3RpZmljYXRpb25SZXF1ZXN0ZWQgZXZlbnQiICJYUkVBREdST1VQIgogICAgICAgIG5vdGlmaWNhdGlvbkNvbnN1bWVyIC0+IG5vdGlmaWNhdGlvblNlcnZpY2UgIkRlbGVnYXRlcyBlbWFpbCBzZW5kaW5nIgogICAgICAgIGVzVXB0aW1lQ2FsYyAtPiBlcyAiUXVlcmllcyBBZ2dyZWdhdGlvbiAoc21zX29ic2VydmF0aW9uX2xvZ3MpIiAiSFRUUC85MjAwIgogICAgICAgIHJlcG9ydFJlcG8gLT4gcG9zdGdyZXMgIlF1ZXJpZXMiICJUQ1AvNTQzMiIKCiAgICAgICAgbm90aWZpY2F0aW9uU2VydmljZSAtPiBzbXRwTm90aWZpZXIgIkludm9rZXMgZW1haWwgYnVpbGRpbmciCiAgICAgICAgc210cE5vdGlmaWVyIC0+IHNtdHAgIlNlbmRzIGNvbXBpbGVkIGVtYWlsIgoKICAgICAgICB0cmFlZmlrIC0+IGFnZW50U2VydmVyICJSb3V0ZXMgL2FwaS92MS9hZ2VudC8qIiAiSFRUUC9nUlBDIgogICAgICAgIGFnZW50U2VydmVyIC0+IGFnZW50U2VydmljZSAiRGVsZWdhdGVzIHRvIgogICAgICAgIGFnZW50U2VydmljZSAtPiBhZ2VudEV2ZW50UHVibGlzaGVyICJQdXNoZXMgdmFsaWRhdGVkIHN0YXRlIgogICAgICAgIGFnZW50RXZlbnRQdWJsaXNoZXIgLT4gcmVkaXMgIlpBREQgbW9uaXRvcmluZzphZ2VudDpoZWFydGJlYXRzICYgWEFERCBzbXMuZXZlbnRzLmhlYXJ0YmVhdCIKICAgICAgICAKICAgICAgICAjIERlcGxveW1lbnQgRW52aXJvbm1lbnQgKERvY2tlciBTd2FybSkKICAgICAgICBkZXBsb3ltZW50RW52aXJvbm1lbnQgIlByb2R1Y3Rpb24iIHsKICAgICAgICAgICAgZGVwbG95bWVudE5vZGUgIkRvY2tlciBTd2FybSBDbHVzdGVyICgzIFZNcykiICJNYW5hZ2VyICYgV29ya2VyIE5vZGVzIiAiRG9ja2VyIFN3YXJtIiB7CiAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgIGRlcGxveW1lbnROb2RlICJNYW5hZ2VyIE5vZGUiICJDb25zdHJhaW50OiBub2RlLnJvbGUgPT0gbWFuYWdlciIgIkRvY2tlciBFbmdpbmUiIHsKICAgICAgICAgICAgICAgICAgICBnYXRld2F5SW5zdGFuY2UgPSBjb250YWluZXJJbnN0YW5jZSB0cmFlZmlrCiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgIGRlcGxveW1lbnROb2RlICJBbnkgTm9kZSAoMSwgMiwgMykiICJTdGF0ZWxlc3MgQXBwbGljYXRpb24gV29ya2xvYWRzIChSZXBsaWNhdGVkKSIgIkRvY2tlciBFbmdpbmUiIHsKICAgICAgICAgICAgICAgICAgICBpZGVudGl0eUluc3RhbmNlID0gY29udGFpbmVySW5zdGFuY2UgaWRlbnRpdHkKICAgICAgICAgICAgICAgICAgICBtYW5hZ2VtZW50SW5zdGFuY2UgPSBjb250YWluZXJJbnN0YW5jZSBtYW5hZ2VtZW50CiAgICAgICAgICAgICAgICAgICAgcmVwb3J0aW5nSW5zdGFuY2UgPSBjb250YWluZXJJbnN0YW5jZSByZXBvcnRpbmcKICAgICAgICAgICAgICAgICAgICBtb25pdG9yaW5nSW5zdGFuY2UgPSBjb250YWluZXJJbnN0YW5jZSBtb25pdG9yaW5nCiAgICAgICAgICAgICAgICAgICAgbm90aWZpY2F0aW9uSW5zdGFuY2UgPSBjb250YWluZXJJbnN0YW5jZSBub3RpZmljYXRpb24KICAgICAgICAgICAgICAgICAgICBhZ2VudEhhbmRsZXJJbnN0YW5jZSA9IGNvbnRhaW5lckluc3RhbmNlIGFnZW50SGFuZGxlcgogICAgICAgICAgICAgICAgICAgIHNwYUluc3RhbmNlID0gY29udGFpbmVySW5zdGFuY2Ugc3BhCiAgICAgICAgICAgICAgICAgICAgc3dhZ2dlckluc3RhbmNlID0gY29udGFpbmVySW5zdGFuY2Ugc3dhZ2dlclVJCiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgIGRlcGxveW1lbnROb2RlICJOb2RlLTMiICJDb25zdHJhaW50OiBub2RlLmhvc3RuYW1lID09IG5vZGUtMyAoU3RhdGVmdWwpIiAiRG9ja2VyIEVuZ2luZSIgewogICAgICAgICAgICAgICAgICAgIHBnSW5zdGFuY2UgPSBjb250YWluZXJJbnN0YW5jZSBwb3N0Z3JlcwogICAgICAgICAgICAgICAgICAgIHJlZGlzSW5zdGFuY2UgPSBjb250YWluZXJJbnN0YW5jZSByZWRpcwogICAgICAgICAgICAgICAgICAgIGVzSW5zdGFuY2UgPSBjb250YWluZXJJbnN0YW5jZSBlcwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CiAgICAgICAgfQogICAgfQoKICAgIHZpZXdzIHsKICAgICAgICBzeXN0ZW1Db250ZXh0IHNtcyAiU3lzdGVtQ29udGV4dCIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KCiAgICAgICAgY29udGFpbmVyIHNtcyAiQ29udGFpbmVycyIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KICAgICAgICAKICAgICAgICBjb21wb25lbnQgaWRlbnRpdHkgIklkZW50aXR5Q29tcG9uZW50cyIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KICAgICAgICAKICAgICAgICBjb21wb25lbnQgbWFuYWdlbWVudCAiTWFuYWdlbWVudENvbXBvbmVudHMiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGNvbXBvbmVudCBtb25pdG9yaW5nICJNb25pdG9yaW5nQ29tcG9uZW50cyIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KCiAgICAgICAgY29tcG9uZW50IHJlcG9ydGluZyAiUmVwb3J0aW5nQ29tcG9uZW50cyIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KCiAgICAgICAgY29tcG9uZW50IG5vdGlmaWNhdGlvbiAiTm90aWZpY2F0aW9uQ29tcG9uZW50cyIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KCiAgICAgICAgY29tcG9uZW50IGFnZW50SGFuZGxlciAiQWdlbnRIYW5kbGVyQ29tcG9uZW50cyIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KCiAgICAgICAgZGVwbG95bWVudCBzbXMgIlByb2R1Y3Rpb24iICJTd2FybURlcGxveW1lbnQiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGR5bmFtaWMgaWRlbnRpdHkgIklkZW50aXR5X0xvZ2luIiAiRGV0YWlsZWQgc2VxdWVuY2UgZm9yIHVzZXIgbG9naW4iIHsKICAgICAgICAgICAgc3BhIC0+IHRyYWVmaWsgIjEuIFBPU1QgL2FwaS92MS9hdXRoL2xvZ2luIgogICAgICAgICAgICB0cmFlZmlrIC0+IGF1dGhTZXJ2ZXIgIjIuIFJvdXRlcyByZXF1ZXN0IgogICAgICAgICAgICBhdXRoU2VydmVyIC0+IGlkZW50aXR5U2VydmljZSAiMy4gTG9naW4oZW1haWwsIHBhc3N3b3JkKSIKICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHVzZXJSZXBvICI0LiBGaW5kQnlFbWFpbChlbWFpbCkiCiAgICAgICAgICAgIHVzZXJSZXBvIC0+IHBvc3RncmVzICI1LiBTRUxFQ1QgRlJPTSB1c2VycyIKICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHNlc3Npb25SZXBvICI2LiBDcmVhdGUoc2Vzc2lvbikiCiAgICAgICAgICAgIHNlc3Npb25SZXBvIC0+IHBvc3RncmVzICI3LiBJTlNFUlQgSU5UTyBhdXRoX3Nlc3Npb25zIgogICAgICAgICAgICBpZGVudGl0eVNlcnZpY2UgLT4gcmVmcmVzaFJlcG8gIjguIENyZWF0ZShyZWZyZXNoVG9rZW4pIgogICAgICAgICAgICByZWZyZXNoUmVwbyAtPiBwb3N0Z3JlcyAiOS4gSU5TRVJUIElOVE8gcmVmcmVzaF90b2tlbnMiCiAgICAgICAgICAgIGlkZW50aXR5U2VydmljZSAtPiBhdXRoU2VydmVyICIxMC4gUmV0dXJuIFRva2VucyIKICAgICAgICAgICAgYXV0aFNlcnZlciAtPiB0cmFlZmlrICIxMS4gUmV0dXJuIDIwMCBPSyIKICAgICAgICAgICAgdHJhZWZpayAtPiBzcGEgIjEyLiBSZXR1cm4gSldUICsgU2V0LUNvb2tpZSIKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KICAgICAgICAKICAgICAgICBkeW5hbWljIGlkZW50aXR5ICJJZGVudGl0eV9WZXJpZnkiICJEZXRhaWxlZCBzZXF1ZW5jZSBmb3IgRm9yd2FyZEF1dGggdmFsaWRhdGlvbiIgewogICAgICAgICAgICBzcGEgLT4gdHJhZWZpayAiMS4gUmVxdWVzdCBQcm90ZWN0ZWQgQVBJIgogICAgICAgICAgICB0cmFlZmlrIC0+IGZvcndhcmRBdXRoSGFuZGxlciAiMi4gR0VUIC92ZXJpZnkgKFBhc3NlcyBIZWFkZXJzL0Nvb2tpZXMpIgogICAgICAgICAgICBmb3J3YXJkQXV0aEhhbmRsZXIgLT4gYXV0aGVudGljYXRvciAiMy4gVmFsaWRhdGVUb2tlbihqd3QpIgogICAgICAgICAgICBhdXRoZW50aWNhdG9yIC0+IHJldm9jYXRpb25TdG9yZSAiNC4gQ2hlY2sgaWYgc2Vzc2lvbiBpcyByZXZva2VkIgogICAgICAgICAgICByZXZvY2F0aW9uU3RvcmUgLT4gcmVkaXMgIjUuIEVYSVNUUyByZXZva2VkX3Nlc3Npb246e2lkfSIKICAgICAgICAgICAgYXV0aGVudGljYXRvciAtPiBmb3J3YXJkQXV0aEhhbmRsZXIgIjYuIFJldHVybiBQcmluY2lwYWwiCiAgICAgICAgICAgIGZvcndhcmRBdXRoSGFuZGxlciAtPiB0cmFlZmlrICI3LiBSZXR1cm4gMjAwIE9LICsgSW5qZWN0IFgtVXNlciBIZWFkZXJzIgogICAgICAgICAgICB0cmFlZmlrIC0+IG1hbmFnZW1lbnQgIjguIEZvcndhcmQgcmVxdWVzdCB0byBkb3duc3RyZWFtIHNlcnZpY2UiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGR5bmFtaWMgbWFuYWdlbWVudCAiTWFuYWdlbWVudF9DcmVhdGUiICJEZXRhaWxlZCBzZXF1ZW5jZSBmb3IgY3JlYXRpbmcgYSBzZXJ2ZXIgd2l0aCBPdXRib3ggUGF0dGVybiIgewogICAgICAgICAgICBzcGEgLT4gdHJhZWZpayAiMS4gUE9TVCAvYXBpL3YxL3NlcnZlcnMiCiAgICAgICAgICAgIHRyYWVmaWsgLT4gc2VydmVyU2VydmVyICIyLiBSb3V0ZXMgcmVxdWVzdCAod2l0aCBYLVVzZXItUm9sZSkiCiAgICAgICAgICAgIHNlcnZlclNlcnZlciAtPiByYXRlTGltaXRlciAiMy4gQ2hlY2sgcXVvdGEgJiBWYWxpZGF0ZSBSQkFDIgogICAgICAgICAgICByYXRlTGltaXRlciAtPiByZWRpcyAiNC4gSU5DUiIKICAgICAgICAgICAgc2VydmVyU2VydmVyIC0+IHNlcnZlclNlcnZpY2UgIjUuIENyZWF0ZVNlcnZlcihpbnB1dCkiCiAgICAgICAgICAgIHNlcnZlclNlcnZpY2UgLT4gc2VydmVyUmVwbyAiNi4gQkVHSU4gVHJhbnNhY3Rpb24iCiAgICAgICAgICAgIHNlcnZlclNlcnZpY2UgLT4gc2VydmVyUmVwbyAiNy4gSU5TRVJUIElOVE8gc2VydmVycyIKICAgICAgICAgICAgc2VydmVyUmVwbyAtPiBwb3N0Z3JlcyAiOC4gRXhlY3V0ZSBTUUwiCiAgICAgICAgICAgIHNlcnZlclNlcnZpY2UgLT4gb3V0Ym94UmVwbyAiOS4gSU5TRVJUIElOVE8gb3V0Ym94X2V2ZW50cyAoU2VydmVyQ3JlYXRlZCkiCiAgICAgICAgICAgIG91dGJveFJlcG8gLT4gcG9zdGdyZXMgIjEwLiBFeGVjdXRlIFNRTCIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBzZXJ2ZXJSZXBvICIxMS4gQ09NTUlUIFRyYW5zYWN0aW9uIgogICAgICAgICAgICBzZXJ2ZXJTZXJ2aWNlIC0+IHNlcnZlclNlcnZlciAiMTIuIFJldHVybiBTdWNjZXNzIgogICAgICAgICAgICBzZXJ2ZXJTZXJ2ZXIgLT4gdHJhZWZpayAiMTMuIFJldHVybiAyMDEgQ3JlYXRlZCIKICAgICAgICAgICAgdHJhZWZpayAtPiBzcGEgIjE0LiBSZXR1cm4gUmVzcG9uc2UiCiAgICAgICAgICAgIAogICAgICAgICAgICBvdXRib3hSZWxheSAtPiBvdXRib3hSZXBvICIxNS4gW0FzeW5jXSBGZXRjaCB1bnB1Ymxpc2hlZCBldmVudHMiCiAgICAgICAgICAgIG91dGJveFJlcG8gLT4gcG9zdGdyZXMgIjE2LiBTRUxFQ1QgRlJPTSBvdXRib3hfZXZlbnRzIgogICAgICAgICAgICBvdXRib3hSZWxheSAtPiByZWRpcyAiMTcuIFhBREQgc21zLmV2ZW50cy5zZXJ2ZXIiCiAgICAgICAgICAgIG91dGJveFJlbGF5IC0+IG91dGJveFJlcG8gIjE4LiBNYXJrIGFzIHB1Ymxpc2hlZCIKICAgICAgICAgICAgb3V0Ym94UmVwbyAtPiBwb3N0Z3JlcyAiMTkuIFVQREFURSBvdXRib3hfZXZlbnRzIgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICBkeW5hbWljIG1vbml0b3JpbmcgIk1vbml0b3JpbmdfQ3ljbGUiICJEZXRhaWxlZCBzZXF1ZW5jZSBmb3IgZGlzdHJpYnV0ZWQgSUNNUCBwaW5nIGN5Y2xlIiB7CiAgICAgICAgICAgIHNjaGVkdWxlciAtPiByZWRpcyAiMS4gU0VUTlggbG9jazptb25pdG9yaW5nX3Byb2R1Y2VyIChMZWFkZXIgRWxlY3Rpb24pIgogICAgICAgICAgICBzY2hlZHVsZXIgLT4gY2FjaGVSZXBvICIyLiBTTUVNQkVSUyBzZXJ2ZXI6YWxsX2lkcyIKICAgICAgICAgICAgY2FjaGVSZXBvIC0+IHJlZGlzICIzLiBGZXRjaCB0YXJnZXRzIgogICAgICAgICAgICBzY2hlZHVsZXIgLT4gcXVldWVSZXBvICI0LiBSUFVTSCBtb25pdG9yaW5nOnF1ZXVlIgogICAgICAgICAgICBxdWV1ZVJlcG8gLT4gcmVkaXMgIjUuIEVucXVldWUgdGFyZ2V0cyIKICAgICAgICAgICAgCiAgICAgICAgICAgIG1vbml0b3JXb3JrZXIgLT4gcXVldWVSZXBvICI2LiBCTFBPUCBtb25pdG9yaW5nOnF1ZXVlIChDb25zdW1lIEpvYikiCiAgICAgICAgICAgIHF1ZXVlUmVwbyAtPiByZWRpcyAiNy4gRGVxdWV1ZSB0YXJnZXQiCiAgICAgICAgICAgIG1vbml0b3JXb3JrZXIgLT4gaGVhbHRoQ2hlY2tlckZhY3RvcnkgIjguIEdldHMgYXBwcm9wcmlhdGUgY2hlY2tlciIKICAgICAgICAgICAgaGVhbHRoQ2hlY2tlckZhY3RvcnkgLT4gdGFyZ2V0U2VydmVycyAiOS4gRXhlY3V0ZSBDaGVjayAoSUNNUC9TU0gvSFRUUCkiCiAgICAgICAgICAgIG1vbml0b3JXb3JrZXIgLT4gbW9uaXRvcmluZ1NlcnZpY2UgIjEwLiBFdmFsdWF0ZShzZXJ2ZXJJRCwgc3VjY2VzcykiCiAgICAgICAgICAgIG1vbml0b3JpbmdTZXJ2aWNlIC0+IG9ic2VydmF0aW9uTG9nZ2VyICIxMS4gTG9nT2JzZXJ2YXRpb24gW2ZpcmUtYW5kLWZvcmdldF0iCiAgICAgICAgICAgIG9ic2VydmF0aW9uTG9nZ2VyIC0+IGVzICIxMi4gQnVmZmVyZWQgQnVsayBXcml0ZSIKICAgICAgICAgICAgbW9uaXRvcmluZ1NlcnZpY2UgLT4gY2FjaGVSZXBvICIxMy4gR2V0ICYgU2V0IFNlcnZlclN0YXRlIgogICAgICAgICAgICBjYWNoZVJlcG8gLT4gcmVkaXMgIjE0LiBIR0VUIC8gSFNFVCIKICAgICAgICAgICAgbW9uaXRvcmluZ1NlcnZpY2UgLT4gcmVkaXMgIjE1LiBbSWYgU3RhdGUgQ2hhbmdlZF0gWEFERCBzbXMuZXZlbnRzLnNlcnZlcl9zdGF0dXMiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGR5bmFtaWMgcmVwb3J0aW5nICJSZXBvcnRpbmdfR2VuZXJhdGUiICJEZXRhaWxlZCBzZXF1ZW5jZSBmb3IgYXV0b21hdGVkIHJlcG9ydCBnZW5lcmF0aW9uIiB7CiAgICAgICAgICAgIGRhaWx5U2NoZWR1bGVyIC0+IHJlcG9ydFNlcnZpY2UgIjEuIFRyaWdnZXIgZGFpbHkgcmVwb3J0IgogICAgICAgICAgICByZXBvcnRTZXJ2aWNlIC0+IHJlcG9ydFJlcG8gIjIuIENyZWF0ZVJlcG9ydFJlcXVlc3QoUEVORElORykiCiAgICAgICAgICAgIHJlcG9ydFJlcG8gLT4gcG9zdGdyZXMgIjMuIElOU0VSVCIKICAgICAgICAgICAgcmVwb3J0U2VydmljZSAtPiByZXBvcnRXb3JrZXIgIjQuIEVucXVldWUgdG8gam9iUXVldWUgKEluLW1lbW9yeSBDaGFubmVsKSIKICAgICAgICAgICAgCiAgICAgICAgICAgIHJlcG9ydFdvcmtlciAtPiByZXBvcnRSZXBvICI1LiBEZXF1ZXVlIGpvYiAmIFVwZGF0ZVJlcG9ydFN0YXR1cyhQUk9DRVNTSU5HKSIKICAgICAgICAgICAgcmVwb3J0UmVwbyAtPiBwb3N0Z3JlcyAiNi4gVVBEQVRFIHJlcG9ydF9yZXF1ZXN0cyIKICAgICAgICAgICAgcmVwb3J0V29ya2VyIC0+IHJlcG9ydFJlcG8gIjcuIEdldFNlcnZlckNvdW50QnlTdGF0dXMoKSIKICAgICAgICAgICAgcmVwb3J0UmVwbyAtPiBwb3N0Z3JlcyAiOC4gU0VMRUNUIEZST00gcmVwb3J0aW5nX3NlcnZlcnMiCiAgICAgICAgICAgIHJlcG9ydFdvcmtlciAtPiBlc1VwdGltZUNhbGMgIjkuIENhbGN1bGF0ZVVwdGltZSgpIgogICAgICAgICAgICBlc1VwdGltZUNhbGMgLT4gZXMgIjEwLiBFbGFzdGljc2VhcmNoIEFnZ3JlZ2F0aW9uIFF1ZXJ5IgogICAgICAgICAgICByZXBvcnRXb3JrZXIgLT4gcmVkaXMgIjExLiBSZW5kZXIgSFRNTCAmIFhBREQgbm90aWZpY2F0aW9uX2V2ZW50cyIKICAgICAgICAgICAgcmVkaXMgLT4gbm90aWZpY2F0aW9uQ29uc3VtZXIgIjEyLiBYUkVBREdST1VQIChBc3luYyBEZWxpdmVyeSkiCiAgICAgICAgICAgIG5vdGlmaWNhdGlvbkNvbnN1bWVyIC0+IG5vdGlmaWNhdGlvblNlcnZpY2UgIjEzLiBQcm9jZXNzIE5vdGlmaWNhdGlvbiIKICAgICAgICAgICAgbm90aWZpY2F0aW9uU2VydmljZSAtPiBzbXRwTm90aWZpZXIgIjE0LiBCdWlsZCAmIFNlbmQgRW1haWwiCiAgICAgICAgICAgIHJlcG9ydFdvcmtlciAtPiByZXBvcnRSZXBvICIxNS4gVXBkYXRlUmVwb3J0U3RhdHVzKENPTVBMRVRFRCkiCiAgICAgICAgICAgIHJlcG9ydFJlcG8gLT4gcG9zdGdyZXMgIjE2LiBVUERBVEUgcmVwb3J0X3JlcXVlc3RzIgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICAKICAgICAgICBkeW5hbWljIGlkZW50aXR5ICJJZGVudGl0eV9SZWZyZXNoVG9rZW4iICJEZXRhaWxlZCBzZXF1ZW5jZSBmb3IgVG9rZW4gUmVmcmVzaCIgewogICAgICAgICAgICBzcGEgLT4gdHJhZWZpayAiMS4gUE9TVCAvYXBpL3YxL2F1dGgvcmVmcmVzaCAoQ29va2llKSIKICAgICAgICAgICAgdHJhZWZpayAtPiBhdXRoU2VydmVyICIyLiBSb3V0ZXMgcmVxdWVzdCIKICAgICAgICAgICAgYXV0aFNlcnZlciAtPiBpZGVudGl0eVNlcnZpY2UgIjMuIFJlZnJlc2hUb2tlbihqd3QpIgogICAgICAgICAgICBpZGVudGl0eVNlcnZpY2UgLT4gcmVmcmVzaFJlcG8gIjQuIFZhbGlkYXRlIFJlZnJlc2ggVG9rZW4iCiAgICAgICAgICAgIHJlZnJlc2hSZXBvIC0+IHBvc3RncmVzICI1LiBTRUxFQ1QgRlJPTSByZWZyZXNoX3Rva2VucyIKICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHJldm9jYXRpb25TdG9yZSAiNi4gQ2hlY2sgUmV2b2NhdGlvbiIKICAgICAgICAgICAgcmV2b2NhdGlvblN0b3JlIC0+IHJlZGlzICI3LiBFWElTVFMgcmV2b2tlZF9zZXNzaW9uOntpZH0iCiAgICAgICAgICAgIGlkZW50aXR5U2VydmljZSAtPiBzZXNzaW9uUmVwbyAiOC4gUmV2b2tlIFNlc3Npb24gKGlmIHRoZWZ0IGRldGVjdGVkKSIKICAgICAgICAgICAgc2Vzc2lvblJlcG8gLT4gcG9zdGdyZXMgIjkuIFVQREFURSBhdXRoX3Nlc3Npb25zIgogICAgICAgICAgICBpZGVudGl0eVNlcnZpY2UgLT4gcmV2b2NhdGlvblN0b3JlICIxMC4gQWRkIFNlc3Npb24gdG8gQmxhY2tsaXN0IgogICAgICAgICAgICByZXZvY2F0aW9uU3RvcmUgLT4gcmVkaXMgIjExLiBTRVQgcmV2b2tlZF9zZXNzaW9uOntpZH0gPSB0cnVlIgogICAgICAgICAgICBpZGVudGl0eVNlcnZpY2UgLT4gYXV0aFNlcnZlciAiMTIuIFNpZ24gbmV3IEpXVCIKICAgICAgICAgICAgYXV0aFNlcnZlciAtPiB0cmFlZmlrICIxMy4gUmV0dXJuIDIwMCBPSyAoTmV3IFRva2VucykiCiAgICAgICAgICAgIHRyYWVmaWsgLT4gc3BhICIxNC4gUmV0dXJuIEpXVCArIFNldC1Db29raWUiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGR5bmFtaWMgaWRlbnRpdHkgIklkZW50aXR5X0xvZ291dF9SZXZvY2F0aW9uIiAiRGV0YWlsZWQgc2VxdWVuY2UgZm9yIExvZ291dCBhbmQgU2Vzc2lvbiBSZXZvY2F0aW9uIiB7CiAgICAgICAgICAgIHNwYSAtPiB0cmFlZmlrICIxLiBQT1NUIC9hcGkvdjEvYXV0aC9sb2dvdXQiCiAgICAgICAgICAgIHRyYWVmaWsgLT4gYXV0aFNlcnZlciAiMi4gUm91dGVzIHJlcXVlc3QiCiAgICAgICAgICAgIGF1dGhTZXJ2ZXIgLT4gaWRlbnRpdHlTZXJ2aWNlICIzLiBMb2dvdXQoKSIKICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHNlc3Npb25SZXBvICI0LiBVcGRhdGUgQXV0aFNlc3Npb24gKFJldm9rZWRBdCA9IE5vdykiCiAgICAgICAgICAgIHNlc3Npb25SZXBvIC0+IHBvc3RncmVzICI1LiBVUERBVEUgYXV0aF9zZXNzaW9ucyIKICAgICAgICAgICAgaWRlbnRpdHlTZXJ2aWNlIC0+IHJldm9jYXRpb25TdG9yZSAiNi4gQWRkIFNlc3Npb24gdG8gQmxhY2tsaXN0IgogICAgICAgICAgICByZXZvY2F0aW9uU3RvcmUgLT4gcmVkaXMgIjcuIFNFVCByZXZva2VkX3Nlc3Npb246e2lkfSA9IHRydWUiCiAgICAgICAgICAgIGlkZW50aXR5U2VydmljZSAtPiBhdXRoU2VydmVyICI4LiBSZXR1cm4gU3VjY2VzcyIKICAgICAgICAgICAgYXV0aFNlcnZlciAtPiB0cmFlZmlrICI5LiBSZXR1cm4gMjAwIE9LIChDbGVhciBDb29raWVzKSIKICAgICAgICAgICAgdHJhZWZpayAtPiBzcGEgIjEwLiBDbGVhciBDbGllbnQgQ29va2llcyIKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KCiAgICAgICAgZHluYW1pYyBtYW5hZ2VtZW50ICJNYW5hZ2VtZW50X0J1bGtfSW1wb3J0IiAiRGV0YWlsZWQgc2VxdWVuY2UgZm9yIEJ1bGsgQ1NWIEltcG9ydCIgewogICAgICAgICAgICBzcGEgLT4gdHJhZWZpayAiMS4gUE9TVCAvYXBpL3YxL3NlcnZlcnMvaW1wb3J0IgogICAgICAgICAgICB0cmFlZmlrIC0+IHNlcnZlclNlcnZlciAiMi4gUm91dGVzIHJlcXVlc3QiCiAgICAgICAgICAgIHNlcnZlclNlcnZlciAtPiBzZXJ2ZXJTZXJ2aWNlICIzLiBQYXJzZSBDU1YgJiBWYWxpZGF0ZSIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBzZXJ2ZXJSZXBvICI0LiBCRUdJTiBUcmFuc2FjdGlvbiAoQmF0Y2ggb2YgMTAwKSIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBzZXJ2ZXJSZXBvICI1LiBCdWxrIElOU0VSVCBTRVJWRVJTIgogICAgICAgICAgICBzZXJ2ZXJSZXBvIC0+IHBvc3RncmVzICI2LiBFeGVjdXRlIFNRTCBCYXRjaCIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBvdXRib3hSZXBvICI3LiBCdWxrIElOU0VSVCBPVVRCT1hfRVZFTlRTIgogICAgICAgICAgICBvdXRib3hSZXBvIC0+IHBvc3RncmVzICI4LiBFeGVjdXRlIFNRTCBCYXRjaCIKICAgICAgICAgICAgc2VydmVyU2VydmljZSAtPiBzZXJ2ZXJSZXBvICI5LiBDT01NSVQgVHJhbnNhY3Rpb24iCiAgICAgICAgICAgIHNlcnZlclNlcnZpY2UgLT4gc2VydmVyU2VydmVyICIxMC4gUmV0dXJuIEltcG9ydCBTdW1tYXJ5IgogICAgICAgICAgICBzZXJ2ZXJTZXJ2ZXIgLT4gdHJhZWZpayAiMTEuIFJldHVybiAyMDAgT0siCiAgICAgICAgICAgIHRyYWVmaWsgLT4gc3BhICIxMi4gUmV0dXJuIFJlc3BvbnNlIgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICBkeW5hbWljIG1hbmFnZW1lbnQgIk1hbmFnZW1lbnRfQnVsa19FeHBvcnQiICJEZXRhaWxlZCBzZXF1ZW5jZSBmb3IgQnVsayBDU1YgRXhwb3J0IiB7CiAgICAgICAgICAgIHNwYSAtPiB0cmFlZmlrICIxLiBHRVQgL2FwaS92MS9zZXJ2ZXJzL2V4cG9ydCIKICAgICAgICAgICAgdHJhZWZpayAtPiBzZXJ2ZXJTZXJ2ZXIgIjIuIFJvdXRlcyByZXF1ZXN0IgogICAgICAgICAgICBzZXJ2ZXJTZXJ2ZXIgLT4gc2VydmVyU2VydmljZSAiMy4gRXhwb3J0U2VydmVycygpIgogICAgICAgICAgICBzZXJ2ZXJTZXJ2aWNlIC0+IHNlcnZlclJlcG8gIjQuIFF1ZXJ5IGN1cnNvciAoQ2h1bmtpbmcpIgogICAgICAgICAgICBzZXJ2ZXJSZXBvIC0+IHBvc3RncmVzICI1LiBTRUxFQ1QgU3RyZWFtIgogICAgICAgICAgICBwb3N0Z3JlcyAtPiBzZXJ2ZXJSZXBvICI2LiBSZXR1cm4gRGF0YSBTdHJlYW0iCiAgICAgICAgICAgIHNlcnZlclNlcnZpY2UgLT4gc2VydmVyU2VydmVyICI3LiBGb3JtYXQgdG8gQ1NWIGNodW5rIgogICAgICAgICAgICBzZXJ2ZXJTZXJ2ZXIgLT4gdHJhZWZpayAiOC4gSFRUUCBDaHVua2VkIFJlc3BvbnNlIgogICAgICAgICAgICB0cmFlZmlrIC0+IHNwYSAiOS4gU3RyZWFtIHRvIGZpbGUiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGR5bmFtaWMgbWFuYWdlbWVudCAiTWFuYWdlbWVudF9TdGF0dXNfQ29uc3VtZXIiICJXb3JrZXIgdXBkYXRpbmcgREIgZnJvbSBNb25pdG9yaW5nIEV2ZW50cyIgewogICAgICAgICAgICByZWRpcyAtPiBzdGF0dXNDb25zdW1lciAiMS4gRGVsaXZlcnMgU2VydmVyU3RhdHVzQ2hhbmdlZCBldmVudCB2aWEgWFJFQUQiCiAgICAgICAgICAgIHN0YXR1c0NvbnN1bWVyIC0+IHNlcnZlclJlcG8gIjIuIFVwZGF0ZVNlcnZlclN0YXR1cyhzZXJ2ZXJfaWQsIHN0YXR1cykiCiAgICAgICAgICAgIHNlcnZlclJlcG8gLT4gcG9zdGdyZXMgIjMuIFVQREFURSBTRVJWRVJTIFNFVCBjdXJyZW50X3N0YXR1cyIKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KCiAgICAgICAgZHluYW1pYyByZXBvcnRpbmcgIlJlcG9ydGluZ19EYWlseV9TY2hlZHVsZXIiICJDcm9uam9iIHRyaWdnZXJpbmcgZGFpbHkgcmVwb3J0cyIgewogICAgICAgICAgICBkYWlseVNjaGVkdWxlciAtPiByZWRpcyAiMS4gU0VUTlggbG9jazpkYWlseV9yZXBvcnQgKExlYWRlciBFbGVjdGlvbikiCiAgICAgICAgICAgIGRhaWx5U2NoZWR1bGVyIC0+IHJlcG9ydFNlcnZpY2UgIjIuIFRyaWdnZXIgUmVwb3J0IEdlbmVyYXRpb24gZm9yIGFsbCBBZG1pbnMiCiAgICAgICAgICAgIHJlcG9ydFNlcnZpY2UgLT4gcmVwb3J0UmVwbyAiMy4gRmV0Y2ggdGFyZ2V0cy9hZG1pbnMiCiAgICAgICAgICAgIHJlcG9ydFJlcG8gLT4gcG9zdGdyZXMgIjQuIFNFTEVDVCIKICAgICAgICAgICAgcmVwb3J0U2VydmljZSAtPiByZXBvcnRXb3JrZXIgIjUuIEVucXVldWUgdG8gam9iUXVldWUiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGR5bmFtaWMgcmVwb3J0aW5nICJSZXBvcnRpbmdfRXZlbnRfQ29uc3VtZXIiICJEYXRhIHJlcGxpY2F0aW9uIGZyb20gTWFuYWdlbWVudCB2aWEgRXZlbnQgQnVzIiB7CiAgICAgICAgICAgIHJlZGlzIC0+IGV2ZW50Q29uc3VtZXIgIjEuIERlbGl2ZXJzIFNlcnZlciBDUlVEICYgU3RhdHVzIGV2ZW50cyB2aWEgWFJFQUQiCiAgICAgICAgICAgIGV2ZW50Q29uc3VtZXIgLT4gcmVwb3J0UmVwbyAiMi4gU3luYyBTZXJ2ZXIgRGF0YSAoVXBzZXJ0L0RlbGV0ZS9TdGF0dXNVcGRhdGUpIgogICAgICAgICAgICByZXBvcnRSZXBvIC0+IHBvc3RncmVzICIzLiBTeW5jIFJFUE9SVElOR19TRVJWRVJTIgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICBkeW5hbWljIGFnZW50SGFuZGxlciAiQWdlbnRfUHVzaF9IZWFydGJlYXQiICJEZXRhaWxlZCBzZXF1ZW5jZSBmb3IgQWdlbnQgcHVzaGluZyB0ZWxlbWV0cnkiIHsKICAgICAgICAgICAgdGFyZ2V0U2VydmVycyAtPiB0cmFlZmlrICIxLiBQT1NUIC9hcGkvdjEvYWdlbnQvaGVhcnRiZWF0IChYLU1hc3Rlci1LZXkpIgogICAgICAgICAgICB0cmFlZmlrIC0+IGFnZW50U2VydmVyICIyLiBSb3V0ZXMgcmVxdWVzdCIKICAgICAgICAgICAgYWdlbnRTZXJ2ZXIgLT4gYWdlbnRTZXJ2aWNlICIzLiBWYWxpZGF0ZSBYLU1hc3Rlci1LZXkgJiBQYXJzZSBQYXlsb2FkIgogICAgICAgICAgICBhZ2VudFNlcnZpY2UgLT4gYWdlbnRFdmVudFB1Ymxpc2hlciAiNC4gUHVzaCBWYWxpZGF0ZWQgU3RhdGUiCiAgICAgICAgICAgIGFnZW50RXZlbnRQdWJsaXNoZXIgLT4gcmVkaXMgIjUuIFpBREQgaGVhcnRiZWF0ICYgWEFERCBzbXMuZXZlbnRzLmhlYXJ0YmVhdCIKICAgICAgICAgICAgYWdlbnRTZXJ2ZXIgLT4gdHJhZWZpayAiNi4gUmV0dXJuIDIwMCBPSyIKICAgICAgICAgICAgdHJhZWZpayAtPiB0YXJnZXRTZXJ2ZXJzICI3LiBSZXR1cm4gUmVzcG9uc2UiCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CgogICAgICAgIGR5bmFtaWMgbm90aWZpY2F0aW9uICJOb3RpZmljYXRpb25fUHJvY2VzcyIgIkRldGFpbGVkIHNlcXVlbmNlIGZvciBwcm9jZXNzaW5nIGVtYWlsIG5vdGlmaWNhdGlvbnMiIHsKICAgICAgICAgICAgcmVkaXMgLT4gbm90aWZpY2F0aW9uQ29uc3VtZXIgIjEuIERlbGl2ZXJzIE5vdGlmaWNhdGlvblJlcXVlc3RlZCBldmVudCB2aWEgWFJFQURHUk9VUCIKICAgICAgICAgICAgbm90aWZpY2F0aW9uQ29uc3VtZXIgLT4gbm90aWZpY2F0aW9uU2VydmljZSAiMi4gUHJvY2Vzc05vdGlmaWNhdGlvbihldmVudCkiCiAgICAgICAgICAgIG5vdGlmaWNhdGlvblNlcnZpY2UgLT4gc210cE5vdGlmaWVyICIzLiBCdWlsZCBNdWx0aXBhcnQgTUlNRSAmIFNlbmRFbWFpbCgpIgogICAgICAgICAgICBzbXRwTm90aWZpZXIgLT4gc210cCAiNC4gU01UUCBUcmFuc2FjdGlvbiAoU1RBUlRUTFMsIEFVVEgsIFNFTkQpIgogICAgICAgICAgICBub3RpZmljYXRpb25Db25zdW1lciAtPiByZWRpcyAiNS4gWEFDSyAoQWNrbm93bGVkZ2UgZXZlbnQpIgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQoKICAgICAgICBzdHlsZXMgewogICAgICAgICAgICBlbGVtZW50ICJQZXJzb24iIHsKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzA4NDI3YgogICAgICAgICAgICAgICAgc2hhcGUgUGVyc29uCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiU29mdHdhcmUgU3lzdGVtIiB7CiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICMxMTY4YmQKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJDb250YWluZXIiIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzQzOGRkNQogICAgICAgICAgICAgICAgY29sb3IgI2ZmZmZmZgogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsZW1lbnQgIkRhdGFiYXNlIiB7CiAgICAgICAgICAgICAgICBzaGFwZSBDeWxpbmRlcgogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjMjI2NDliCiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiR2F0ZXdheSIgewogICAgICAgICAgICAgICAgc2hhcGUgUGlwZQogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsZW1lbnQgIldvcmtlciIgewogICAgICAgICAgICAgICAgc2hhcGUgSGV4YWdvbgogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsZW1lbnQgIk1lc3NhZ2UgQnJva2VyIiB7CiAgICAgICAgICAgICAgICBzaGFwZSBQaXBlCiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICNmZjk5MDAKICAgICAgICAgICAgICAgIGNvbG9yICMwMDAwMDAKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJDb21wb25lbnQiIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzg1YmJmMAogICAgICAgICAgICAgICAgY29sb3IgIzAwMDAwMAogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsZW1lbnQgIkV4dGVybmFsIiB7CiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICM5OTk5OTkKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KfQ==",
     "structurizr.inspection.info" : "0",
     "structurizr.inspection.ignore" : "0",
     "structurizr.inspection.warning" : "0"
@@ -1344,11 +1623,11 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
+        "id" : "53",
         "x" : 0,
         "y" : 0
       } ],
@@ -1357,31 +1636,31 @@
       "name" : "Component View: Server Management System (SMS) - Identity Service",
       "order" : 3,
       "relationships" : [ {
-        "id" : "69"
+        "id" : "84"
       }, {
-        "id" : "70"
+        "id" : "85"
       }, {
-        "id" : "71"
+        "id" : "86"
       }, {
-        "id" : "72"
+        "id" : "87"
       }, {
-        "id" : "73"
+        "id" : "88"
       }, {
-        "id" : "74"
+        "id" : "89"
       }, {
-        "id" : "75"
+        "id" : "90"
       }, {
-        "id" : "76"
+        "id" : "91"
       }, {
-        "id" : "77"
+        "id" : "92"
       }, {
-        "id" : "78"
+        "id" : "93"
       }, {
-        "id" : "79"
+        "id" : "94"
       }, {
-        "id" : "80"
+        "id" : "95"
       }, {
-        "id" : "81"
+        "id" : "96"
       } ]
     }, {
       "automaticLayout" : {
@@ -1425,11 +1704,11 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
+        "id" : "53",
         "x" : 0,
         "y" : 0
       } ],
@@ -1437,85 +1716,6 @@
       "key" : "ManagementComponents",
       "name" : "Component View: Server Management System (SMS) - Management Service",
       "order" : 4,
-      "relationships" : [ {
-        "id" : "82"
-      }, {
-        "id" : "83"
-      }, {
-        "id" : "84"
-      }, {
-        "id" : "85"
-      }, {
-        "id" : "86"
-      }, {
-        "id" : "87"
-      }, {
-        "id" : "88"
-      }, {
-        "id" : "89"
-      }, {
-        "id" : "90"
-      }, {
-        "id" : "92"
-      }, {
-        "id" : "93"
-      }, {
-        "id" : "94"
-      } ]
-    }, {
-      "automaticLayout" : {
-        "edgeSeparation" : 50,
-        "nodeSeparation" : 50,
-        "rankDirection" : "LeftRight",
-        "rankSeparation" : 100,
-        "vertices" : true
-      },
-      "containerId" : "34",
-      "elements" : [ {
-        "id" : "3",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "35",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "36",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "37",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "38",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "39",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "40",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "41",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "43",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "44",
-        "x" : 0,
-        "y" : 0
-      } ],
-      "externalContainerBoundariesVisible" : false,
-      "key" : "MonitoringComponents",
-      "name" : "Component View: Server Management System (SMS) - Monitoring Worker",
-      "order" : 5,
       "relationships" : [ {
         "id" : "100"
       }, {
@@ -1529,15 +1729,11 @@
       }, {
         "id" : "105"
       }, {
-        "id" : "106"
-      }, {
         "id" : "107"
       }, {
         "id" : "108"
       }, {
         "id" : "109"
-      }, {
-        "id" : "95"
       }, {
         "id" : "97"
       }, {
@@ -1553,12 +1749,113 @@
         "rankSeparation" : 100,
         "vertices" : true
       },
-      "containerId" : "25",
+      "containerId" : "41",
       "elements" : [ {
-        "id" : "2",
+        "id" : "3",
         "x" : 0,
         "y" : 0
       }, {
+        "id" : "42",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "43",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "44",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "45",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "46",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "47",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "48",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "49",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "50",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "51",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "53",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "54",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "MonitoringComponents",
+      "name" : "Component View: Server Management System (SMS) - Monitoring Worker",
+      "order" : 5,
+      "relationships" : [ {
+        "id" : "110"
+      }, {
+        "id" : "112"
+      }, {
+        "id" : "113"
+      }, {
+        "id" : "114"
+      }, {
+        "id" : "115"
+      }, {
+        "id" : "116"
+      }, {
+        "id" : "117"
+      }, {
+        "id" : "118"
+      }, {
+        "id" : "119"
+      }, {
+        "id" : "120"
+      }, {
+        "id" : "121"
+      }, {
+        "id" : "122"
+      }, {
+        "id" : "123"
+      }, {
+        "id" : "124"
+      }, {
+        "id" : "125"
+      }, {
+        "id" : "126"
+      }, {
+        "id" : "127"
+      }, {
+        "id" : "128"
+      }, {
+        "id" : "129"
+      } ]
+    }, {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "containerId" : "25",
+      "elements" : [ {
         "id" : "5",
         "x" : 0,
         "y" : 0
@@ -1591,19 +1888,15 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "33",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "53",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "44",
+        "id" : "54",
         "x" : 0,
         "y" : 0
       } ],
@@ -1612,33 +1905,117 @@
       "name" : "Component View: Server Management System (SMS) - Reporting Service",
       "order" : 6,
       "relationships" : [ {
-        "id" : "110"
+        "id" : "130"
       }, {
-        "id" : "111"
+        "id" : "131"
       }, {
-        "id" : "112"
+        "id" : "132"
       }, {
-        "id" : "113"
+        "id" : "133"
       }, {
-        "id" : "114"
+        "id" : "134"
       }, {
-        "id" : "115"
+        "id" : "135"
       }, {
-        "id" : "116"
+        "id" : "136"
       }, {
-        "id" : "118"
+        "id" : "138"
       }, {
-        "id" : "119"
+        "id" : "139"
       }, {
-        "id" : "120"
+        "id" : "140"
       }, {
-        "id" : "121"
+        "id" : "141"
       }, {
-        "id" : "122"
+        "id" : "145"
       }, {
-        "id" : "123"
+        "id" : "146"
+      } ]
+    }, {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "containerId" : "33",
+      "elements" : [ {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
       }, {
-        "id" : "124"
+        "id" : "34",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "35",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "36",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "53",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "NotificationComponents",
+      "name" : "Component View: Server Management System (SMS) - Notification Service",
+      "order" : 7,
+      "relationships" : [ {
+        "id" : "142"
+      }, {
+        "id" : "144"
+      }, {
+        "id" : "147"
+      }, {
+        "id" : "148"
+      } ]
+    }, {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "containerId" : "37",
+      "elements" : [ {
+        "id" : "5",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "38",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "39",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "40",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "53",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "AgentHandlerComponents",
+      "name" : "Component View: Server Management System (SMS) - Agent Handler Service",
+      "order" : 8,
+      "relationships" : [ {
+        "id" : "149"
+      }, {
+        "id" : "150"
+      }, {
+        "id" : "151"
+      }, {
+        "id" : "152"
       } ]
     } ],
     "configuration" : {
@@ -1729,19 +2106,27 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "34",
+        "id" : "33",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "37",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
+        "id" : "41",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "44",
+        "id" : "52",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "53",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "54",
         "x" : 0,
         "y" : 0
       } ],
@@ -1750,29 +2135,13 @@
       "name" : "Container View: Server Management System (SMS)",
       "order" : 2,
       "relationships" : [ {
-        "id" : "117"
+        "id" : "106"
       }, {
-        "id" : "48"
+        "id" : "111"
       }, {
-        "id" : "49"
+        "id" : "137"
       }, {
-        "id" : "50"
-      }, {
-        "id" : "51"
-      }, {
-        "id" : "52"
-      }, {
-        "id" : "53"
-      }, {
-        "id" : "54"
-      }, {
-        "id" : "55"
-      }, {
-        "id" : "56"
-      }, {
-        "id" : "57"
-      }, {
-        "id" : "58"
+        "id" : "143"
       }, {
         "id" : "59"
       }, {
@@ -1794,9 +2163,35 @@
       }, {
         "id" : "68"
       }, {
-        "id" : "91"
+        "id" : "69"
       }, {
-        "id" : "96"
+        "id" : "70"
+      }, {
+        "id" : "71"
+      }, {
+        "id" : "72"
+      }, {
+        "id" : "73"
+      }, {
+        "id" : "74"
+      }, {
+        "id" : "75"
+      }, {
+        "id" : "76"
+      }, {
+        "id" : "77"
+      }, {
+        "id" : "78"
+      }, {
+        "id" : "79"
+      }, {
+        "id" : "80"
+      }, {
+        "id" : "81"
+      }, {
+        "id" : "82"
+      }, {
+        "id" : "83"
       } ],
       "softwareSystemId" : "4"
     } ],
@@ -1809,102 +2204,118 @@
         "vertices" : true
       },
       "elements" : [ {
-        "id" : "125",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "126",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "127",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "128",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "129",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "132",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "134",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "136",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "137",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "139",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "141",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "142",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "146",
+        "id" : "153",
         "x" : 0,
         "y" : 0
       }, {
         "id" : "154",
         "x" : 0,
         "y" : 0
+      }, {
+        "id" : "155",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "156",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "157",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "160",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "162",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "164",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "165",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "166",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "168",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "170",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "172",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "173",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "177",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "188",
+        "x" : 0,
+        "y" : 0
       } ],
       "environment" : "Production",
       "key" : "SwarmDeployment",
       "name" : "Deployment View: Server Management System (SMS) - Production",
-      "order" : 7,
+      "order" : 9,
       "relationships" : [ {
-        "id" : "130"
+        "id" : "158"
       }, {
-        "id" : "131"
+        "id" : "159"
       }, {
-        "id" : "133"
+        "id" : "161"
       }, {
-        "id" : "135"
+        "id" : "163"
       }, {
-        "id" : "138"
+        "id" : "167"
       }, {
-        "id" : "140"
+        "id" : "169"
       }, {
-        "id" : "143"
+        "id" : "171"
       }, {
-        "id" : "144"
+        "id" : "174"
       }, {
-        "id" : "145"
+        "id" : "175"
       }, {
-        "id" : "147"
+        "id" : "176"
       }, {
-        "id" : "148"
+        "id" : "178"
       }, {
-        "id" : "149"
+        "id" : "179"
       }, {
-        "id" : "150"
+        "id" : "180"
       }, {
-        "id" : "151"
+        "id" : "181"
       }, {
-        "id" : "152"
+        "id" : "182"
       }, {
-        "id" : "153"
+        "id" : "183"
       }, {
-        "id" : "155"
+        "id" : "184"
       }, {
-        "id" : "156"
+        "id" : "185"
+      }, {
+        "id" : "186"
+      }, {
+        "id" : "187"
+      }, {
+        "id" : "189"
+      }, {
+        "id" : "190"
       } ],
       "softwareSystemId" : "4"
     } ],
@@ -1947,72 +2358,72 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Identity_Login",
       "name" : "Dynamic View: Server Management System (SMS) - Identity Service",
-      "order" : 8,
+      "order" : 10,
       "relationships" : [ {
         "description" : "1. POST /api/v1/auth/login",
-        "id" : "52",
+        "id" : "63",
         "order" : "1",
         "response" : false
       }, {
         "description" : "2. Routes request",
-        "id" : "70",
+        "id" : "85",
         "order" : "2",
         "response" : false
       }, {
         "description" : "3. Login(email, password)",
-        "id" : "72",
+        "id" : "87",
         "order" : "3",
         "response" : false
       }, {
         "description" : "4. FindByEmail(email)",
-        "id" : "73",
+        "id" : "88",
         "order" : "4",
         "response" : false
       }, {
         "description" : "5. SELECT FROM users",
-        "id" : "78",
+        "id" : "93",
         "order" : "5",
         "response" : false
       }, {
         "description" : "6. Create(session)",
-        "id" : "74",
+        "id" : "89",
         "order" : "6",
         "response" : false
       }, {
         "description" : "7. INSERT INTO auth_sessions",
-        "id" : "79",
+        "id" : "94",
         "order" : "7",
         "response" : false
       }, {
         "description" : "8. Create(refreshToken)",
-        "id" : "75",
+        "id" : "90",
         "order" : "8",
         "response" : false
       }, {
         "description" : "9. INSERT INTO refresh_tokens",
-        "id" : "80",
+        "id" : "95",
         "order" : "9",
         "response" : false
       }, {
         "description" : "10. Return Tokens",
-        "id" : "72",
+        "id" : "87",
         "order" : "10",
         "response" : true
       }, {
         "description" : "11. Return 200 OK",
-        "id" : "70",
+        "id" : "85",
         "order" : "11",
         "response" : true
       }, {
         "description" : "12. Return JWT + Set-Cookie",
-        "id" : "52",
+        "id" : "63",
         "order" : "12",
         "response" : true
       } ]
@@ -2051,52 +2462,52 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
+        "id" : "53",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Identity_Verify",
       "name" : "Dynamic View: Server Management System (SMS) - Identity Service",
-      "order" : 9,
+      "order" : 11,
       "relationships" : [ {
         "description" : "1. Request Protected API",
-        "id" : "52",
+        "id" : "63",
         "order" : "1",
         "response" : false
       }, {
         "description" : "2. GET /verify (Passes Headers/Cookies)",
-        "id" : "69",
+        "id" : "84",
         "order" : "2",
         "response" : false
       }, {
         "description" : "3. ValidateToken(jwt)",
-        "id" : "71",
+        "id" : "86",
         "order" : "3",
         "response" : false
       }, {
         "description" : "4. Check if session is revoked",
-        "id" : "77",
+        "id" : "92",
         "order" : "4",
         "response" : false
       }, {
         "description" : "5. EXISTS revoked_session:{id}",
-        "id" : "81",
+        "id" : "96",
         "order" : "5",
         "response" : false
       }, {
         "description" : "6. Return Principal",
-        "id" : "71",
+        "id" : "86",
         "order" : "6",
         "response" : true
       }, {
         "description" : "7. Return 200 OK + Inject X-User Headers",
-        "id" : "69",
+        "id" : "84",
         "order" : "7",
         "response" : true
       }, {
         "description" : "8. Forward request to downstream service",
-        "id" : "56",
+        "id" : "67",
         "order" : "8",
         "response" : false
       } ]
@@ -2143,111 +2554,111 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
+        "id" : "53",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Management_Create",
       "name" : "Dynamic View: Server Management System (SMS) - Management Service",
-      "order" : 10,
+      "order" : 12,
       "relationships" : [ {
         "description" : "1. POST /api/v1/servers",
-        "id" : "52",
+        "id" : "63",
         "order" : "1",
         "response" : false
       }, {
-        "description" : "2. Routes request",
-        "id" : "82",
+        "description" : "2. Routes request (with X-User-Role)",
+        "id" : "97",
         "order" : "2",
         "response" : false
       }, {
-        "description" : "3. Check quota",
-        "id" : "83",
+        "description" : "3. Check quota & Validate RBAC",
+        "id" : "98",
         "order" : "3",
         "response" : false
       }, {
         "description" : "4. INCR",
-        "id" : "84",
+        "id" : "99",
         "order" : "4",
         "response" : false
       }, {
         "description" : "5. CreateServer(input)",
-        "id" : "85",
+        "id" : "100",
         "order" : "5",
         "response" : false
       }, {
         "description" : "6. BEGIN Transaction",
-        "id" : "86",
+        "id" : "101",
         "order" : "6",
         "response" : false
       }, {
         "description" : "7. INSERT INTO servers",
-        "id" : "86",
+        "id" : "101",
         "order" : "7",
         "response" : false
       }, {
         "description" : "8. Execute SQL",
-        "id" : "93",
+        "id" : "108",
         "order" : "8",
         "response" : false
       }, {
         "description" : "9. INSERT INTO outbox_events (ServerCreated)",
-        "id" : "87",
+        "id" : "102",
         "order" : "9",
         "response" : false
       }, {
         "description" : "10. Execute SQL",
-        "id" : "94",
+        "id" : "109",
         "order" : "10",
         "response" : false
       }, {
         "description" : "11. COMMIT Transaction",
-        "id" : "86",
+        "id" : "101",
         "order" : "11",
         "response" : false
       }, {
         "description" : "12. Return Success",
-        "id" : "85",
+        "id" : "100",
         "order" : "12",
         "response" : true
       }, {
         "description" : "13. Return 201 Created",
-        "id" : "82",
+        "id" : "97",
         "order" : "13",
         "response" : true
       }, {
         "description" : "14. Return Response",
-        "id" : "52",
+        "id" : "63",
         "order" : "14",
         "response" : true
       }, {
         "description" : "15. [Async] Fetch unpublished events",
-        "id" : "88",
+        "id" : "103",
         "order" : "15",
         "response" : false
       }, {
         "description" : "16. SELECT FROM outbox_events",
-        "id" : "94",
+        "id" : "109",
         "order" : "16",
         "response" : false
       }, {
         "description" : "17. XADD sms.events.server",
-        "id" : "89",
+        "id" : "104",
         "order" : "17",
         "response" : false
       }, {
         "description" : "18. Mark as published",
-        "id" : "88",
+        "id" : "103",
         "order" : "18",
         "response" : false
       }, {
         "description" : "19. UPDATE outbox_events",
-        "id" : "94",
+        "id" : "109",
         "order" : "19",
         "response" : false
       } ]
@@ -2260,33 +2671,13 @@
         "vertices" : true
       },
       "description" : "Detailed sequence for distributed ICMP ping cycle",
-      "elementId" : "34",
+      "elementId" : "41",
       "elements" : [ {
         "id" : "3",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "35",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "36",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "37",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "39",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "40",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "41",
+        "id" : "42",
         "x" : 0,
         "y" : 0
       }, {
@@ -2297,80 +2688,109 @@
         "id" : "44",
         "x" : 0,
         "y" : 0
+      }, {
+        "id" : "45",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "49",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "50",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "51",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "53",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "54",
+        "x" : 0,
+        "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Monitoring_Cycle",
       "name" : "Dynamic View: Server Management System (SMS) - Monitoring Worker",
-      "order" : 11,
+      "order" : 13,
       "relationships" : [ {
         "description" : "1. SETNX lock:monitoring_producer (Leader Election)",
-        "id" : "98",
+        "id" : "117",
         "order" : "1",
         "response" : false
       }, {
         "description" : "2. SMEMBERS server:all_ids",
-        "id" : "99",
+        "id" : "118",
         "order" : "2",
         "response" : false
       }, {
         "description" : "3. Fetch targets",
-        "id" : "108",
+        "id" : "128",
         "order" : "3",
         "response" : false
       }, {
         "description" : "4. RPUSH monitoring:queue",
-        "id" : "100",
+        "id" : "119",
         "order" : "4",
         "response" : false
       }, {
         "description" : "5. Enqueue targets",
-        "id" : "109",
+        "id" : "129",
         "order" : "5",
         "response" : false
       }, {
         "description" : "6. BLPOP monitoring:queue (Consume Job)",
-        "id" : "101",
+        "id" : "120",
         "order" : "6",
         "response" : false
       }, {
         "description" : "7. Dequeue target",
-        "id" : "109",
+        "id" : "129",
         "order" : "7",
         "response" : false
       }, {
-        "description" : "8. ICMP Ping",
-        "id" : "102",
+        "description" : "8. Gets appropriate checker",
+        "id" : "121",
         "order" : "8",
         "response" : false
       }, {
-        "description" : "9. Evaluate(serverID, success)",
-        "id" : "103",
+        "description" : "9. Execute Check (ICMP/SSH/HTTP)",
+        "id" : "122",
         "order" : "9",
         "response" : false
       }, {
-        "description" : "10. LogObservation [fire-and-forget]",
-        "id" : "104",
+        "description" : "10. Evaluate(serverID, success)",
+        "id" : "123",
         "order" : "10",
         "response" : false
       }, {
-        "description" : "11. Buffered Bulk Write",
-        "id" : "105",
+        "description" : "11. LogObservation [fire-and-forget]",
+        "id" : "124",
         "order" : "11",
         "response" : false
       }, {
-        "description" : "12. Get & Set ServerState",
-        "id" : "106",
+        "description" : "12. Buffered Bulk Write",
+        "id" : "125",
         "order" : "12",
         "response" : false
       }, {
-        "description" : "13. HGET / HSET",
-        "id" : "108",
+        "description" : "13. Get & Set ServerState",
+        "id" : "126",
         "order" : "13",
         "response" : false
       }, {
-        "description" : "14. [If State Changed] XADD sms.events.server_status",
-        "id" : "107",
+        "description" : "14. HGET / HSET",
+        "id" : "128",
         "order" : "14",
+        "response" : false
+      }, {
+        "description" : "15. [If State Changed] XADD sms.events.server_status",
+        "id" : "127",
+        "order" : "15",
         "response" : false
       } ]
     }, {
@@ -2384,10 +2804,6 @@
       "description" : "Detailed sequence for automated report generation",
       "elementId" : "25",
       "elements" : [ {
-        "id" : "2",
-        "x" : 0,
-        "y" : 0
-      }, {
         "id" : "27",
         "x" : 0,
         "y" : 0
@@ -2396,7 +2812,7 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "29",
+        "id" : "30",
         "x" : 0,
         "y" : 0
       }, {
@@ -2408,91 +2824,113 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "33",
+        "id" : "34",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "35",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "44",
+        "id" : "36",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "52",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "53",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "54",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Reporting_Generate",
       "name" : "Dynamic View: Server Management System (SMS) - Reporting Service",
-      "order" : 12,
+      "order" : 14,
       "relationships" : [ {
         "description" : "1. Trigger daily report",
-        "id" : "112",
+        "id" : "132",
         "order" : "1",
         "response" : false
       }, {
         "description" : "2. CreateReportRequest(PENDING)",
-        "id" : "114",
+        "id" : "134",
         "order" : "2",
         "response" : false
       }, {
         "description" : "3. INSERT",
-        "id" : "124",
+        "id" : "146",
         "order" : "3",
         "response" : false
       }, {
         "description" : "4. Enqueue to jobQueue (In-memory Channel)",
-        "id" : "115",
+        "id" : "135",
         "order" : "4",
         "response" : false
       }, {
         "description" : "5. Dequeue job & UpdateReportStatus(PROCESSING)",
-        "id" : "119",
+        "id" : "139",
         "order" : "5",
         "response" : false
       }, {
         "description" : "6. UPDATE report_requests",
-        "id" : "124",
+        "id" : "146",
         "order" : "6",
         "response" : false
       }, {
         "description" : "7. GetServerCountByStatus()",
-        "id" : "119",
+        "id" : "139",
         "order" : "7",
         "response" : false
       }, {
         "description" : "8. SELECT FROM reporting_servers",
-        "id" : "124",
+        "id" : "146",
         "order" : "8",
         "response" : false
       }, {
         "description" : "9. CalculateUptime()",
-        "id" : "120",
+        "id" : "140",
         "order" : "9",
         "response" : false
       }, {
         "description" : "10. Elasticsearch Aggregation Query",
-        "id" : "122",
+        "id" : "145",
         "order" : "10",
         "response" : false
       }, {
-        "description" : "11. SendReportEmail(Render HTML)",
-        "id" : "121",
+        "description" : "11. Render HTML & XADD notification_events",
+        "id" : "141",
         "order" : "11",
         "response" : false
       }, {
-        "description" : "12. Send SMTP Email",
-        "id" : "123",
+        "description" : "12. XREADGROUP (Async Delivery)",
+        "id" : "142",
         "order" : "12",
         "response" : false
       }, {
-        "description" : "13. UpdateReportStatus(COMPLETED)",
-        "id" : "119",
+        "description" : "13. Process Notification",
+        "id" : "144",
         "order" : "13",
         "response" : false
       }, {
-        "description" : "14. UPDATE report_requests",
-        "id" : "124",
+        "description" : "14. Build & Send Email",
+        "id" : "147",
         "order" : "14",
+        "response" : false
+      }, {
+        "description" : "15. UpdateReportStatus(COMPLETED)",
+        "id" : "139",
+        "order" : "15",
+        "response" : false
+      }, {
+        "description" : "16. UPDATE report_requests",
+        "id" : "146",
+        "order" : "16",
         "response" : false
       } ]
     }, {
@@ -2534,86 +2972,86 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
+        "id" : "53",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Identity_RefreshToken",
       "name" : "Dynamic View: Server Management System (SMS) - Identity Service",
-      "order" : 13,
+      "order" : 15,
       "relationships" : [ {
         "description" : "1. POST /api/v1/auth/refresh (Cookie)",
-        "id" : "52",
+        "id" : "63",
         "order" : "1",
         "response" : false
       }, {
         "description" : "2. Routes request",
-        "id" : "70",
+        "id" : "85",
         "order" : "2",
         "response" : false
       }, {
         "description" : "3. RefreshToken(jwt)",
-        "id" : "72",
+        "id" : "87",
         "order" : "3",
         "response" : false
       }, {
         "description" : "4. Validate Refresh Token",
-        "id" : "75",
+        "id" : "90",
         "order" : "4",
         "response" : false
       }, {
         "description" : "5. SELECT FROM refresh_tokens",
-        "id" : "80",
+        "id" : "95",
         "order" : "5",
         "response" : false
       }, {
         "description" : "6. Check Revocation",
-        "id" : "76",
+        "id" : "91",
         "order" : "6",
         "response" : false
       }, {
         "description" : "7. EXISTS revoked_session:{id}",
-        "id" : "81",
+        "id" : "96",
         "order" : "7",
         "response" : false
       }, {
         "description" : "8. Revoke Session (if theft detected)",
-        "id" : "74",
+        "id" : "89",
         "order" : "8",
         "response" : false
       }, {
         "description" : "9. UPDATE auth_sessions",
-        "id" : "79",
+        "id" : "94",
         "order" : "9",
         "response" : false
       }, {
         "description" : "10. Add Session to Blacklist",
-        "id" : "76",
+        "id" : "91",
         "order" : "10",
         "response" : false
       }, {
         "description" : "11. SET revoked_session:{id} = true",
-        "id" : "81",
+        "id" : "96",
         "order" : "11",
         "response" : false
       }, {
         "description" : "12. Sign new JWT",
-        "id" : "72",
+        "id" : "87",
         "order" : "12",
         "response" : true
       }, {
         "description" : "13. Return 200 OK (New Tokens)",
-        "id" : "70",
+        "id" : "85",
         "order" : "13",
         "response" : true
       }, {
         "description" : "14. Return JWT + Set-Cookie",
-        "id" : "52",
+        "id" : "63",
         "order" : "14",
         "response" : true
       } ]
@@ -2652,66 +3090,66 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
+        "id" : "53",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Identity_Logout_Revocation",
       "name" : "Dynamic View: Server Management System (SMS) - Identity Service",
-      "order" : 14,
+      "order" : 16,
       "relationships" : [ {
         "description" : "1. POST /api/v1/auth/logout",
-        "id" : "52",
+        "id" : "63",
         "order" : "1",
         "response" : false
       }, {
         "description" : "2. Routes request",
-        "id" : "70",
+        "id" : "85",
         "order" : "2",
         "response" : false
       }, {
         "description" : "3. Logout()",
-        "id" : "72",
+        "id" : "87",
         "order" : "3",
         "response" : false
       }, {
         "description" : "4. Update AuthSession (RevokedAt = Now)",
-        "id" : "74",
+        "id" : "89",
         "order" : "4",
         "response" : false
       }, {
         "description" : "5. UPDATE auth_sessions",
-        "id" : "79",
+        "id" : "94",
         "order" : "5",
         "response" : false
       }, {
         "description" : "6. Add Session to Blacklist",
-        "id" : "76",
+        "id" : "91",
         "order" : "6",
         "response" : false
       }, {
         "description" : "7. SET revoked_session:{id} = true",
-        "id" : "81",
+        "id" : "96",
         "order" : "7",
         "response" : false
       }, {
         "description" : "8. Return Success",
-        "id" : "72",
+        "id" : "87",
         "order" : "8",
         "response" : true
       }, {
         "description" : "9. Return 200 OK (Clear Cookies)",
-        "id" : "70",
+        "id" : "85",
         "order" : "9",
         "response" : true
       }, {
         "description" : "10. Clear Client Cookies",
-        "id" : "52",
+        "id" : "63",
         "order" : "10",
         "response" : true
       } ]
@@ -2750,72 +3188,72 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Management_Bulk_Import",
       "name" : "Dynamic View: Server Management System (SMS) - Management Service",
-      "order" : 15,
+      "order" : 17,
       "relationships" : [ {
         "description" : "1. POST /api/v1/servers/import",
-        "id" : "52",
+        "id" : "63",
         "order" : "1",
         "response" : false
       }, {
         "description" : "2. Routes request",
-        "id" : "82",
+        "id" : "97",
         "order" : "2",
         "response" : false
       }, {
         "description" : "3. Parse CSV & Validate",
-        "id" : "85",
+        "id" : "100",
         "order" : "3",
         "response" : false
       }, {
         "description" : "4. BEGIN Transaction (Batch of 100)",
-        "id" : "86",
+        "id" : "101",
         "order" : "4",
         "response" : false
       }, {
         "description" : "5. Bulk INSERT SERVERS",
-        "id" : "86",
+        "id" : "101",
         "order" : "5",
         "response" : false
       }, {
         "description" : "6. Execute SQL Batch",
-        "id" : "93",
+        "id" : "108",
         "order" : "6",
         "response" : false
       }, {
         "description" : "7. Bulk INSERT OUTBOX_EVENTS",
-        "id" : "87",
+        "id" : "102",
         "order" : "7",
         "response" : false
       }, {
         "description" : "8. Execute SQL Batch",
-        "id" : "94",
+        "id" : "109",
         "order" : "8",
         "response" : false
       }, {
         "description" : "9. COMMIT Transaction",
-        "id" : "86",
+        "id" : "101",
         "order" : "9",
         "response" : false
       }, {
         "description" : "10. Return Import Summary",
-        "id" : "85",
+        "id" : "100",
         "order" : "10",
         "response" : true
       }, {
         "description" : "11. Return 200 OK",
-        "id" : "82",
+        "id" : "97",
         "order" : "11",
         "response" : true
       }, {
         "description" : "12. Return Response",
-        "id" : "52",
+        "id" : "63",
         "order" : "12",
         "response" : true
       } ]
@@ -2850,53 +3288,58 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Management_Bulk_Export",
       "name" : "Dynamic View: Server Management System (SMS) - Management Service",
-      "order" : 16,
+      "order" : 18,
       "relationships" : [ {
         "description" : "1. GET /api/v1/servers/export",
-        "id" : "52",
+        "id" : "63",
         "order" : "1",
         "response" : false
       }, {
         "description" : "2. Routes request",
-        "id" : "82",
+        "id" : "97",
         "order" : "2",
         "response" : false
       }, {
         "description" : "3. ExportServers()",
-        "id" : "85",
+        "id" : "100",
         "order" : "3",
         "response" : false
       }, {
         "description" : "4. Query cursor (Chunking)",
-        "id" : "86",
+        "id" : "101",
         "order" : "4",
         "response" : false
       }, {
         "description" : "5. SELECT Stream",
-        "id" : "93",
+        "id" : "108",
         "order" : "5",
         "response" : false
       }, {
-        "description" : "7. Format to CSV chunk",
-        "id" : "85",
+        "description" : "6. Return Data Stream",
+        "id" : "108",
         "order" : "6",
         "response" : true
       }, {
-        "description" : "8. HTTP Chunked Response",
-        "id" : "82",
+        "description" : "7. Format to CSV chunk",
+        "id" : "100",
         "order" : "7",
         "response" : true
       }, {
-        "description" : "9. Stream to file",
-        "id" : "52",
+        "description" : "8. HTTP Chunked Response",
+        "id" : "97",
         "order" : "8",
+        "response" : true
+      }, {
+        "description" : "9. Stream to file",
+        "id" : "63",
+        "order" : "9",
         "response" : true
       } ]
     }, {
@@ -2918,31 +3361,31 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
+        "id" : "53",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Management_Status_Consumer",
       "name" : "Dynamic View: Server Management System (SMS) - Management Service",
-      "order" : 17,
+      "order" : 19,
       "relationships" : [ {
         "description" : "1. Delivers ServerStatusChanged event via XREAD",
-        "id" : "90",
+        "id" : "105",
         "order" : "1",
         "response" : false
       }, {
-        "description" : "3. UpdateServerStatus(server_id, status)",
-        "id" : "92",
+        "description" : "2. UpdateServerStatus(server_id, status)",
+        "id" : "107",
         "order" : "2",
         "response" : false
       }, {
-        "description" : "4. UPDATE SERVERS SET current_status",
-        "id" : "93",
+        "description" : "3. UPDATE SERVERS SET current_status",
+        "id" : "108",
         "order" : "3",
         "response" : false
       } ]
@@ -2965,49 +3408,49 @@
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "31",
+        "id" : "30",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "33",
+        "id" : "32",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
+        "id" : "53",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Reporting_Daily_Scheduler",
       "name" : "Dynamic View: Server Management System (SMS) - Reporting Service",
-      "order" : 18,
+      "order" : 20,
       "relationships" : [ {
         "description" : "1. SETNX lock:daily_report (Leader Election)",
-        "id" : "111",
+        "id" : "131",
         "order" : "1",
         "response" : false
       }, {
         "description" : "2. Trigger Report Generation for all Admins",
-        "id" : "112",
+        "id" : "132",
         "order" : "2",
         "response" : false
       }, {
         "description" : "3. Fetch targets/admins",
-        "id" : "114",
+        "id" : "134",
         "order" : "3",
         "response" : false
       }, {
         "description" : "4. SELECT",
-        "id" : "124",
+        "id" : "146",
         "order" : "4",
         "response" : false
       }, {
         "description" : "5. Enqueue to jobQueue",
-        "id" : "115",
+        "id" : "135",
         "order" : "5",
         "response" : false
       } ]
@@ -3022,41 +3465,177 @@
       "description" : "Data replication from Management via Event Bus",
       "elementId" : "25",
       "elements" : [ {
-        "id" : "30",
+        "id" : "29",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "33",
+        "id" : "32",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "42",
+        "id" : "52",
         "x" : 0,
         "y" : 0
       }, {
-        "id" : "43",
+        "id" : "53",
         "x" : 0,
         "y" : 0
       } ],
       "externalBoundariesVisible" : false,
       "key" : "Reporting_Event_Consumer",
       "name" : "Dynamic View: Server Management System (SMS) - Reporting Service",
-      "order" : 19,
+      "order" : 21,
       "relationships" : [ {
-        "description" : "1. Delivers ServerCreated/Deleted event via XREAD",
-        "id" : "116",
+        "description" : "1. Delivers Server CRUD & Status events via XREAD",
+        "id" : "136",
         "order" : "1",
         "response" : false
       }, {
-        "description" : "3. Sync Server Data",
-        "id" : "118",
+        "description" : "2. Sync Server Data (Upsert/Delete/StatusUpdate)",
+        "id" : "138",
         "order" : "2",
         "response" : false
       }, {
-        "description" : "4. INSERT/DELETE REPORTING_SERVERS",
-        "id" : "124",
+        "description" : "3. Sync REPORTING_SERVERS",
+        "id" : "146",
         "order" : "3",
         "response" : false
+      } ]
+    }, {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "description" : "Detailed sequence for Agent pushing telemetry",
+      "elementId" : "37",
+      "elements" : [ {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "5",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "38",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "39",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "40",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "53",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalBoundariesVisible" : false,
+      "key" : "Agent_Push_Heartbeat",
+      "name" : "Dynamic View: Server Management System (SMS) - Agent Handler Service",
+      "order" : 22,
+      "relationships" : [ {
+        "description" : "1. POST /api/v1/agent/heartbeat (X-Master-Key)",
+        "id" : "78",
+        "order" : "1",
+        "response" : false
+      }, {
+        "description" : "2. Routes request",
+        "id" : "149",
+        "order" : "2",
+        "response" : false
+      }, {
+        "description" : "3. Validate X-Master-Key & Parse Payload",
+        "id" : "150",
+        "order" : "3",
+        "response" : false
+      }, {
+        "description" : "4. Push Validated State",
+        "id" : "151",
+        "order" : "4",
+        "response" : false
+      }, {
+        "description" : "5. ZADD heartbeat & XADD sms.events.heartbeat",
+        "id" : "152",
+        "order" : "5",
+        "response" : false
+      }, {
+        "description" : "6. Return 200 OK",
+        "id" : "149",
+        "order" : "6",
+        "response" : true
+      }, {
+        "description" : "7. Return Response",
+        "id" : "78",
+        "order" : "7",
+        "response" : true
+      } ]
+    }, {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "description" : "Detailed sequence for processing email notifications",
+      "elementId" : "33",
+      "elements" : [ {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "34",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "35",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "36",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "53",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalBoundariesVisible" : false,
+      "key" : "Notification_Process",
+      "name" : "Dynamic View: Server Management System (SMS) - Notification Service",
+      "order" : 23,
+      "relationships" : [ {
+        "description" : "1. Delivers NotificationRequested event via XREADGROUP",
+        "id" : "142",
+        "order" : "1",
+        "response" : false
+      }, {
+        "description" : "2. ProcessNotification(event)",
+        "id" : "144",
+        "order" : "2",
+        "response" : false
+      }, {
+        "description" : "3. Build Multipart MIME & SendEmail()",
+        "id" : "147",
+        "order" : "3",
+        "response" : false
+      }, {
+        "description" : "4. SMTP Transaction (STARTTLS, AUTH, SEND)",
+        "id" : "148",
+        "order" : "4",
+        "response" : false
+      }, {
+        "description" : "5. XACK (Acknowledge event)",
+        "id" : "142",
+        "order" : "5",
+        "response" : true
       } ]
     } ],
     "systemContextViews" : [ {
@@ -3089,13 +3668,15 @@
       "name" : "System Context View: Server Management System (SMS)",
       "order" : 1,
       "relationships" : [ {
-        "id" : "45"
+        "id" : "55"
       }, {
-        "id" : "46"
+        "id" : "56"
       }, {
-        "id" : "47"
+        "id" : "57"
       }, {
-        "id" : "48"
+        "id" : "58"
+      }, {
+        "id" : "59"
       } ],
       "softwareSystemId" : "4"
     } ]

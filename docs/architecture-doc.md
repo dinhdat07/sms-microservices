@@ -488,17 +488,49 @@ Các trường hợp đặc biệt và xử lý lỗi:
 * **Tránh chia cho 0:** Nếu Tổng số lần Ping \= 0 (ví dụ hệ thống vừa khởi tạo hoặc khoảng thời gian được chọn chưa có dữ liệu), thuật toán trả về 0,00%.  
 * **Đồng nhất múi giờ:** Toàn bộ mốc thời gian được xử lý theo chuẩn UTC nhằm bảo đảm kết quả tính toán khớp với thời điểm ghi log của Monitoring Worker.
 
-# 
+## 4.5 Nghiệp vụ Gửi thông báo (Notification)
 
-# 
+Dịch vụ `sms-notification` đóng vai trò là một kênh liên lạc trung tâm, tách biệt hoàn toàn rủi ro và độ trễ của việc giao tiếp với các hệ thống Mail Server (SMTP) bên ngoài ra khỏi các dịch vụ lõi nội bộ.
 
-# 
+### 4.5.1 Luồng xử lý (Notification Consumer)
 
-# 
+![][image21]
 
-# 
+Quy trình hoạt động hoàn toàn bất đồng bộ (Asynchronous):
+1. **Lắng nghe sự kiện**: Worker liên tục poll từ Redis Stream `notification_events` thông qua Consumer Group.
+2. **Xử lý tác vụ**: Khi có sự kiện `NotificationRequested` (mang theo HTML đã render và thông tin người nhận), Worker sẽ parse dữ liệu.
+3. **Gửi Mail (SMTP)**: Xây dựng cấu trúc Multipart MIME (cho phép đính kèm cả Text và HTML) và gửi qua SMTP Server (được bảo mật bằng STARTTLS).
+4. **Xác nhận (ACK)**: Sau khi gửi thành công, Worker gửi tín hiệu `XACK` lại cho Redis Stream để đánh dấu hoàn tất sự kiện, đảm bảo không gửi email trùng lặp.
 
-# 
+### 4.5.2 Thiết kế Event Bus (Redis)
+
+Dịch vụ này hoàn toàn phi trạng thái (stateless) và không sở hữu Database quan hệ. Mọi giao tiếp và nhận lệnh đều thông qua Redis Streams.
+
+| Key Pattern | Data Type | TTL | Purpose |
+| :---- | :---- | :---- | :---- |
+| notification\_events | STREAM | Unbounded | Hàng đợi chứa các sự kiện yêu cầu gửi email. Sử dụng cơ chế Consumer Group để chia sẻ tải giữa các Replica và có cơ chế `XACK` đảm bảo không mất mát sự kiện (At-least-once / Exactly-once delivery). |
+
+## 4.6 Nghiệp vụ Tiếp nhận Heartbeat (Agent Handler)
+
+Dịch vụ `sms-agent-handler` được thiết kế tối giản để hứng lượng traffic lớn (high-throughput) từ hàng vạn Agent chủ động đẩy (Push) tín hiệu Heartbeat về hệ thống một cách liên tục.
+
+### 4.6.1 Luồng xử lý Agent Push
+
+![][image22]
+
+1. **Tiếp nhận & Xác thực**: Agent gửi HTTP POST mang theo Header `X-Master-Key`. Middleware sẽ đối chiếu khóa này, nếu sai lập tức chặn request (HTTP 401) để bảo vệ hệ thống khỏi các nỗ lực tấn công hoặc chèn dữ liệu rác.
+2. **Cập nhật mốc thời gian (ZADD)**: Đẩy `server_id` vào Redis Sorted Set `monitoring:agent:heartbeats` với `score` là Unix timestamp hiện tại. Cơ chế này đóng vai trò như một "Dead Man's Switch", cho phép `Agent Sweeper` của dịch vụ Monitoring quét và phát hiện Timeout nếu Agent đột ngột ngừng gửi dữ liệu.
+3. **Phát sự kiện (XADD)**: Đồng thời đẩy sự kiện lên Redis Stream `sms.events.heartbeat`. `Heartbeat Consumer` của Monitoring sẽ bắt sự kiện này để đánh giá Server đang ở trạng thái ONLINE.
+4. **Phản hồi**: Trả về HTTP 200 OK cho Agent với độ trễ cực thấp do mọi thao tác ở trên đều chỉ tương tác với bộ nhớ (Redis).
+
+### 4.6.2 Thiết kế Cấu trúc dữ liệu (Redis)
+
+Nhằm tối ưu độ trễ (low-latency) để xử lý lượng connection khổng lồ cùng lúc, Agent Handler không ghi xuống đĩa (DB) mà chỉ sử dụng cấu trúc dữ liệu in-memory của Redis.
+
+| Key Pattern | Data Type | TTL | Purpose |
+| :---- | :---- | :---- | :---- |
+| monitoring:agent:heartbeats | ZSET (Sorted Set) | Unbounded | Lưu trữ danh sách Server ID dưới dạng member, và timestamp (Unix) của lần gửi Heartbeat cuối cùng dưới dạng score. Dùng để cấu trúc cây (Skip List) của Redis cho phép Agent Sweeper query siêu tốc dải server bị quá hạn bằng lệnh `ZREVRANGEBYSCORE`. |
+| sms.events.heartbeat | STREAM | Unbounded | Phân phối sự kiện Heartbeat theo thời gian thực về Event Bus. Các service khác (như Monitoring) sẽ lắng nghe luồng này để cập nhật trạng thái ONLINE ngay lập tức. |
 
 # **5\. TỔNG QUAN KIẾN TRÚC LƯU TRỮ**
 
@@ -513,6 +545,8 @@ Redis (In-memory \- Key/Value): Đóng vai trò tối ưu hóa ranh giới tốc
 * *Identity:* Chặn Anti-Replay Attack bằng cách lưu trữ tạm thời các Token vừa bị thu hồi.  
 * *Server Management:* Cache tốc độ cao toàn bộ trạng thái Server (Status, IPv4, Failures) với thời gian truy xuất O(1).  
 * *Monitoring:* Hoạt động như một Distributed Lock (Mutex) để đảm bảo tiến trình chạy nền không bị giẫm lên nhau.
+* *Notification:* Event Bus phi trạng thái truyền tải yêu cầu gửi email bất đồng bộ qua Redis Streams.
+* *Agent Handler:* Thu thập tín hiệu Heartbeat liên tục với ZSET (Sorted Set) và phân phối sự kiện tức thì qua Streams để đạt độ trễ siêu thấp.
 
 Elasticsearch (Time-Series / Search Engine): Việc tách hoàn toàn hàng chục triệu bản ghi Log Ping (Observation Logs) ra khỏi DB quan hệ giúp hệ thống tối ưu hóa năng lực truy vấn Aggregation khi cần tính toán tỷ lệ Uptime.
 
@@ -529,11 +563,8 @@ Thực thể "Server" tồn tại dưới nhiều hình thái khác nhau qua cá
 Để đảm bảo các thành phần lưu trữ hoạt động đồng bộ trên kiến trúc phân tán, hệ thống áp dụng các cơ chế sau:
 
 * **Đồng bộ Eventual Consistency qua Outbox Pattern & Redis Streams**: 
-Thay vì Dual-write tiềm ẩn rủi ro lỗi đồng bộ, hệ thống ghi dữ liệu thay đổi vào bảng nghiệp vụ và bảng outbox\_events trên PostgreSQL trong cùng một Transaction (ở Management Service). Một Outbox Worker sau đó sẽ quét và phát (Publish) sự kiện lên Redis Streams. Các stream được bảo vệ bởi tham số **MAXLEN** (với mốc ~1 triệu sự kiện) để ngăn chặn tràn RAM (OOM). 
-Monitoring, Reporting và Notification Service đóng vai trò là Consumer. Đặc biệt, hệ thống triển khai các cơ chế đảm bảo không rò rỉ và tự chữa lành:
+Thay vì Dual-write tiềm ẩn rủi ro lỗi đồng bộ, hệ thống ghi dữ liệu thay đổi vào bảng nghiệp vụ và bảng outbox\_events trên PostgreSQL trong cùng một Transaction (ở Management Service). Một Outbox Worker sau đó sẽ quét và phát (Publish) sự kiện lên Redis Streams. Monitoring, Reporting và Notification Service đóng vai trò là Consumer. Để đảm bảo dữ liệu toàn vẹn khi luồng chạy bất đồng bộ, hệ thống sử dụng:
   * **Idempotent Consumer (Consumer tự toàn vẹn)**: Cơ chế giao vận "At-least-once" của Redis Stream có thể khiến một Worker nhận cùng một sự kiện 2 lần nếu có lỗi mạng trước khi gửi lệnh xác nhận (ACK). Để chống lại lỗi nhân bản dữ liệu (Data Duplication), mọi thao tác cập nhật cấu hình/trạng thái server từ Event Stream đều được cài đặt dưới dạng `UPSERT` (cụ thể là `ON CONFLICT DO UPDATE` trong PostgreSQL). Dù hệ thống có đẩy sự kiện 1 lần hay 100 lần, trạng thái cuối cùng trong CSDL vẫn duy nhất và chính xác tuyệt đối.
-  * **XAUTOCLAIM cho Worker hỏng (Stalled Worker Recovery)**: Các worker liên tục rà soát các message bị kẹt (PEL) bằng lệnh `XAUTOCLAIM` để tiếp quản công việc từ các worker đã chết.
-  * **Dead Letter Queue (DLQ)**: Nếu message xử lý lỗi quá nhiều lần (sau 3 lần Retry bất thành do lỗi logic hoặc format dị biệt), thay vì tiếp tục cản đường dòng chảy sự kiện, thông điệp sẽ bị gỡ khỏi luồng chính và đẩy sang stream phụ `*stream_name*:dlq` (Dead Letter Queue) để kỹ sư phân tích thủ công sau.
 
 * **Giảm khuếch đại ghi (Write Amplification Reduction) chống Flapping**: 
 Tiến trình Monitoring hoạt động liên tục. Thay vì liên tục đẩy trạng thái về Management, Monitoring chỉ phát sinh sự kiện ServerStatusChanged qua Redis Streams khi trạng thái của server thực sự thay đổi. Cách tiếp cận này giúp Management và Reporting không bị quá tải bởi các cập nhật trạng thái không cần thiết.
@@ -551,15 +582,32 @@ Sự phân tách kiến trúc thành hai nửa Command và Query độc lập tu
 
 # **6\. BẢO MẬT & GIỚI HẠN TÀI NGUYÊN**
 
-## 6.1. Bảo mật đa lớp tại API Gateway (Traefik)
+## 6.1. Bảo mật đa lớp 
 
 * **Rate Limiting Kép**: Traefik giới hạn ở mức mạng (average 100 req/s), Management giới hạn ở mức ứng dụng (Application-level Limiter bằng Redis).  
-* **Xác thực ủy quyền & Chống CSRF (ForwardAuth)**: Mọi request bị Traefik chặn lại và hỏi ý kiến Identity qua /verify. Kiểm tra chéo CSRF Token giữa Cookie và Header. Traefik tự động đẩy Custom Headers (X-User-Role) xuống các service phía sau.
+* **Xác thực ủy quyền & Chống CSRF (ForwardAuth)**: Mọi request giao diện đều bị Traefik chặn lại và hỏi ý kiến Identity qua /verify. Kiểm tra chéo CSRF Token giữa Cookie và Header. Traefik tự động đẩy Custom Headers (X-User-Role) xuống các service phía sau.
+* **Xác thực M2M (Machine-to-Machine)**: Đối với các Agent bên ngoài gọi về hệ thống, bảo mật được siết chặt qua cấu trúc Header `X-Master-Key` tại dịch vụ `sms-agent-handler`, từ chối ngay lập tức các truy cập trái phép.
 
-## 6.2. Hạ tầng triển khai (Docker Swarm)![][image21]
+## 6.2. Hạ tầng triển khai (Docker Swarm)
 
-* **Zero Downtime Deployments (ZDT) & Graceful Shutdown**: Cấu hình update\_config: order: start-first kết hợp với HTTP Healthchecks. Cấp độ Service đã được chuẩn hóa vòng đời Graceful Shutdown để xả (flush) toàn bộ log/queue trước khi container dừng, đảm bảo cập nhật không gây gián đoạn hay mất mát dữ liệu.
+![][image23]
+
+Hệ thống được triển khai trên cụm Swarm gồm 3 Node VM với các đặc tả vận hành sau:
+
+* **Chiến lược Phân bổ Node (Placement Constraints)**: 
+  * *Manager Node*: Dành riêng cho API Gateway (Traefik) do yêu cầu bắt buộc phải giao tiếp trực tiếp với Docker Socket để lắng nghe cấu hình định tuyến.
+  * *Node-3 (Stateful)*: Bắt buộc chứa toàn bộ các hệ thống lưu trữ (PostgreSQL, Redis, Elasticsearch). Việc "ghim" (pin) này kết hợp cùng Local Persistent Volumes giúp dữ liệu không bị thất thoát hoặc lỗi mount khi khởi động lại.
+  * *Any Node (Stateless)*: Các Microservices ứng dụng (Identity, Management, Reporting, Monitoring, Agent Handler...) được nhân bản (Replicas) và phân bổ ngẫu nhiên trên bất kỳ Node nào trong 3 Node.
+* **Zero Downtime Deployments (ZDT) & Graceful Shutdown**: Cấu hình `update_config: order: start-first` kết hợp với HTTP Healthchecks. Cấp độ Service đã được chuẩn hóa vòng đời Graceful Shutdown để xả (flush) toàn bộ log/queue trước khi container dừng, đảm bảo cập nhật không gây gián đoạn hay mất mát dữ liệu.
 * **Persistent Volumes**: Các Stateful workloads (PostgreSQL, Redis, Elasticsearch) được gắn persistent volume để tránh rủi ro mất dữ liệu khi container tái khởi động hoặc di chuyển giữa các node.
 * **Native OS Environment Variables**: Cấu hình động được tiêm trực tiếp qua environment block của Swarm.
 * **Mật khẩu an toàn (Docker Secrets)**: Các dữ liệu nhạy cảm được truyền qua Docker Secrets dưới dạng In-Memory Files (tmpfs).
 * **ICMP Privileged Mode**: Hỗ trợ ICMP_PRIVILEGED=true/false để chọn Raw Sockets hoặc UDP Datagrams.
+
+## 6.3. Quản trị Năng lực & Chống Quá Tải (Backpressure)
+
+Hệ thống xử lý lượng lớn dữ liệu bất đồng bộ nên được thiết kế để chống lại hiện tượng "thắt cổ chai" gây tồn đọng hàng đợi (Queue Buildup):
+
+* **Giới hạn kích thước Stream (MAXLEN)**: Mọi Event Stream trên Redis (ví dụ `sms.events.server` hay `notification_events`) đều áp dụng tham số `MAXLEN` (mặc định ~1 triệu bản ghi) mỗi khi XADD. Khi hàng đợi vượt quá giới hạn, các sự kiện cũ nhất sẽ tự động bị loại bỏ (evict) nhằm bảo vệ Redis khỏi lỗi tràn bộ nhớ (OOM).
+* **Buffered Channels có giới hạn**: Các Worker xử lý tiến trình nền nội bộ (ví dụ: Job Queue của Reporting, hay Worker Pool của Monitoring) đều được cấp phát dung lượng đệm cố định (Bounded Capacity). Khi bộ đệm đầy, cơ chế Backpressure tự nhiên của ngôn ngữ Go (Blocking Channels) sẽ ép tiến trình sản xuất (Producer) phải chạy chậm lại, thay vì cấp phát vô hạn gây sập (Crash) ứng dụng.
+* **Chống kẹt luồng (Head-of-Line Blocking)**: Đối với các message "độc hại" (lỗi parse, thiếu dữ liệu, API bên thứ ba chết), nếu cứ liên tục retry sẽ làm kẹt cả hệ thống hàng đợi. Hệ thống sử dụng kết hợp `XAUTOCLAIM` (thu hồi message từ các worker chết ngang) và **Dead Letter Queue (DLQ)** (tống khứ message lỗi sang luồng phụ sau 3 lần thử lại). Nhờ đó, luồng Queue chính luôn được lưu thông ổn định.
