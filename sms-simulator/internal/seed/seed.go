@@ -13,12 +13,13 @@ import (
 )
 
 type Server struct {
-	ServerID      string    `gorm:"primaryKey;column:server_id"`
-	ServerName    string    `gorm:"column:server_name"`
-	IPv4          string    `gorm:"column:ipv4"`
-	CurrentStatus string    `gorm:"column:current_status"`
-	CreatedAt     time.Time `gorm:"column:created_at"`
-	UpdatedAt     time.Time `gorm:"column:updated_at"`
+	ServerID          string    `gorm:"primaryKey;column:server_id"`
+	ServerName        string    `gorm:"column:server_name"`
+	IPv4              string    `gorm:"column:ipv4"`
+	CurrentStatus     string    `gorm:"column:current_status"`
+	HealthCheckMethod string    `gorm:"column:health_check_method"`
+	CreatedAt         time.Time `gorm:"column:created_at"`
+	UpdatedAt         time.Time `gorm:"column:updated_at"`
 }
 
 type ReportingServer struct {
@@ -89,23 +90,6 @@ func RunSeed(db *gorm.DB, rdb redis.UniversalClient, count int, simulatorHost st
 			id := uuid.New().String()
 			name := fmt.Sprintf("sim-%s", id[:8])
 
-			batch = append(batch, &Server{
-				ServerID:      id,
-				ServerName:    name,
-				IPv4:          ip,
-				CurrentStatus: "UNKNOWN",
-				CreatedAt:     time.Now(),
-				UpdatedAt:     time.Now(),
-			})
-
-			reportingBatch = append(reportingBatch, &ReportingServer{
-				ServerID:  id,
-				Name:      name,
-				IPv4:      ip,
-				Status:    "UNKNOWN",
-				UpdatedAt: time.Now(),
-			})
-
 			// 70% ICMP, 10% SSH, 10% AGENT_PULL, 10% AGENT_PUSH
 			method := "ICMP"
 			rnd := rand.Intn(100)
@@ -117,12 +101,30 @@ func RunSeed(db *gorm.DB, rdb redis.UniversalClient, count int, simulatorHost st
 				method = "AGENT_PUSH"
 			}
 
+			batch = append(batch, &Server{
+				ServerID:          id,
+				ServerName:        name,
+				IPv4:              ip,
+				CurrentStatus:     "UNKNOWN",
+				HealthCheckMethod: method,
+				CreatedAt:         time.Now(),
+				UpdatedAt:         time.Now(),
+			})
+
+			reportingBatch = append(reportingBatch, &ReportingServer{
+				ServerID:  id,
+				Name:      name,
+				IPv4:      ip,
+				Status:    "UNKNOWN",
+				UpdatedAt: time.Now(),
+			})
+
 			infoMap := map[string]interface{}{
-				"id":                id,
-				"ipv4":              ip,
-				"status":            "UNKNOWN",
-				"retry_count":       0,
-				"monitoring_method": method,
+				"id":                  id,
+				"ipv4":                ip,
+				"status":              "UNKNOWN",
+				"retry_count":         0,
+				"health_check_method": method,
 			}
 
 			if method == "SSH" {

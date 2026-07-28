@@ -52,7 +52,7 @@ services:
       - JWT_SECRET_FILE=/run/secrets/jwt_secret
     networks:
       - default
-    image: whaleplay710/sms-identity:v1.0.0
+    image: whaleplay710/sms-identity:v1.0.4
     deploy:
       replicas: 3
       update_config:
@@ -98,7 +98,7 @@ services:
       - MASTER_KEY_FILE=/run/secrets/master_key
     networks:
       - default
-    image: whaleplay710/sms-management:v1.0.0
+    image: whaleplay710/sms-management:v1.0.4
     deploy:
       replicas: 2
       update_config:
@@ -212,7 +212,7 @@ services:
           - node.hostname == node-3
   
   sms-seeder:
-    image: whaleplay710/sms-simulator:v1.0.0
+    image: whaleplay710/sms-simulator:v1.0.4
     networks:
       - default
     environment:
@@ -245,7 +245,7 @@ services:
       SIMULATOR_FLAP_PERCENT: '5'
     networks:
       - default
-    image: whaleplay710/sms-simulator:v1.0.0
+    image: whaleplay710/sms-simulator:v1.0.4
     deploy:
       endpoint_mode: dnsrr
 
@@ -279,7 +279,7 @@ services:
       - MASTER_KEY_FILE=/run/secrets/master_key
     networks:
       - default
-    image: whaleplay710/sms-monitoring-worker:v1.0.0
+    image: whaleplay710/sms-monitoring-worker:v1.0.4
     deploy:
       replicas: 2
       update_config:
@@ -297,7 +297,7 @@ services:
       - REDIS_URI=redis://redis:6379/0
     networks:
       - default
-    image: whaleplay710/sms-agent-handler:v1.0.0
+    image: whaleplay710/sms-agent-handler:v1.0.4
     deploy:
       replicas: 3
       labels:
@@ -328,7 +328,7 @@ services:
       - REPORTING_JOB_QUEUE_SIZE=5000
     networks:
       - default
-    image: whaleplay710/sms-reporting:v1.0.0
+    image: whaleplay710/sms-reporting:v1.0.4
     deploy:
       replicas: 2
       update_config:
@@ -375,7 +375,7 @@ services:
       - LOG_FORMAT=text
     networks:
       - default
-    image: whaleplay710/sms-notification:v1.0.0
+    image: whaleplay710/sms-notification:v1.0.4
     deploy:
       replicas: 2
       update_config:
@@ -387,7 +387,7 @@ services:
     logging: *default-logging
     networks:
       - default
-    image: whaleplay710/sms-frontend:v1.0.0
+    image: whaleplay710/sms-frontend:v1.0.4
     deploy:
       replicas: 2
       labels:

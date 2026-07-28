@@ -26,7 +26,7 @@ func StartAgentPushWorker(rdb redis.UniversalClient, endpoint string) {
 		serverIDs, err := rdb.SMembers(ctx, "server:all_ids").Result()
 		if err == nil {
 			for _, id := range serverIDs {
-				method, _ := rdb.HGet(ctx, fmt.Sprintf("server:info:%s", id), "monitoring_method").Result()
+				method, _ := rdb.HGet(ctx, fmt.Sprintf("server:info:%s", id), "health_check_method").Result()
 				if method == "AGENT_PUSH" {
 					pushServerIDs = append(pushServerIDs, id)
 				}
