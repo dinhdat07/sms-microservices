@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	simhttp "sms-simulator/internal/server/http"
 	simpush "sms-simulator/internal/server/push"
@@ -38,7 +39,16 @@ func main() {
 	redisAddr := envStr("REDIS_ADDR", "localhost:6379")
 	rdb := redis.NewClient(&redis.Options{Addr: redisAddr})
 	agentEndpoint := envStr("AGENT_HANDLER_URL", "http://sms-agent-handler:8080/api/v1/agent/heartbeat")
-	simpush.StartAgentPushWorker(rdb, agentEndpoint)
+	
+	masterKey := envStr("MASTER_KEY", "0123456789abcdef0123456789abcdef")
+	if keyFile := os.Getenv("MASTER_KEY_FILE"); keyFile != "" {
+		b, err := os.ReadFile(keyFile)
+		if err == nil {
+			masterKey = strings.TrimSpace(string(b))
+		}
+	}
+	
+	simpush.StartAgentPushWorker(rdb, agentEndpoint, masterKey)
 
 	// 3. Setup API Server & Auto Flapper
 	srv := simhttp.NewServer(totalIPs, subnet)

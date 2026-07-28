@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"sms-monitoring/internal/infrastructure/logger"
 	"sms-monitoring/internal/infrastructure/messagebroker"
@@ -95,6 +96,12 @@ func (c *StreamConsumer) processMessage(ctx context.Context, msg messagebroker.M
 
 		if payload.HealthCheckMethod != "" {
 			c.rdb.HSet(ctx, key, infraRedis.ServerInfoFieldHealthCheckMethod, payload.HealthCheckMethod)
+			if payload.HealthCheckMethod == "AGENT_PUSH" {
+				c.rdb.ZAdd(ctx, infraRedis.AgentHeartbeatZSetKey, redis.Z{
+					Score:  float64(time.Now().Unix()),
+					Member: serverID,
+				})
+			}
 		} else {
 			c.rdb.HSet(ctx, key, infraRedis.ServerInfoFieldHealthCheckMethod, "ICMP")
 		}

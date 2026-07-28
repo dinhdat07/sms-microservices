@@ -40,6 +40,15 @@ func mapError(err error) error {
 		errors.Is(err, service.ErrMissingCols) {
 		return gstatus.Error(codes.InvalidArgument, err.Error())
 	}
+	if errors.Is(err, service.ErrInvalidSSHPort) ||
+		errors.Is(err, service.ErrInvalidSSHUser) ||
+		errors.Is(err, service.ErrInvalidSSHKey) ||
+		errors.Is(err, service.ErrInvalidSSHKeyFormat) ||
+		errors.Is(err, service.ErrInvalidAgentEndpoint) ||
+		errors.Is(err, service.ErrInvalidAgentEndpointFormat) ||
+		errors.Is(err, service.ErrInvalidStatusFilter) {
+		return gstatus.Error(codes.InvalidArgument, err.Error())
+	}
 	return gstatus.Error(codes.Internal, err.Error())
 }
 
@@ -68,16 +77,16 @@ func (s *ServerManagementServer) CreateServer(ctx context.Context, req *server_m
 	}
 
 	if req.GetServerName() == "" {
-		return nil, gstatus.Error(codes.InvalidArgument, "server name is required")
+		return nil, gstatus.Error(codes.InvalidArgument, "Server name is required.")
 	}
 	if len(req.GetServerName()) > 100 {
-		return nil, gstatus.Error(codes.InvalidArgument, "server name is too long")
+		return nil, gstatus.Error(codes.InvalidArgument, "Server name is too long.")
 	}
 	if req.GetIpv4() == "" {
-		return nil, gstatus.Error(codes.InvalidArgument, "ipv4 is required")
+		return nil, gstatus.Error(codes.InvalidArgument, "IPv4 address is required.")
 	}
 	if net.ParseIP(req.GetIpv4()) == nil {
-		return nil, gstatus.Error(codes.InvalidArgument, "invalid ipv4 address")
+		return nil, gstatus.Error(codes.InvalidArgument, "Invalid IPv4 address.")
 	}
 
 	input := service.CreateServerInput{
@@ -240,18 +249,18 @@ func parseCreatedDateRange(createdFrom, createdTo string) (time.Time, time.Time,
 	if createdFrom != "" {
 		from, err = time.Parse("2006-01-02", createdFrom)
 		if err != nil {
-			return time.Time{}, time.Time{}, gstatus.Error(codes.InvalidArgument, "created_from must use YYYY-MM-DD format")
+			return time.Time{}, time.Time{}, gstatus.Error(codes.InvalidArgument, "Created From must use YYYY-MM-DD format.")
 		}
 	}
 	if createdTo != "" {
 		to, err = time.Parse("2006-01-02", createdTo)
 		if err != nil {
-			return time.Time{}, time.Time{}, gstatus.Error(codes.InvalidArgument, "created_to must use YYYY-MM-DD format")
+			return time.Time{}, time.Time{}, gstatus.Error(codes.InvalidArgument, "Created To must use YYYY-MM-DD format.")
 		}
 		to = to.AddDate(0, 0, 1)
 	}
 	if !from.IsZero() && !to.IsZero() && !from.Before(to) {
-		return time.Time{}, time.Time{}, gstatus.Error(codes.InvalidArgument, "created_from must be before or equal to created_to")
+		return time.Time{}, time.Time{}, gstatus.Error(codes.InvalidArgument, "Created From must be before or equal to Created To.")
 	}
 	return from, to, nil
 }

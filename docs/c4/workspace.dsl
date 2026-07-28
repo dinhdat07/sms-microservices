@@ -32,35 +32,47 @@ workspace "SMS Microservices Architecture" "Server Management System" {
                 rateLimiter = component "Rate Limiter" "Application-level rate limiter to protect heavy operations." "Go/Redis Component"
             }
             
-            reporting = container "Reporting Service" "Handles async report generation, HTML rendering, and SMTP communication." "Go" "Microservice" {
+            reporting = container "Reporting Service" "Handles async report generation." "Go" "Microservice" {
                 reportHandler = component "Report Handler" "Accepts report requests via API." "Go gRPC/HTTP Server"
                 dailyScheduler = component "Daily Scheduler" "Cronjob triggering daily report generation." "Go Cron"
-                reportWorker = component "Report Worker" "Consumes in-memory channel to render HTML templates and generate reports." "Go Worker"
-                notifier = component "SMTP Notifier" "Builds multipart MIME email and sends it via SMTP." "Go Component"
-                eventConsumer = component "Event Consumer Worker" "Listens to server and status events to sync local DB." "Go Worker"
+                reportWorker = component "Report Worker" "Consumes in-memory channel to calculate uptime." "Go Worker"
+                eventConsumer = component "Event Consumer Worker" "Listens to server and status events to sync local DB. (Decoupled from DB errors)" "Go Worker"
                 reportService = component "Report Service" "Core business logic for report generation." "Go Service"
                 esUptimeCalc = component "ES Uptime Calculator" "Calculates uptime by querying observation logs." "Go Component"
                 reportRepo = component "Reporting Repository (PostgreSQL)" "Manages report request status and synced server data." "Go Repository"
             }
             
+            notification = container "Notification Service" "Dedicated service for sending emails and alerts." "Go" "Microservice" {
+                notificationService = component "Notification Service" "Processes notification jobs." "Go Service"
+                smtpNotifier = component "SMTP Notifier" "Builds multipart MIME email and sends it via SMTP." "Go Component"
+            }
+
+            agentHandler = container "Agent Handler Service" "Receives telemetry data from agents installed on target servers." "Go" "Microservice" {
+                agentServer = component "Agent gRPC/REST Server" "Accepts heartbeat pushes from agents." "Go gRPC/HTTP Server"
+                agentService = component "Agent Service" "Validates X-Master-Key and processes payload." "Go Service"
+                agentEventPublisher = component "Agent Event Publisher" "Publishes agent status to Redis streams." "Go Component"
+            }
+            
             monitoring = container "Monitoring Worker" "Background pool (500 concurrency) continuously executing ICMP pings against target servers." "Go" "Worker" {
-                monitorWorker = component "Ping Worker" "Pulls targets from queue and pings servers." "Go Worker"
+                monitorWorker = component "Ping Worker" "Pulls targets via BLPOP from queue and pings servers." "Go Worker"
                 monitoringService = component "Monitoring Service" "Evaluates state machine and publishes events." "Go Service"
                 observationLogger = component "Observation Logger" "Writes logs to Elasticsearch." "Go Component"
                 streamConsumer = component "Stream Consumer Worker" "Consumes ServerCreated/Updated/Deleted events to update Cache." "Go Worker"
                 cacheRepo = component "Monitoring Cache (Redis)" "Local high-speed access to server targets." "Redis Set"
-                scheduler = component "Cycle Scheduler" "Elects leader and pushes ping targets into a shared queue." "Go Component"
+                scheduler = component "Cycle Scheduler" "Elects leader (SET NX) and pushes ping targets into a shared queue." "Go Component"
                 queueRepo = component "Ping Queue (Redis)" "A shared queue storing targets to be pinged in the current cycle." "Redis List"
             }
             
             postgres = container "Primary Database" "Stores Users, Sessions, and Server Metadata." "PostgreSQL 15" "Database"
-            redis = container "Event Broker & Cache" "Redis Streams for pub/sub events, token blacklist, and target cache. (Persistent AOF+RDB)" "Redis 7" "Message Broker"
+            redis = container "Event Broker & Cache" "Redis Streams for pub/sub events (with MaxLen protection), token blacklist, and target cache. (Persistent AOF+RDB)" "Redis 7" "Message Broker"
             es = container "Time-Series DB" "Stores millions of ICMP Observation Logs for fast uptime aggregation." "Elasticsearch 8" "Database"
         }
 
         # Context level relationships
         admin -> sms "Manages servers, requests reports, and views status via"
-        sms -> targetServers "Pings continuously using ICMP protocol"
+        sms -> targetServers "Checks status continuously using ICMP, SSH, and HTTP protocols"
+        targetServers -> sms "Pushes telemetry/heartbeat (Agent Push) via"
+        targetServers -> sms "Pushes telemetry/heartbeat (Agent Push) via"
         sms -> smtp "Sends email reports and alerts via"
         smtp -> admin "Delivers emails to"
 
@@ -85,7 +97,13 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         reporting -> postgres "Reads/Writes Report Requests & Synced Servers" "TCP/5432"
         reporting -> redis "Consumes Server CRUD & Status events" "Redis Stream"
         reporting -> es "Aggregates uptime data from" "HTTP/9200"
-        reporting -> smtp "Sends emails via" "SMTP"
+        reporting -> notification "Triggers email sending via" "gRPC/MessageBroker"
+
+        notification -> smtp "Sends emails via" "SMTP"
+
+        targetServers -> traefik "Pushes heartbeat" "HTTPS/REST"
+        traefik -> agentHandler "Routes Agent Push API requests" "HTTP/gRPC"
+        agentHandler -> redis "Publishes Agent Status events" "Redis Stream"
 
         monitoring -> redis "Reads targets, publishes Status events, consumes CRUD events" "Redis Stream / Cache"
         monitoring -> es "Bulk inserts observation logs to" "HTTP/9200"
@@ -133,10 +151,22 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         observationLogger -> es "Bulk inserts logs" "HTTP/9200"
         monitoringService -> cacheRepo "Gets and Sets Server State"
         monitoringService -> redis "Publishes to stream sms.events.server_status" "XADD"
+
+        # Component level relationships (Agent Handler)
+        traefik -> agentServer "Routes /api/v1/agent/*" "HTTP"
+        agentServer -> agentService "Delegates to"
+        agentService -> agentEventPublisher "Publishes via"
+        agentEventPublisher -> redis "Publishes Agent Status event" "XADD"
+
+        # Component level relationships (Agent Handler)
+        traefik -> agentServer "Routes /api/v1/agent/*" "HTTP"
+        agentServer -> agentService "Delegates to"
+        agentService -> agentEventPublisher "Publishes via"
+        agentEventPublisher -> redis "Publishes Agent Status event" "XADD"
         cacheRepo -> redis "Commands" "TCP/6379"
         queueRepo -> redis "Commands" "TCP/6379"
 
-        # Component level relationships (Reporting)
+        # Component level relationships (Reporting & Notification & Agent)
         traefik -> reportHandler "Routes /api/v1/servers/report/*" "HTTP/gRPC"
         dailyScheduler -> redis "Acquires lock (SET NX) to prevent duplicate emails" "TCP/6379"
         dailyScheduler -> reportService "Triggers Daily Reporting"
@@ -147,10 +177,17 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         eventConsumer -> reportRepo "Syncs reporting_servers table"
         reportWorker -> reportRepo "Updates request status & reads synced servers"
         reportWorker -> esUptimeCalc "Delegates uptime calculation"
-        reportWorker -> notifier "Delegates email sending"
+        reportWorker -> notificationService "Delegates notification sending"
         esUptimeCalc -> es "Queries Aggregation (sms_observation_logs)" "HTTP/9200"
-        notifier -> smtp "Sends compiled email"
         reportRepo -> postgres "Queries" "TCP/5432"
+
+        notificationService -> smtpNotifier "Invokes email building"
+        smtpNotifier -> smtp "Sends compiled email"
+
+        traefik -> agentServer "Routes /api/v1/agent/*" "HTTP/gRPC"
+        agentServer -> agentService "Delegates to"
+        agentService -> agentEventPublisher "Pushes validated state"
+        agentEventPublisher -> redis "XADD sms.events.server_status"
         
         # Deployment Environment (Docker Swarm)
         deploymentEnvironment "Production" {
@@ -165,6 +202,8 @@ workspace "SMS Microservices Architecture" "Server Management System" {
                     managementInstance = containerInstance management
                     reportingInstance = containerInstance reporting
                     monitoringInstance = containerInstance monitoring
+                    notificationInstance = containerInstance notification
+                    agentHandlerInstance = containerInstance agentHandler
                     spaInstance = containerInstance spa
                     swaggerInstance = containerInstance swaggerUI
                 }
@@ -244,8 +283,8 @@ workspace "SMS Microservices Architecture" "Server Management System" {
 
         dynamic management "Management_Create" "Detailed sequence for creating a server with Outbox Pattern" {
             spa -> traefik "1. POST /api/v1/servers"
-            traefik -> serverServer "2. Routes request"
-            serverServer -> rateLimiter "3. Check quota"
+            traefik -> serverServer "2. Routes request (with X-User-Role)"
+            serverServer -> rateLimiter "3. Check quota & Validate RBAC"
             rateLimiter -> redis "4. INCR"
             serverServer -> serverService "5. CreateServer(input)"
             serverService -> serverRepo "6. BEGIN Transaction"
@@ -297,8 +336,8 @@ workspace "SMS Microservices Architecture" "Server Management System" {
             reportRepo -> postgres "8. SELECT FROM reporting_servers"
             reportWorker -> esUptimeCalc "9. CalculateUptime()"
             esUptimeCalc -> es "10. Elasticsearch Aggregation Query"
-            reportWorker -> notifier "11. SendReportEmail(Render HTML)"
-            notifier -> smtp "12. Send SMTP Email"
+            reportWorker -> notificationService "11. Dispatch Notification Job"
+            notificationService -> smtpNotifier "12. Build & Send Email"
             reportWorker -> reportRepo "13. UpdateReportStatus(COMPLETED)"
             reportRepo -> postgres "14. UPDATE report_requests"
             autoLayout

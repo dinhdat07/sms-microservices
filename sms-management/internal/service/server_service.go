@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"sms-management/internal/domain"
 	"sms-management/internal/infrastructure/security"
@@ -12,9 +14,17 @@ import (
 )
 
 var (
-	ErrServerNotFound = errors.New("server not found")
-	ErrIPv4Exists     = errors.New("ipv4 already exists")
-	ErrNameExists     = errors.New("server name already exists")
+	ErrServerNotFound = errors.New("Server not found.")
+	ErrIPv4Exists     = errors.New("This IPv4 address already exists.")
+	ErrNameExists     = errors.New("This Server name already exists.")
+
+	ErrInvalidSSHPort             = errors.New("SSH port must be between 1 and 65535.")
+	ErrInvalidSSHUser             = errors.New("SSH user is required for SSH health check.")
+	ErrInvalidSSHKey              = errors.New("SSH private key is required for SSH health check.")
+	ErrInvalidSSHKeyFormat        = errors.New("SSH private key must be a valid format (contains PRIVATE KEY).")
+	ErrInvalidAgentEndpoint       = errors.New("Agent endpoint is required for AGENT_PULL.")
+	ErrInvalidAgentEndpointFormat = errors.New("Agent endpoint must be a valid absolute URL.")
+	ErrInvalidStatusFilter        = errors.New("Invalid status filter.")
 )
 
 type CreateServerInput struct {
@@ -84,13 +94,25 @@ func (s *serverService) CreateServer(ctx context.Context, input CreateServerInpu
 	}
 
 	if input.HealthCheckMethod == domain.MethodSSH {
-		if input.SSHPort <= 0 || input.SSHUser == "" || input.SSHKey == "" {
-			return nil, errors.New("ssh_port, ssh_user, and ssh_key are required for SSH health check")
+		if input.SSHPort <= 0 || input.SSHPort > 65535 {
+			return nil, ErrInvalidSSHPort
+		}
+		if input.SSHUser == "" {
+			return nil, ErrInvalidSSHUser
+		}
+		if input.SSHKey == "" {
+			return nil, ErrInvalidSSHKey
+		}
+		if !strings.Contains(input.SSHKey, "PRIVATE KEY") {
+			return nil, ErrInvalidSSHKeyFormat
 		}
 	}
 	if input.HealthCheckMethod == domain.MethodAgentPull {
 		if input.AgentEndpoint == "" {
-			return nil, errors.New("agent_endpoint is required for AGENT_PULL health check")
+			return nil, ErrInvalidAgentEndpoint
+		}
+		if _, err := url.ParseRequestURI(input.AgentEndpoint); err != nil {
+			return nil, ErrInvalidAgentEndpointFormat
 		}
 	}
 
@@ -171,13 +193,22 @@ func (s *serverService) UpdateServer(ctx context.Context, id string, input Updat
 	}
 
 	if input.HealthCheckMethod == domain.MethodSSH {
-		if input.SSHPort <= 0 || input.SSHUser == "" {
-			return nil, errors.New("ssh_port and ssh_user are required for SSH health check")
+		if input.SSHPort <= 0 || input.SSHPort > 65535 {
+			return nil, ErrInvalidSSHPort
+		}
+		if input.SSHUser == "" {
+			return nil, ErrInvalidSSHUser
+		}
+		if input.SSHKey != "" && !strings.Contains(input.SSHKey, "PRIVATE KEY") {
+			return nil, ErrInvalidSSHKeyFormat
 		}
 	}
 	if input.HealthCheckMethod == domain.MethodAgentPull {
 		if input.AgentEndpoint == "" {
-			return nil, errors.New("agent_endpoint is required for AGENT_PULL health check")
+			return nil, ErrInvalidAgentEndpoint
+		}
+		if _, err := url.ParseRequestURI(input.AgentEndpoint); err != nil {
+			return nil, ErrInvalidAgentEndpointFormat
 		}
 	}
 
@@ -274,7 +305,7 @@ func (s *serverService) SearchServers(ctx context.Context, filter repository.Ser
 	}
 
 	if filter.Status != "" && !domain.ServerStatus(filter.Status).IsValid() {
-		return nil, 0, errors.New("invalid status filter")
+		return nil, 0, ErrInvalidStatusFilter
 	}
 
 	return s.repo.Search(ctx, filter)

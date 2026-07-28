@@ -127,12 +127,18 @@ func RunSeed(db *gorm.DB, rdb redis.UniversalClient, count int, simulatorHost st
 				"health_check_method": method,
 			}
 
-			if method == "SSH" {
+			switch method {
+			case "SSH":
 				infoMap["ssh_port"] = "2222"
 				infoMap["ssh_user"] = "sim"
 				infoMap["ssh_key"] = ""
-			} else if method == "AGENT_PULL" {
+			case "AGENT_PULL":
 				infoMap["agent_endpoint"] = fmt.Sprintf("http://%s:8080/health", simulatorHost)
+			case "AGENT_PUSH":
+				redisPipeline.ZAdd(ctx, "monitoring:agent:heartbeats", redis.Z{
+					Score:  float64(time.Now().Unix()),
+					Member: id,
+				})
 			}
 
 			redisKey := fmt.Sprintf("server:info:%s", id)

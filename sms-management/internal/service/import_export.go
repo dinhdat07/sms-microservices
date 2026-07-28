@@ -20,11 +20,11 @@ const maxFileSize = 2 * 1024 * 1024 // 2MB used to limit the size of the importe
 const batchSize = 100               // 100 servers per batch
 
 var (
-	ErrFileTooLarge  = errors.New("file size exceeds 2MB limit")
-	ErrInvalidFormat = errors.New("invalid excel file format")
-	ErrNoSheets      = errors.New("no sheets found in the excel file")
-	ErrEmptyFile     = errors.New("empty excel file")
-	ErrMissingCols   = errors.New("missing required columns: 'Server Name' or 'IPv4'")
+	ErrFileTooLarge  = errors.New("File size exceeds 2MB limit.")
+	ErrInvalidFormat = errors.New("Invalid file format. Only .xlsx is supported.")
+	ErrNoSheets      = errors.New("No sheets found in the Excel file.")
+	ErrEmptyFile     = errors.New("The Excel file is empty.")
+	ErrMissingCols   = errors.New("The Excel file is missing required columns: 'Server Name' or 'IPv4'.")
 )
 
 func (s *serverService) ImportServers(ctx context.Context, fileBytes []byte) (*ImportResult, error) {

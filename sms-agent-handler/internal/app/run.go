@@ -23,10 +23,15 @@ func (a *App) Run() error {
 
 	// Initialize Handlers
 	heartbeatHandler := rest.NewHeartbeatHandler(a.RedisClient, a.logger)
+	authMiddleware := rest.NewMasterKeyAuthMiddleware(a.cfg.MasterKey, a.logger)
 
 	// Setup Router
 	r := mux.NewRouter()
-	r.HandleFunc("/api/v1/agent/heartbeat", heartbeatHandler.HandleHeartbeat).Methods("POST")
+	
+	// Create subrouter for agent API
+	agentRouter := r.PathPrefix("/api/v1/agent").Subrouter()
+	agentRouter.Use(authMiddleware.Middleware)
+	agentRouter.HandleFunc("/heartbeat", heartbeatHandler.HandleHeartbeat).Methods("POST")
 
 	// HTTP Server
 	a.httpServer = &http.Server{

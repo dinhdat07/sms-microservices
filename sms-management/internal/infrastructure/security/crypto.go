@@ -8,7 +8,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"os"
+
+	"sms-management/internal/config"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 )
 
 func getMasterKey() ([]byte, error) {
-	keyStr := os.Getenv("MASTER_KEY")
+	keyStr := config.GetEnvDefault("MASTER_KEY", "")
 	if keyStr == "" {
 		return nil, ErrMasterKeyNotSet
 	}
