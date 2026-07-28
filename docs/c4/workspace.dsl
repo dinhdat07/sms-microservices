@@ -72,7 +72,6 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         admin -> sms "Manages servers, requests reports, and views status via"
         sms -> targetServers "Checks status continuously using ICMP, SSH, and HTTP protocols"
         targetServers -> sms "Pushes telemetry/heartbeat (Agent Push) via"
-        targetServers -> sms "Pushes telemetry/heartbeat (Agent Push) via"
         sms -> smtp "Sends email reports and alerts via"
         smtp -> admin "Delivers emails to"
 
@@ -152,17 +151,6 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         monitoringService -> cacheRepo "Gets and Sets Server State"
         monitoringService -> redis "Publishes to stream sms.events.server_status" "XADD"
 
-        # Component level relationships (Agent Handler)
-        traefik -> agentServer "Routes /api/v1/agent/*" "HTTP"
-        agentServer -> agentService "Delegates to"
-        agentService -> agentEventPublisher "Publishes via"
-        agentEventPublisher -> redis "Publishes Agent Status event" "XADD"
-
-        # Component level relationships (Agent Handler)
-        traefik -> agentServer "Routes /api/v1/agent/*" "HTTP"
-        agentServer -> agentService "Delegates to"
-        agentService -> agentEventPublisher "Publishes via"
-        agentEventPublisher -> redis "Publishes Agent Status event" "XADD"
         cacheRepo -> redis "Commands" "TCP/6379"
         queueRepo -> redis "Commands" "TCP/6379"
 
@@ -244,6 +232,16 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         }
 
         component reporting "ReportingComponents" {
+            include *
+            autoLayout
+        }
+
+        component notification "NotificationComponents" {
+            include *
+            autoLayout
+        }
+
+        component agentHandler "AgentHandlerComponents" {
             include *
             autoLayout
         }
@@ -398,16 +396,17 @@ workspace "SMS Microservices Architecture" "Server Management System" {
             serverServer -> serverService "3. ExportServers()"
             serverService -> serverRepo "4. Query cursor (Chunking)"
             serverRepo -> postgres "5. SELECT Stream"
-                        serverService -> serverServer "7. Format to CSV chunk"
+            postgres -> serverRepo "6. Return Data Stream"
+            serverService -> serverServer "7. Format to CSV chunk"
             serverServer -> traefik "8. HTTP Chunked Response"
             traefik -> spa "9. Stream to file"
             autoLayout
         }
 
         dynamic management "Management_Status_Consumer" "Worker updating DB from Monitoring Events" {
-                        redis -> statusConsumer "1. Delivers ServerStatusChanged event via XREAD"
-            statusConsumer -> serverRepo "3. UpdateServerStatus(server_id, status)"
-            serverRepo -> postgres "4. UPDATE SERVERS SET current_status"
+            redis -> statusConsumer "1. Delivers ServerStatusChanged event via XREAD"
+            statusConsumer -> serverRepo "2. UpdateServerStatus(server_id, status)"
+            serverRepo -> postgres "3. UPDATE SERVERS SET current_status"
             autoLayout
         }
 
@@ -421,9 +420,20 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         }
 
         dynamic reporting "Reporting_Event_Consumer" "Data replication from Management via Event Bus" {
-                        redis -> eventConsumer "1. Delivers ServerCreated/Deleted event via XREAD"
-            eventConsumer -> reportRepo "3. Sync Server Data"
-            reportRepo -> postgres "4. INSERT/DELETE REPORTING_SERVERS"
+            redis -> eventConsumer "1. Delivers ServerCreated/Deleted event via XREAD"
+            eventConsumer -> reportRepo "2. Sync Server Data"
+            reportRepo -> postgres "3. INSERT/DELETE REPORTING_SERVERS"
+            autoLayout
+        }
+
+        dynamic agentHandler "Agent_Push_Heartbeat" "Detailed sequence for Agent pushing telemetry" {
+            targetServers -> traefik "1. POST /api/v1/agent/heartbeat (X-Master-Key)"
+            traefik -> agentServer "2. Routes request"
+            agentServer -> agentService "3. Validate X-Master-Key & Parse Payload"
+            agentService -> agentEventPublisher "4. Push Validated State"
+            agentEventPublisher -> redis "5. XADD sms.events.server_status"
+            agentServer -> traefik "6. Return 200 OK"
+            traefik -> targetServers "7. Return Response"
             autoLayout
         }
 
