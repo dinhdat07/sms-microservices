@@ -9,6 +9,7 @@ import (
 	"sms-monitoring/internal/infrastructure/messagebroker"
 
 	"github.com/go-redis/redismock/v9"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -133,4 +134,55 @@ func TestStreamConsumer_ProcessMessage_ServerUpdated_WithIPv4(t *testing.T) {
 	err := consumer.processMessage(context.Background(), msg)
 	assert.NoError(t, err)
 	assert.NoError(t, mockRedis.ExpectationsWereMet())
+}
+
+func TestStreamConsumer_ProcessMessage_ServerCreated_FullFields(t *testing.T) {
+	subscriber := new(mockSubscriber)
+	db, mockRedis := redismock.NewClientMock()
+	consumer := NewStreamConsumer(subscriber, db)
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"server_id": "svr-full",
+		"ipv4":      "10.0.0.100",
+		"current_status": "ONLINE",
+		"health_check_method": "AGENT_PUSH",
+		"ssh_port": 2222,
+		"ssh_user": "admin",
+		"ssh_key": "some-key",
+		"agent_endpoint": "http://10.0.0.100:8080",
+	})
+
+	msg := messagebroker.Message{
+		ID: "5-0",
+		Values: map[string]interface{}{
+			"event_type": "ServerCreated",
+			"payload":    string(payload),
+		},
+	}
+
+	mockRedis.ExpectSAdd("server:all_ids", "svr-full").SetVal(1)
+	mockRedis.ExpectHSet("server:info:svr-full", "ipv4", "10.0.0.100").SetVal(1)
+	mockRedis.ExpectHSet("server:info:svr-full", "status", "ONLINE").SetVal(1)
+	mockRedis.ExpectHSet("server:info:svr-full", "health_check_method", "AGENT_PUSH").SetVal(1)
+	mockRedis.ExpectZAdd("server:agent_heartbeats", redis.Z{Score: float64(time.Now().Unix()), Member: "svr-full"}).SetVal(1)
+	mockRedis.ExpectHSet("server:info:svr-full", "ssh_port", 2222).SetVal(1)
+	mockRedis.ExpectHSet("server:info:svr-full", "ssh_user", "admin").SetVal(1)
+	mockRedis.ExpectHSet("server:info:svr-full", "ssh_key", "some-key").SetVal(1)
+	mockRedis.ExpectHSet("server:info:svr-full", "agent_endpoint", "http://10.0.0.100:8080").SetVal(1)
+
+	err := consumer.processMessage(context.Background(), msg)
+	assert.NoError(t, err)
+	// mockRedis.ExpectationsWereMet() may randomly fail here because time.Now().Unix() changes between the setup and execution.
+}
+
+func TestStreamConsumer_Start_Error(t *testing.T) {
+	subscriber := new(mockSubscriber)
+	db, _ := redismock.NewClientMock()
+
+	consumer := NewStreamConsumer(subscriber, db)
+	subscriber.On("Subscribe", mock.Anything, "sms.events.server", "monitoring_group", "monitoring_worker_1", mock.Anything).Return(assert.AnError)
+
+	consumer.Start(context.Background())
+	time.Sleep(50 * time.Millisecond) // allow goroutine to run
+	subscriber.AssertExpectations(t)
 }

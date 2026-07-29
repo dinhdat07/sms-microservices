@@ -29,4 +29,17 @@ else
     exit 1
 fi
 
+# Run a background loop to update the route if simulator IP changes
+(
+    while true; do
+        CURRENT_IP=$(ping -c 1 simulator 2>/dev/null | awk -F'[()]' '/PING/ { print $2 }')
+        if [ -n "$CURRENT_IP" ] && [ "$CURRENT_IP" != "$SIMULATOR_IP" ]; then
+            echo "Simulator IP changed from $SIMULATOR_IP to $CURRENT_IP. Updating route..."
+            ip route change 10.1.0.0/16 via $CURRENT_IP 2>/dev/null || ip route add 10.1.0.0/16 via $CURRENT_IP
+            SIMULATOR_IP=$CURRENT_IP
+        fi
+        sleep 10
+    done
+) &
+
 exec /app/monitoring-worker

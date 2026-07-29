@@ -13,6 +13,7 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/mock"
+	"github.com/go-redis/redismock/v9"
 )
 
 func TestAgentSweeper_StartAndSweep(t *testing.T) {
@@ -74,4 +75,26 @@ func TestAgentSweeper_StartAndSweep(t *testing.T) {
 	}
 	
 	monService.AssertExpectations(t)
+}
+
+func TestAgentSweeper_ZRangeError(t *testing.T) {
+	// Create a mock redis client
+	db, mockRedis := redismock.NewClientMock()
+	monService := mocks.NewMonitoringService(t)
+
+	sweeper := NewAgentSweeper(db, monService, 10*time.Millisecond, 120)
+
+	// Calculate exact max
+	expiredScore := fmt.Sprintf("%d", time.Now().Unix()-120)
+
+	// Simulate error on ZRangeByScore
+	mockRedis.ExpectZRangeByScore("server:agent_heartbeats", &redis.ZRangeBy{
+		Min: "-inf",
+		Max: expiredScore,
+	}).SetErr(errors.New("redis error"))
+
+	// Call sweep directly
+	sweeper.sweep(context.Background())
+
+	monService.AssertNotCalled(t, "Evaluate")
 }
