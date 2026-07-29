@@ -58,7 +58,7 @@ func handleConn(nConn net.Conn, config *ssh.ServerConfig) {
 
 	for newChannel := range chans {
 		if newChannel.ChannelType() != "session" {
-			newChannel.Reject(ssh.UnknownChannelType, "unknown channel type")
+			_ = newChannel.Reject(ssh.UnknownChannelType, "unknown channel type")
 			continue
 		}
 
@@ -69,13 +69,22 @@ func handleConn(nConn net.Conn, config *ssh.ServerConfig) {
 
 		go func(in <-chan *ssh.Request) {
 			for req := range in {
-				if req.Type == "exec" {
-					// Dummy execution: Always return success for any command
-					req.Reply(true, nil)
-					channel.SendRequest("exit-status", false, ssh.Marshal(struct{ Status uint32 }{0}))
-					channel.Close()
-				} else {
-					req.Reply(false, nil)
+				switch req.Type {
+				case "exec":
+					if req.WantReply {
+						_ = req.Reply(true, nil)
+						_, _ = channel.SendRequest("exit-status", false, ssh.Marshal(struct{ Status uint32 }{0}))
+					}
+					_ = channel.Close()
+				case "env":
+					if req.WantReply {
+						_ = req.Reply(true, nil)
+						_, _ = channel.SendRequest("exit-status", false, ssh.Marshal(struct{ Status uint32 }{0}))
+					}
+				default:
+					if req.WantReply {
+						_ = req.Reply(false, nil)
+					}
 				}
 			}
 		}(requests)

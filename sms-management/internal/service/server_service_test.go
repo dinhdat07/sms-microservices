@@ -582,7 +582,7 @@ func TestSearchServers_InvalidStatus(t *testing.T) {
 	_, _, err := svc.SearchServers(context.Background(), repository.ServerListFilter{
 		Status: "INVALID_STATUS",
 	})
-	assert.ErrorContains(t, err, "invalid status filter")
+	assert.ErrorContains(t, err, "Invalid status filter")
 }
 
 

@@ -67,6 +67,7 @@ func (h *HeartbeatHandler) HandleHeartbeat(w http.ResponseWriter, r *http.Reques
 		h.logger.Error("Failed to publish heartbeat event", zap.Error(err), zap.String("server_id", payload.ServerID))
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status": "ok"}`))
+	_, _ = w.Write([]byte(`{"status": "ok"}`))
 }

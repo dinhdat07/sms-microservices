@@ -47,13 +47,13 @@ func TestEvaluate_SecondFailureGoesOffline(t *testing.T) {
 	service := NewMonitoringService(publisher, stateStore, esLogger, 2)
 
 	stateStore.On("GetServerState", ctx, serverID).Return(&monitoringDomain.ServerState{Status: "ONLINE", RetryCount: 1}, nil).Once()
-	stateStore.On("SetServerState", ctx, serverID, "OFFLINE", 0).Return(nil).Once()
+	stateStore.On("SetServerState", ctx, serverID, "OFFLINE", 2).Return(nil).Once()
 	esLogger.On("LogObservation", ctx, serverID, false).Return(nil).Once()
 
 	payload, _ := json.Marshal(map[string]interface{}{
 		"server_id":   serverID,
 		"status":      "OFFLINE",
-		"retry_count": 0,
+		"retry_count": 2,
 	})
 	mockRedis.ExpectXAdd(&redis.XAddArgs{
 		Stream: "sms.events.server_status",
@@ -156,7 +156,7 @@ func TestEvaluate_UnknownState(t *testing.T) {
 
 	esLogger.On("LogObservation", ctx, serverID, false).Return(nil).Once()
 	stateStore.On("GetServerState", ctx, serverID).Return(&monitoringDomain.ServerState{Status: "", RetryCount: 0}, nil).Once()
-	stateStore.On("SetServerState", ctx, serverID, "OFFLINE", 0).Return(nil).Once()
+	stateStore.On("SetServerState", ctx, serverID, "OFFLINE", 2).Return(nil).Once()
 
 	err := service.Evaluate(ctx, serverID, "1.1.1.1", false)
 	assert.NoError(t, err)

@@ -28,11 +28,11 @@ func TestAgentSweeper_StartAndSweep(t *testing.T) {
 	now := time.Now().Unix()
 	
 	// Server 1: Expired (Score < now - 120)
-	mr.ZAdd(infraRedis.AgentHeartbeatZSetKey, float64(now-130), "srv-1")
+	mr.ZAdd(infraRedis.AgentHeartbeatZSetKey, float64(now-130), "srv-1") //nolint:errcheck
 	// Server 2: Also Expired (will mock HGet success)
-	mr.ZAdd(infraRedis.AgentHeartbeatZSetKey, float64(now-130), "srv-2")
+	mr.ZAdd(infraRedis.AgentHeartbeatZSetKey, float64(now-130), "srv-2") //nolint:errcheck
 	// Server 3: Not expired
-	mr.ZAdd(infraRedis.AgentHeartbeatZSetKey, float64(now-10), "srv-3")
+	mr.ZAdd(infraRedis.AgentHeartbeatZSetKey, float64(now-10), "srv-3") //nolint:errcheck
 
 	mr.HSet(fmt.Sprintf(infraRedis.ServerInfoKeyFmt, "srv-2"), infraRedis.ServerInfoFieldIPv4, "1.1.1.1")
 
