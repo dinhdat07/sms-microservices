@@ -8,6 +8,7 @@ import (
 	"sms-reporting/internal/domain"
 	repoMock "sms-reporting/internal/repository/mock"
 	domainMock "sms-reporting/internal/domain/mock"
+	mbMock "sms-reporting/internal/infrastructure/messagebroker/mock"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -17,9 +18,9 @@ import (
 func TestReportingWorker_Lifecycle(t *testing.T) {
 	repo := new(repoMock.MockReportingRepository)
 	uptimeCalc := new(domainMock.MockUptimeCalculator)
-	notifier := new(domainMock.MockReportNotifier)
+	publisher := new(mbMock.MockPublisher)
 
-	worker := NewReportingWorker(repo, uptimeCalc, 2, 10, notifier)
+	worker := NewReportingWorker(repo, uptimeCalc, 2, 10, publisher, "test_stream")
 
 	ctx := context.Background()
 	worker.Start(ctx)
@@ -41,7 +42,7 @@ func TestReportingWorker_Lifecycle(t *testing.T) {
 	
 	uptimeCalc.On("CalculateUptime", ctx, req.StartTime, req.EndTime).Return(99.5, nil)
 	
-	notifier.On("SendReportEmail", ctx, "test@example.com", mock.Anything, mock.Anything).Return(nil)
+	publisher.On("Publish", ctx, "test_stream", mock.Anything).Return(nil)
 	repo.On("UpdateReportStatus", ctx, req.ID.String(), domain.ReportStatusCompleted).Return(nil)
 
 	worker.EnqueueReport(req)
@@ -51,15 +52,15 @@ func TestReportingWorker_Lifecycle(t *testing.T) {
 
 	repo.AssertExpectations(t)
 	uptimeCalc.AssertExpectations(t)
-	notifier.AssertExpectations(t)
+	publisher.AssertExpectations(t)
 }
 
 func TestReportingWorker_ProcessReport_StatusUpdateFail(t *testing.T) {
 	repo := new(repoMock.MockReportingRepository)
 	uptimeCalc := new(domainMock.MockUptimeCalculator)
-	notifier := new(domainMock.MockReportNotifier)
+	publisher := new(mbMock.MockPublisher)
 
-	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, notifier)
+	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, publisher, "test_stream")
 	worker.Start(context.Background())
 
 	req := &domain.ReportRequest{ID: uuid.New()}
@@ -90,9 +91,9 @@ func TestHealthLabel(t *testing.T) {
 func TestReportingWorker_DoWork_GetServerCountOnlineFail(t *testing.T) {
 	repo := new(repoMock.MockReportingRepository)
 	uptimeCalc := new(domainMock.MockUptimeCalculator)
-	notifier := new(domainMock.MockReportNotifier)
+	publisher := new(mbMock.MockPublisher)
 
-	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, notifier)
+	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, publisher, "test_stream")
 	worker.Start(context.Background())
 
 	req := &domain.ReportRequest{ID: uuid.New()}
@@ -111,9 +112,9 @@ func TestReportingWorker_DoWork_GetServerCountOnlineFail(t *testing.T) {
 func TestReportingWorker_DoWork_GetServerCountOfflineFail(t *testing.T) {
 	repo := new(repoMock.MockReportingRepository)
 	uptimeCalc := new(domainMock.MockUptimeCalculator)
-	notifier := new(domainMock.MockReportNotifier)
+	publisher := new(mbMock.MockPublisher)
 
-	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, notifier)
+	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, publisher, "test_stream")
 	worker.Start(context.Background())
 
 	req := &domain.ReportRequest{ID: uuid.New()}
@@ -131,7 +132,7 @@ func TestReportingWorker_DoWork_GetServerCountOfflineFail(t *testing.T) {
 }
 
 func TestNewReportingWorker_Defaults(t *testing.T) {
-	worker := NewReportingWorker(nil, nil, 0, 0, nil).(*reportingWorkerImpl)
+	worker := NewReportingWorker(nil, nil, 0, 0, nil, "test_stream").(*reportingWorkerImpl)
 	assert.Equal(t, 5, worker.workerCount)
 	assert.Equal(t, 100, cap(worker.jobQueue))
 }
@@ -139,9 +140,9 @@ func TestNewReportingWorker_Defaults(t *testing.T) {
 func TestReportingWorker_DoWork_ESError(t *testing.T) {
 	repo := new(repoMock.MockReportingRepository)
 	uptimeCalc := new(domainMock.MockUptimeCalculator)
-	notifier := new(domainMock.MockReportNotifier)
+	publisher := new(mbMock.MockPublisher)
 
-	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, notifier)
+	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, publisher, "test_stream")
 	worker.Start(context.Background())
 
 	req := &domain.ReportRequest{ID: uuid.New()}
@@ -165,9 +166,9 @@ func TestReportingWorker_DoWork_ESError(t *testing.T) {
 func TestReportingWorker_DoWork_NotifierError(t *testing.T) {
 	repo := new(repoMock.MockReportingRepository)
 	uptimeCalc := new(domainMock.MockUptimeCalculator)
-	notifier := new(domainMock.MockReportNotifier)
+	publisher := new(mbMock.MockPublisher)
 
-	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, notifier)
+	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, publisher, "test_stream")
 	worker.Start(context.Background())
 
 	req := &domain.ReportRequest{ID: uuid.New()}
@@ -180,7 +181,7 @@ func TestReportingWorker_DoWork_NotifierError(t *testing.T) {
 	
 	uptimeCalc.On("CalculateUptime", mock.Anything, mock.Anything, mock.Anything).Return(float64(100), nil)
 	
-	notifier.On("SendReportEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError)
+	publisher.On("Publish", mock.Anything, "test_stream", mock.Anything).Return(assert.AnError)
 	
 	repo.On("UpdateReportStatus", mock.Anything, req.ID.String(), domain.ReportStatusFailed).Return(nil)
 
@@ -193,9 +194,9 @@ func TestReportingWorker_DoWork_NotifierError(t *testing.T) {
 func TestReportingWorker_DoWork_GetServerCountTotalFail(t *testing.T) {
 	repo := new(repoMock.MockReportingRepository)
 	uptimeCalc := new(domainMock.MockUptimeCalculator)
-	notifier := new(domainMock.MockReportNotifier)
+	publisher := new(mbMock.MockPublisher)
 
-	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, notifier)
+	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, publisher, "test_stream")
 	worker.Start(context.Background())
 
 	req := &domain.ReportRequest{ID: uuid.New()}
@@ -213,9 +214,9 @@ func TestReportingWorker_DoWork_GetServerCountTotalFail(t *testing.T) {
 func TestReportingWorker_ProcessReport_FinalStatusUpdateFail(t *testing.T) {
 	repo := new(repoMock.MockReportingRepository)
 	uptimeCalc := new(domainMock.MockUptimeCalculator)
-	notifier := new(domainMock.MockReportNotifier)
+	publisher := new(mbMock.MockPublisher)
 
-	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, notifier)
+	worker := NewReportingWorker(repo, uptimeCalc, 1, 10, publisher, "test_stream")
 	worker.Start(context.Background())
 
 	req := &domain.ReportRequest{ID: uuid.New()}
@@ -230,3 +231,4 @@ func TestReportingWorker_ProcessReport_FinalStatusUpdateFail(t *testing.T) {
 
 	repo.AssertExpectations(t)
 }
+

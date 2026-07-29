@@ -39,7 +39,7 @@ func TestCreateServer_Success(t *testing.T) {
 	repo.On("GetByIPv4", ctx, "1.2.3.4").Return(nil, nil).Once()
 	repo.On("Create", ctx, mock.AnythingOfType("*domain.Server")).Return(nil).Once()
 
-	server, err := svc.CreateServer(ctx, service.CreateServerInput{ServerName: "test-server", IPv4: "1.2.3.4"})
+	server, err := svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "test-server", IPv4: "1.2.3.4"})
 
 	assert.NoError(t, err)
 	assert.Equal(t, "test-server", server.ServerName)
@@ -58,7 +58,7 @@ func TestCreateServer_NameExists(t *testing.T) {
 	existing := &domain.Server{ServerID: "existing-id", ServerName: "test-server", IPv4: "5.6.7.8"}
 	repo.On("GetByName", ctx, "test-server").Return(existing, nil).Once()
 
-	_, err := svc.CreateServer(ctx, service.CreateServerInput{ServerName: "test-server", IPv4: "1.2.3.4"})
+	_, err := svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "test-server", IPv4: "1.2.3.4"})
 
 	assert.ErrorIs(t, err, service.ErrNameExists)
 }
@@ -76,7 +76,7 @@ func TestCreateServer_IPv4Exists(t *testing.T) {
 	repo.On("GetByName", ctx, "test-server").Return(nil, nil).Once()
 	repo.On("GetByIPv4", ctx, "1.2.3.4").Return(existing, nil).Once()
 
-	_, err := svc.CreateServer(ctx, service.CreateServerInput{ServerName: "test-server", IPv4: "1.2.3.4"})
+	_, err := svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "test-server", IPv4: "1.2.3.4"})
 
 	assert.ErrorIs(t, err, service.ErrIPv4Exists)
 }
@@ -95,7 +95,7 @@ func TestCreateServer_DBError(t *testing.T) {
 	repo.On("GetByIPv4", ctx, "1.2.3.4").Return(nil, nil).Once()
 	repo.On("Create", ctx, mock.AnythingOfType("*domain.Server")).Return(dbErr).Once()
 
-	_, err := svc.CreateServer(ctx, service.CreateServerInput{ServerName: "test-server", IPv4: "1.2.3.4"})
+	_, err := svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "test-server", IPv4: "1.2.3.4"})
 
 	assert.ErrorIs(t, err, dbErr)
 }
@@ -115,7 +115,7 @@ func TestUpdateServer_Success(t *testing.T) {
 	repo.On("GetByIPv4", ctx, "2.2.2.2").Return(nil, nil).Once()
 	repo.On("Update", ctx, mock.AnythingOfType("*domain.Server")).Return(nil).Once()
 
-	server, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{ServerName: "new-name", IPv4: "2.2.2.2"})
+	server, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "new-name", IPv4: "2.2.2.2"})
 
 	assert.NoError(t, err)
 	assert.Equal(t, "new-name", server.ServerName)
@@ -133,7 +133,7 @@ func TestUpdateServer_NotFound(t *testing.T) {
 
 	repo.On("GetByID", ctx, "id-nonexistent").Return(nil, repository.ErrNotFound).Once()
 
-	_, err := svc.UpdateServer(ctx, "id-nonexistent", service.UpdateServerInput{ServerName: "new-name", IPv4: "2.2.2.2"})
+	_, err := svc.UpdateServer(ctx, "id-nonexistent", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "new-name", IPv4: "2.2.2.2"})
 
 	assert.ErrorIs(t, err, service.ErrServerNotFound)
 }
@@ -152,7 +152,7 @@ func TestUpdateServer_NameConflict(t *testing.T) {
 	repo.On("GetByID", ctx, "id-1").Return(existing, nil).Once()
 	repo.On("GetByName", ctx, "new-name").Return(conflict, nil).Once()
 
-	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{ServerName: "new-name", IPv4: "2.2.2.2"})
+	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "new-name", IPv4: "2.2.2.2"})
 
 	assert.ErrorIs(t, err, service.ErrNameExists)
 }
@@ -172,7 +172,7 @@ func TestUpdateServer_IPv4Conflict(t *testing.T) {
 	repo.On("GetByName", ctx, "new-name").Return(nil, nil).Once()
 	repo.On("GetByIPv4", ctx, "2.2.2.2").Return(conflict, nil).Once()
 
-	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{ServerName: "new-name", IPv4: "2.2.2.2"})
+	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "new-name", IPv4: "2.2.2.2"})
 
 	assert.ErrorIs(t, err, service.ErrIPv4Exists)
 }
@@ -301,7 +301,7 @@ func TestCreateServer_GetByNameError(t *testing.T) {
 	dbErr := errors.New("db connection lost")
 	repo.On("GetByName", ctx, "test").Return(nil, dbErr).Once()
 
-	_, err := svc.CreateServer(ctx, service.CreateServerInput{ServerName: "test", IPv4: "1.2.3.4"})
+	_, err := svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "test", IPv4: "1.2.3.4"})
 	assert.ErrorIs(t, err, dbErr)
 }
 
@@ -319,7 +319,7 @@ func TestCreateServer_GetByIPv4Error(t *testing.T) {
 	repo.On("GetByName", ctx, "test").Return(nil, nil).Once()
 	repo.On("GetByIPv4", ctx, "1.2.3.4").Return(nil, dbErr).Once()
 
-	_, err := svc.CreateServer(ctx, service.CreateServerInput{ServerName: "test", IPv4: "1.2.3.4"})
+	_, err := svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "test", IPv4: "1.2.3.4"})
 	assert.ErrorIs(t, err, dbErr)
 }
 
@@ -341,7 +341,7 @@ func TestUpdateServer_SameNameDiffIP(t *testing.T) {
 		return s.ServerName == "srv" && s.IPv4 == "2.2.2.2"
 	})).Return(nil).Once()
 
-	server, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{ServerName: "srv", IPv4: "2.2.2.2"})
+	server, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "srv", IPv4: "2.2.2.2"})
 
 	assert.NoError(t, err)
 	assert.Equal(t, "srv", server.ServerName)
@@ -367,7 +367,7 @@ func TestUpdateServer_SameIPDiffName(t *testing.T) {
 		return s.ServerName == "new-name" && s.IPv4 == "1.1.1.1"
 	})).Return(nil).Once()
 
-	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{ServerName: "new-name", IPv4: "1.1.1.1"})
+	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "new-name", IPv4: "1.1.1.1"})
 
 	assert.NoError(t, err)
 	repo.AssertNotCalled(t, "GetByIPv4")
@@ -389,7 +389,7 @@ func TestUpdateServer_IdenticalValues(t *testing.T) {
 		return s.ServerID == "id-1" && s.ServerName == "srv" && s.IPv4 == "1.1.1.1"
 	})).Return(nil).Once()
 
-	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{ServerName: "srv", IPv4: "1.1.1.1"})
+	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "srv", IPv4: "1.1.1.1"})
 
 	assert.NoError(t, err)
 	repo.AssertNotCalled(t, "GetByName")
@@ -411,7 +411,7 @@ func TestUpdateServer_GetByNameError(t *testing.T) {
 	repo.On("GetByID", ctx, "id-1").Return(existing, nil).Once()
 	repo.On("GetByName", ctx, "new-name").Return(nil, dbErr).Once()
 
-	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{ServerName: "new-name", IPv4: "1.1.1.1"})
+	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "new-name", IPv4: "1.1.1.1"})
 	assert.ErrorIs(t, err, dbErr)
 }
 
@@ -430,7 +430,7 @@ func TestUpdateServer_GetByIPv4Error(t *testing.T) {
 	repo.On("GetByID", ctx, "id-1").Return(existing, nil).Once()
 	repo.On("GetByIPv4", ctx, "2.2.2.2").Return(nil, dbErr).Once()
 
-	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{ServerName: "srv", IPv4: "2.2.2.2"})
+	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "srv", IPv4: "2.2.2.2"})
 	assert.ErrorIs(t, err, dbErr)
 }
 
@@ -451,7 +451,7 @@ func TestUpdateServer_UpdateError(t *testing.T) {
 	repo.On("GetByIPv4", ctx, "2.2.2.2").Return(nil, nil).Once()
 	repo.On("Update", ctx, mock.Anything).Return(dbErr).Once()
 
-	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{ServerName: "new-name", IPv4: "2.2.2.2"})
+	_, err := svc.UpdateServer(ctx, "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "new-name", IPv4: "2.2.2.2"})
 	assert.ErrorIs(t, err, dbErr)
 }
 
@@ -582,7 +582,7 @@ func TestSearchServers_InvalidStatus(t *testing.T) {
 	_, _, err := svc.SearchServers(context.Background(), repository.ServerListFilter{
 		Status: "INVALID_STATUS",
 	})
-	assert.ErrorContains(t, err, "invalid status filter")
+	assert.ErrorContains(t, err, "Invalid status filter")
 }
 
 
@@ -603,7 +603,7 @@ func TestUpdateServer_NilServer(t *testing.T) {
 	svc := service.NewServerService(repo, outbox)
 
 	repo.On("GetByID", mock.Anything, "id-1").Return(nil, nil).Once()
-	_, err := svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{ServerName: "test"})
+	_, err := svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "test"})
 	assert.ErrorIs(t, err, service.ErrServerNotFound)
 }
 

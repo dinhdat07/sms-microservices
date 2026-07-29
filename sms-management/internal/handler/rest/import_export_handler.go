@@ -47,14 +47,14 @@ func writeError(w http.ResponseWriter, status int, message string) {
 
 func (h *ImportExportHandler) HandleImport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed.")
 		return
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, h.maxSize)
 	raw, err := io.ReadAll(r.Body)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "failed to read request body")
+		writeError(w, http.StatusBadRequest, "Failed to read request body.")
 		return
 	}
 
@@ -119,7 +119,7 @@ func extractBoundary(contentType string) string {
 
 func (h *ImportExportHandler) HandleExport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed.")
 		return
 	}
 
@@ -168,18 +168,18 @@ func parseCreatedDateRange(createdFrom, createdTo string) (time.Time, time.Time,
 	if createdFrom != "" {
 		from, err = time.Parse("2006-01-02", createdFrom)
 		if err != nil {
-			return time.Time{}, time.Time{}, errors.New("createdFrom must use YYYY-MM-DD format")
+			return time.Time{}, time.Time{}, errors.New("Created From must use YYYY-MM-DD format.")
 		}
 	}
 	if createdTo != "" {
 		to, err = time.Parse("2006-01-02", createdTo)
 		if err != nil {
-			return time.Time{}, time.Time{}, errors.New("createdTo must use YYYY-MM-DD format")
+			return time.Time{}, time.Time{}, errors.New("Created To must use YYYY-MM-DD format.")
 		}
 		to = to.AddDate(0, 0, 1)
 	}
 	if !from.IsZero() && !to.IsZero() && !from.Before(to) {
-		return time.Time{}, time.Time{}, errors.New("createdFrom must be before or equal to createdTo")
+		return time.Time{}, time.Time{}, errors.New("Created From must be before or equal to Created To.")
 	}
 	return from, to, nil
 }

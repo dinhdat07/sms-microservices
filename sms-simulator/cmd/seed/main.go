@@ -1,52 +1,17 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
-	"time"
 
-	"github.com/google/uuid"
+	"sms-simulator/internal/seed"
+
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
-
-// Raw server struct to bypass domain dependencies
-type Server struct {
-	ServerID      string    `gorm:"primaryKey;column:server_id"`
-	ServerName    string    `gorm:"column:server_name"`
-	IPv4          string    `gorm:"column:ipv4"`
-	CurrentStatus string    `gorm:"column:current_status"`
-	CreatedAt     time.Time `gorm:"column:created_at"`
-	UpdatedAt     time.Time `gorm:"column:updated_at"`
-}
-
-type ReportingServer struct {
-	ServerID  string    `gorm:"primaryKey;column:server_id"`
-	Name      string    `gorm:"column:name"`
-	IPv4      string    `gorm:"column:ipv4"`
-	Status    string    `gorm:"column:status"`
-	UpdatedAt time.Time `gorm:"column:updated_at"`
-}
-
-func (ReportingServer) TableName() string {
-	return "reporting_schema.reporting_servers"
-}
-
-func (Server) TableName() string {
-	return "management_schema.servers"
-}
-
-// Raw Redis cache struct
-type CacheItem struct {
-	ID         string `json:"id"`
-	IPv4       string `json:"ipv4"`
-	Status     string `json:"status"`
-	RetryCount int    `json:"retry_count"`
-}
 
 func main() {
 	if err := run(); err != nil {
@@ -70,127 +35,20 @@ func run() error {
 		redisAddr = "localhost:6379"
 	}
 
-	// 1. Setup Postgres
+	// Assuming the simulator host name from within docker network is "sms-simulator"
+	simulatorHost := os.Getenv("SIMULATOR_HOST")
+	if simulatorHost == "" {
+		simulatorHost = "sms-simulator"
+	}
+
 	db, err := gorm.Open(postgres.Open(dbUrl), &gorm.Config{})
 	if err != nil {
 		return fmt.Errorf("db connect: %w", err)
 	}
 
-	log.Println("Cleaning up previous simulation servers...")
-
-	// Collect IDs of old simulation servers before deleting
-	var oldSimServerIDs []string
-	db.Model(&Server{}).Where("server_name LIKE ?", "sim-%").Pluck("server_id", &oldSimServerIDs)
-
-	result := db.Where("server_name LIKE ?", "sim-%").Delete(&Server{})
-	if result.Error != nil {
-		return fmt.Errorf("cleanup old sim servers: %w", result.Error)
-	}
-	log.Printf("Deleted %d old simulation servers from management\n", result.RowsAffected)
-
-	resultReporting := db.Where("name LIKE ?", "sim-%").Delete(&ReportingServer{})
-	if resultReporting.Error != nil {
-		return fmt.Errorf("cleanup old sim servers reporting: %w", resultReporting.Error)
-	}
-	log.Printf("Deleted %d old simulation servers from reporting\n", resultReporting.RowsAffected)
-
-	// 2. Setup Redis
 	rdb := redis.NewClient(&redis.Options{
 		Addr: redisAddr,
 	})
 
-	ctx := context.Background()
-
-	// Only delete the Redis keys of the simulation servers
-	if len(oldSimServerIDs) > 0 {
-		var redisKeys []string
-		for _, id := range oldSimServerIDs {
-			redisKeys = append(redisKeys, fmt.Sprintf("server:info:%s", id))
-			rdb.SRem(ctx, "server:all_ids", id)
-		}
-
-		// Delete from Redis
-		rdb.Del(ctx, redisKeys...)
-	}
-	log.Printf("Redis: flushed %d simulation server keys\n", len(oldSimServerIDs))
-
-	// 3. Seed Data
-	batchSize := 500
-	subnet := "10.1"
-	octet3 := 0
-	octet4 := 1
-
-	log.Printf("Seeding %d servers in batches of %d...\n", count, batchSize)
-
-	for i := 0; i < count; i += batchSize {
-		end := i + batchSize
-		if end > count {
-			end = count
-		}
-
-		var batch []*Server
-		var reportingBatch []*ReportingServer
-		redisPipeline := rdb.Pipeline()
-
-		for j := i; j < end; j++ {
-			ip := fmt.Sprintf("%s.%d.%d", subnet, octet3, octet4)
-			id := uuid.New().String()
-			name := fmt.Sprintf("sim-%s", id[:8])
-
-			// Add to DB batch
-			batch = append(batch, &Server{
-				ServerID:      id,
-				ServerName:    name,
-				IPv4:          ip,
-				CurrentStatus: "UNKNOWN",
-				CreatedAt:     time.Now(),
-				UpdatedAt:     time.Now(),
-			})
-
-			// Add to reporting batch
-			reportingBatch = append(reportingBatch, &ReportingServer{
-				ServerID:  id,
-				Name:      name,
-				IPv4:      ip,
-				Status:    "UNKNOWN",
-				UpdatedAt: time.Now(),
-			})
-
-			// Add to Redis pipeline (New Schema: Hash for info, Set for all IDs)
-			redisKey := fmt.Sprintf("server:info:%s", id)
-			redisPipeline.HSet(ctx, redisKey, map[string]interface{}{
-				"id":          id,
-				"ipv4":        ip,
-				"status":      "UNKNOWN",
-				"retry_count": 0,
-			})
-			redisPipeline.SAdd(ctx, "server:all_ids", id)
-
-			octet4++
-			if octet4 > 254 {
-				octet4 = 1
-				octet3++
-			}
-		}
-
-		// Execute DB Insert
-		if err := db.Create(batch).Error; err != nil {
-			return fmt.Errorf("batch create at offset %d: %w", i, err)
-		}
-
-		// Execute Reporting DB Insert
-		if err := db.Create(reportingBatch).Error; err != nil {
-			return fmt.Errorf("reporting batch create at offset %d: %w", i, err)
-		}
-
-		// Execute Redis Pipeline
-		if _, err := redisPipeline.Exec(ctx); err != nil {
-			log.Printf("WARN: redis batch upsert at offset %d: %v\n", i, err)
-		}
-
-		log.Printf("Seeded %d/%d servers\n", end, count)
-	}
-
-	log.Printf("Seed complete: %d servers in DB + Redis\n", count)
-	return nil
+	return seed.RunSeed(db, rdb, count, simulatorHost)
 }

@@ -2,14 +2,14 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
-	"encoding/json"
 
 	monitoringDomain "sms-monitoring/internal/domain"
-	mockRepo "sms-monitoring/internal/repository/mock"
 	esMock "sms-monitoring/internal/infrastructure/elasticsearch/mock"
 	"sms-monitoring/internal/infrastructure/messagebroker"
+	mockRepo "sms-monitoring/internal/repository/mock"
 
 	"github.com/go-redis/redismock/v9"
 	"github.com/redis/go-redis/v9"
@@ -47,13 +47,13 @@ func TestEvaluate_SecondFailureGoesOffline(t *testing.T) {
 	service := NewMonitoringService(publisher, stateStore, esLogger, 2)
 
 	stateStore.On("GetServerState", ctx, serverID).Return(&monitoringDomain.ServerState{Status: "ONLINE", RetryCount: 1}, nil).Once()
-	stateStore.On("SetServerState", ctx, serverID, "OFFLINE", 0).Return(nil).Once()
+	stateStore.On("SetServerState", ctx, serverID, "OFFLINE", 2).Return(nil).Once()
 	esLogger.On("LogObservation", ctx, serverID, false).Return(nil).Once()
-	
+
 	payload, _ := json.Marshal(map[string]interface{}{
-		"server_id": serverID,
-		"status": "OFFLINE",
-		"retry_count": 0,
+		"server_id":   serverID,
+		"status":      "OFFLINE",
+		"retry_count": 2,
 	})
 	mockRedis.ExpectXAdd(&redis.XAddArgs{
 		Stream: "sms.events.server_status",
@@ -86,10 +86,10 @@ func TestEvaluate_RedisXAddError(t *testing.T) {
 	stateStore.On("SetServerState", ctx, serverID, "ONLINE", 0).Return(nil).Once()
 
 	esLogger.On("LogObservation", ctx, serverID, true).Return(nil).Once()
-	
+
 	payload, _ := json.Marshal(map[string]interface{}{
-		"server_id": serverID,
-		"status": "ONLINE",
+		"server_id":   serverID,
+		"status":      "ONLINE",
 		"retry_count": 0,
 	})
 	mockRedis.ExpectXAdd(&redis.XAddArgs{
@@ -109,3 +109,73 @@ func TestEvaluate_RedisXAddError(t *testing.T) {
 	stateStore.AssertExpectations(t)
 }
 
+func TestEvaluate_GetStateError(t *testing.T) {
+	ctx := context.Background()
+	serverID := "svr-err"
+
+	stateStore := mockRepo.NewMockServerStateStore(t)
+	db, _ := redismock.NewClientMock()
+	esLogger := esMock.NewObservationLogger(t)
+	publisher := messagebroker.NewRedisPublisher(db, 1000000)
+	service := NewMonitoringService(publisher, stateStore, esLogger, 2)
+
+	esLogger.On("LogObservation", ctx, serverID, true).Return(nil).Once()
+	stateStore.On("GetServerState", ctx, serverID).Return((*monitoringDomain.ServerState)(nil), errors.New("db error")).Once()
+
+	err := service.Evaluate(ctx, serverID, "1.1.1.1", true)
+	assert.Error(t, err)
+}
+
+func TestEvaluate_SetStateError(t *testing.T) {
+	ctx := context.Background()
+	serverID := "svr-err"
+
+	stateStore := mockRepo.NewMockServerStateStore(t)
+	db, _ := redismock.NewClientMock()
+	esLogger := esMock.NewObservationLogger(t)
+	publisher := messagebroker.NewRedisPublisher(db, 1000000)
+	service := NewMonitoringService(publisher, stateStore, esLogger, 2)
+
+	esLogger.On("LogObservation", ctx, serverID, true).Return(nil).Once()
+	stateStore.On("GetServerState", ctx, serverID).Return(&monitoringDomain.ServerState{Status: "OFFLINE", RetryCount: 0}, nil).Once()
+	stateStore.On("SetServerState", ctx, serverID, "ONLINE", 0).Return(errors.New("db error")).Once()
+
+	err := service.Evaluate(ctx, serverID, "1.1.1.1", true)
+	assert.Error(t, err)
+}
+
+func TestEvaluate_UnknownState(t *testing.T) {
+	ctx := context.Background()
+	serverID := "svr-unknown"
+
+	stateStore := mockRepo.NewMockServerStateStore(t)
+	db, _ := redismock.NewClientMock()
+	esLogger := esMock.NewObservationLogger(t)
+	publisher := messagebroker.NewRedisPublisher(db, 1000000)
+	service := NewMonitoringService(publisher, stateStore, esLogger, 2)
+
+	esLogger.On("LogObservation", ctx, serverID, false).Return(nil).Once()
+	stateStore.On("GetServerState", ctx, serverID).Return(&monitoringDomain.ServerState{Status: "", RetryCount: 0}, nil).Once()
+	stateStore.On("SetServerState", ctx, serverID, "OFFLINE", 2).Return(nil).Once()
+
+	err := service.Evaluate(ctx, serverID, "1.1.1.1", false)
+	assert.NoError(t, err)
+}
+
+func TestEvaluate_AlreadyOffline(t *testing.T) {
+	ctx := context.Background()
+	serverID := "svr-off"
+
+	stateStore := mockRepo.NewMockServerStateStore(t)
+	db, _ := redismock.NewClientMock()
+	esLogger := esMock.NewObservationLogger(t)
+	publisher := messagebroker.NewRedisPublisher(db, 1000000)
+	service := NewMonitoringService(publisher, stateStore, esLogger, 2)
+
+	esLogger.On("LogObservation", ctx, serverID, false).Return(nil).Once()
+	stateStore.On("GetServerState", ctx, serverID).Return(&monitoringDomain.ServerState{Status: "OFFLINE", RetryCount: 0}, nil).Once()
+	stateStore.On("SetServerState", ctx, serverID, "OFFLINE", 1).Return(nil).Once()
+
+	err := service.Evaluate(ctx, serverID, "1.1.1.1", false)
+	assert.NoError(t, err)
+}

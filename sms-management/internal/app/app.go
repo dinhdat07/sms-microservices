@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
 	"gorm.io/gorm"
 
 	servermanagementv1 "sms-management/gen/go/server_management/v1"
@@ -29,6 +31,8 @@ type App struct {
 	StatusConsumer    *worker.StatusConsumer
 	Authorizer        *security.Authorizer
 	MethodPermissions map[string]security.PermissionCode
+	grpcServer        *grpc.Server
+	httpServer        *http.Server
 }
 
 func New() (*App, error) {

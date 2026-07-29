@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sms-monitoring/internal/infrastructure/logger"
+	"sms-monitoring/internal/worker/checkers"
 	"sync"
 	"time"
 
@@ -20,16 +21,16 @@ type Pool interface {
 type workerPool struct {
 	rdb         redis.UniversalClient
 	monService  service.MonitoringService
-	pinger      Pinger
+	factory     checkers.HealthCheckerFactory
 	concurrency int
 	timeout     time.Duration
 }
 
-func NewWorkerPool(rdb redis.UniversalClient, monService service.MonitoringService, pinger Pinger, concurrency int, timeout time.Duration) Pool {
+func NewWorkerPool(rdb redis.UniversalClient, monService service.MonitoringService, factory checkers.HealthCheckerFactory, concurrency int, timeout time.Duration) Pool {
 	return &workerPool{
 		rdb:         rdb,
 		monService:  monService,
-		pinger:      pinger,
+		factory:     factory,
 		concurrency: concurrency,
 		timeout:     timeout,
 	}
@@ -56,7 +57,7 @@ func (w *workerPool) Run(ctx context.Context) error {
 
 				// Blocking Pop a server ID from the shared Redis queue
 				// Timeout of 2 seconds allows the loop to frequently check context cancellation
-				result, err := w.rdb.BLPop(ctx, 2*time.Second, "monitoring:queue").Result()
+				result, err := w.rdb.BLPop(ctx, 2*time.Second, infraRedis.MonitoringQueueKey).Result()
 				if err == redis.Nil {
 					// Timeout reached, queue is empty, loop again
 					continue
@@ -82,20 +83,27 @@ func (w *workerPool) Run(ctx context.Context) error {
 }
 
 func (w *workerPool) processServer(ctx context.Context, serverID string) {
-	// Get server info (IPv4) from Redis
+	// Get full server info from Redis
 	redisKey := fmt.Sprintf(infraRedis.ServerInfoKeyFmt, serverID)
-	ipv4, err := w.rdb.HGet(ctx, redisKey, "ipv4").Result()
+	configMap, err := w.rdb.HGetAll(ctx, redisKey).Result()
 	if err != nil {
-		logger.Log.Sugar().Errorf("[Worker] Failed to get IP for server %s: %v\n", serverID, err)
+		logger.Log.Sugar().Errorf("[Worker] Failed to get config for server %s: %v\n", serverID, err)
 		return
 	}
-	if ipv4 == "" {
-		logger.Log.Sugar().Infof("[Worker] IPv4 is empty for server %s\n", serverID)
+	if len(configMap) == 0 {
+		logger.Log.Sugar().Infof("[Worker] Config is empty for server %s\n", serverID)
 		return
 	}
 
-	// Perform Ping
-	success := w.pinger.Ping(ipv4, w.timeout)
+	ipv4 := configMap[infraRedis.ServerInfoFieldIPv4]
+	method := configMap[infraRedis.ServerInfoFieldHealthCheckMethod]
+
+	configMap["server_id"] = serverID
+
+	checker := w.factory.GetChecker(method)
+
+	// Perform Health Check
+	success := checker.Check(ctx, configMap)
 
 	// Evaluate State Machine
 	err = w.monService.Evaluate(ctx, serverID, ipv4, success)

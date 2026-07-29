@@ -1,0 +1,13 @@
+meta {
+  name: Health Check Management
+  type: http
+  seq: 43
+}
+
+get {
+  url: {{baseURL}}/health/management
+}
+
+assert {
+  res.status: eq 200
+}

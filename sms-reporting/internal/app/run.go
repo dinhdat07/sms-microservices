@@ -86,14 +86,14 @@ func (a *App) Run() error {
 	mux.Handle("/openapi/", http.StripPrefix("/openapi/", http.FileServer(http.Dir("./api/openapi"))))
 
 	httpAddr := fmt.Sprintf(":%s", a.cfg.HTTPPort)
-	httpSrv := &http.Server{
+	a.httpServer = &http.Server{
 		Addr:    httpAddr,
 		Handler: mux,
 	}
 
 	go func() {
 		logger.Log.Sugar().Infof("HTTP REST gateway listening on %s", httpAddr)
-		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Log.Sugar().Fatalf("Failed to serve HTTP: %v", err)
 		}
 	}()
@@ -103,16 +103,26 @@ func (a *App) Run() error {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigChan
-	logger.Log.Info("Shutting down Reporting Service...")
 
-	cancel()
-	a.grpcServer.GracefulStop()
-	if err := httpSrv.Shutdown(ctx); err != nil {
-		logger.Log.Sugar().Errorf("HTTP server shutdown failed: %v", err)
-	}
-	a.worker.Stop()
-	a.scheduler.Stop()
-
-	logger.Log.Info("Reporting Service shutdown complete")
+	a.Shutdown(ctx)
 	return nil
+}
+
+func (a *App) Shutdown(ctx context.Context) {
+	logger.Log.Info("Shutting down Reporting Service...")
+	if a.grpcServer != nil {
+		a.grpcServer.GracefulStop()
+	}
+	if a.httpServer != nil {
+		if err := a.httpServer.Shutdown(ctx); err != nil {
+			logger.Log.Sugar().Errorf("HTTP server shutdown failed: %v", err)
+		}
+	}
+	if a.worker != nil {
+		a.worker.Stop()
+	}
+	if a.scheduler != nil {
+		a.scheduler.Stop()
+	}
+	logger.Log.Info("Shutdown complete")
 }

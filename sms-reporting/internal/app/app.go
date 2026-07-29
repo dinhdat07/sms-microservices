@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"google.golang.org/grpc"
 
@@ -15,7 +16,6 @@ import (
 	"sms-reporting/internal/infrastructure/elasticsearch"
 	"sms-reporting/internal/infrastructure/logger"
 	"sms-reporting/internal/infrastructure/messagebroker"
-	"sms-reporting/internal/infrastructure/notifier"
 	"sms-reporting/internal/infrastructure/security"
 	"sms-reporting/internal/repository/impl"
 	"sms-reporting/internal/service"
@@ -30,6 +30,7 @@ type App struct {
 	scheduler         *Scheduler
 	authorizer        *security.Authorizer
 	methodPermissions map[string]security.PermissionCode
+	httpServer        *http.Server
 }
 
 func NewApp() (*App, error) {
@@ -70,24 +71,17 @@ func NewApp() (*App, error) {
 		return nil, fmt.Errorf("elasticsearch connection failed: %w", err)
 	}
 
-	// Initialize Notifier
-	smtpConfig := notifier.Config{
-		Host:     cfg.SMTP.Host,
-		Port:     cfg.SMTP.Port,
-		UseAuth:  cfg.SMTP.UseAuth,
-		UseTLS:   cfg.SMTP.UseTLS,
-		Username: cfg.SMTP.Username,
-		Password: cfg.SMTP.Password,
-		From:     cfg.SMTP.From,
-		FromName: cfg.SMTP.FromName,
+	// Initialize Publisher for Notification events
+	var publisher messagebroker.Publisher
+	if redisClient != nil {
+		publisher = messagebroker.NewRedisPublisher(redisClient, cfg.Reporting.NotificationStreamMaxLen)
 	}
-	smtpMailer := notifier.NewMailer(smtpConfig)
 
 	// Initialize Repos & Services
 	repo := impl.NewGormReportingRepository(db)
 	uptimeCalc := elasticsearch.NewESUptimeCalculator(esClient, esCfg.ServerIndex)
 
-	worker := service.NewReportingWorker(repo, uptimeCalc, cfg.Reporting.WorkerCount, cfg.Reporting.JobQueueSize, smtpMailer)
+	worker := service.NewReportingWorker(repo, uptimeCalc, cfg.Reporting.WorkerCount, cfg.Reporting.JobQueueSize, publisher, cfg.Reporting.NotificationStream)
 	svc := service.NewReportingService(repo, worker)
 	handler := grpchandler.NewReportingGrpcHandler(svc)
 

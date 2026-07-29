@@ -52,7 +52,7 @@ services:
       - JWT_SECRET_FILE=/run/secrets/jwt_secret
     networks:
       - default
-    image: whaleplay710/sms-identity:v1.0.0
+    image: whaleplay710/sms-identity:v1.0.7
     deploy:
       replicas: 3
       update_config:
@@ -95,9 +95,10 @@ services:
       - GRPC_PORT=50052
       - DB_URL_FILE=/run/secrets/db_url
       - OUTBOX_STREAM_MAXLEN=1000000
+      - MASTER_KEY_FILE=/run/secrets/master_key
     networks:
       - default
-    image: whaleplay710/sms-management:v1.0.0
+    image: whaleplay710/sms-management:v1.0.10
     deploy:
       replicas: 2
       update_config:
@@ -122,6 +123,7 @@ services:
         - traefik.http.middlewares.management-health-replace.replacepath.path=/health
     secrets:
       - db_url
+      - master_key
 
   postgres:
     logging: *default-logging
@@ -210,11 +212,12 @@ services:
           - node.hostname == node-3
   
   sms-seeder:
-    image: whaleplay710/sms-simulator:v1.0.0
+    image: whaleplay710/sms-simulator:v1.0.10
     networks:
       - default
     environment:
       - REDIS_ADDR=redis:6379
+      - SIMULATOR_HOST=simulator
     entrypoint: ["/bin/sh", "-c", "export DB_URL=$$(cat /run/secrets/db_url) && ./server-seed"]
     secrets:
       - db_url
@@ -241,9 +244,14 @@ services:
       SIMULATOR_AUTO_FLAP_ENABLED: 'true'
       SIMULATOR_FLAP_INTERVAL: 60s
       SIMULATOR_FLAP_PERCENT: '5'
+      AGENT_HANDLER_URL: 'http://sms-agent-handler:8084/api/v1/agent/heartbeat'
+      REDIS_ADDR: 'redis:6379'
+      MASTER_KEY_FILE: '/run/secrets/master_key'
     networks:
       - default
-    image: whaleplay710/sms-simulator:v1.0.0
+    image: whaleplay710/sms-simulator:v1.0.10
+    secrets:
+      - master_key
     deploy:
       endpoint_mode: dnsrr
 
@@ -258,21 +266,26 @@ services:
       - REDIS_ADDR=redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - ELASTICSEARCH_SERVER_INDEX=sms_observation_logs
-      - MONITORING_FAILURE_THRESHOLD=2
+      - MONITORING_FAILURE_THRESHOLD=1
       - MONITORING_WORKER_CONCURRENCY=500
-      - MONITORING_WORKER_PING_TIMEOUT=3s
-      - MONITORING_WORKER_TICK_INTERVAL=30s
+      - MONITORING_ICMP_TIMEOUT=3s
+      - MONITORING_SSH_TIMEOUT=10s
+      - MONITORING_AGENT_PULL_TIMEOUT=10s
+      - MONITORING_AGENT_PUSH_TTL=60
+      - MONITORING_SWEEPER_INTERVAL=10s
+      - MONITORING_WORKER_TICK_INTERVAL=60s
       - MONITORING_WORKER_LOCK_KEY=lock:monitoring_worker
-      - MONITORING_WORKER_LOCK_EXPIRATION=25s
+      - MONITORING_WORKER_LOCK_EXPIRATION=50s
       - SIMULATOR_HOST=simulator
       - SIMULATOR_SUBNET=10.1.0.0/16
       - LOG_LEVEL=info
       - LOG_FORMAT=text
       - DB_URL_FILE=/run/secrets/db_url
       - STREAM_MAXLEN=1000000
+      - MASTER_KEY_FILE=/run/secrets/master_key
     networks:
       - default
-    image: whaleplay710/sms-monitoring-worker:v1.0.0
+    image: whaleplay710/sms-monitoring-worker:v1.0.7
     deploy:
       replicas: 2
       update_config:
@@ -281,6 +294,31 @@ services:
         order: start-first
     secrets:
       - db_url
+      - master_key
+
+  sms-agent-handler:
+    logging: *default-logging
+    environment:
+      - PORT=8084
+      - REDIS_URI=redis://redis:6379/0
+      - MASTER_KEY_FILE=/run/secrets/master_key
+    networks:
+      - default
+    image: whaleplay710/sms-agent-handler:v1.0.7
+    secrets:
+      - master_key
+    deploy:
+      replicas: 3
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.agent.rule=PathPrefix(`/api/v1/agent`)"
+        - "traefik.http.routers.agent.entrypoints=web"
+        - "traefik.http.services.agent.loadbalancer.server.port=8084"
+      update_config:
+        parallelism: 1
+        delay: 5s
+      restart_policy:
+        condition: on-failure
 
   sms-reporting:
     logging: *default-logging
@@ -290,11 +328,7 @@ services:
       - REDIS_ADDR=redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - ELASTICSEARCH_SERVER_INDEX=sms_observation_logs
-      - SMTP_HOST=mailhog
-      - SMTP_PORT=1025
-      - SMTP_USE_AUTH=false
-      - SMTP_USE_TLS=false
-      - SMTP_FROM=reports@sms.local
+      - NOTIFICATION_STREAM=notification_events
       - HTTP_PORT=8002
       - GRPC_PORT=50053
       - CONSUMER_NAME=reporting_worker
@@ -303,7 +337,7 @@ services:
       - REPORTING_JOB_QUEUE_SIZE=5000
     networks:
       - default
-    image: whaleplay710/sms-reporting:v1.0.0
+    image: whaleplay710/sms-reporting:v1.0.7
     deploy:
       replicas: 2
       update_config:
@@ -331,11 +365,38 @@ services:
     secrets:
       - db_url
 
+  sms-notification:
+    logging: *default-logging
+    environment:
+      - ENV=development
+      - REDIS_ENABLED=true
+      - REDIS_ADDR=redis:6379
+      - NOTIFICATION_STREAM=notification_events
+      - NOTIFICATION_GROUP=notification_workers
+      - CONSUMER_NAME=notification_worker_1
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_USE_AUTH=false
+      - SMTP_USE_TLS=false
+      - SMTP_FROM=reports@sms.local
+      - SMTP_FROM_NAME=SMS Monitoring
+      - LOG_LEVEL=info
+      - LOG_FORMAT=text
+    networks:
+      - default
+    image: whaleplay710/sms-notification:v1.0.7
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+
   sms-frontend:
     logging: *default-logging
     networks:
       - default
-    image: whaleplay710/sms-frontend:v1.0.0
+    image: whaleplay710/sms-frontend:v1.0.8
     deploy:
       replicas: 2
       labels:
@@ -360,9 +421,24 @@ services:
         - traefik.http.services.swagger.loadbalancer.server.port=8080
 
 volumes:
-  sms_postgres_data: null
-  sms_es_data: null
-  sms_redis_data: null
+  sms_postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/sms_data/postgres
+  sms_es_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/sms_data/elasticsearch
+  sms_redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/sms_data/redis
 
 networks:
   default:
@@ -379,4 +455,6 @@ secrets:
   jwt_secret:
     external: true
   user_password:
+    external: true
+  master_key:
     external: true

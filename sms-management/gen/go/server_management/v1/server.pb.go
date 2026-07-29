@@ -24,15 +24,20 @@ const (
 )
 
 type Server struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	ServerName    string                 `protobuf:"bytes,2,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
-	Ipv4          string                 `protobuf:"bytes,3,opt,name=ipv4,proto3" json:"ipv4,omitempty"`
-	CurrentStatus string                 `protobuf:"bytes,4,opt,name=current_status,json=currentStatus,proto3" json:"current_status,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     string                 `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	ServerId          string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	ServerName        string                 `protobuf:"bytes,2,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
+	Ipv4              string                 `protobuf:"bytes,3,opt,name=ipv4,proto3" json:"ipv4,omitempty"`
+	CurrentStatus     string                 `protobuf:"bytes,4,opt,name=current_status,json=currentStatus,proto3" json:"current_status,omitempty"`
+	CreatedAt         string                 `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt         string                 `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	HealthCheckMethod string                 `protobuf:"bytes,7,opt,name=health_check_method,json=healthCheckMethod,proto3" json:"health_check_method,omitempty"`
+	SshPort           int32                  `protobuf:"varint,8,opt,name=ssh_port,json=sshPort,proto3" json:"ssh_port,omitempty"`
+	SshUser           string                 `protobuf:"bytes,9,opt,name=ssh_user,json=sshUser,proto3" json:"ssh_user,omitempty"`
+	SshKey            string                 `protobuf:"bytes,10,opt,name=ssh_key,json=sshKey,proto3" json:"ssh_key,omitempty"`
+	AgentEndpoint     string                 `protobuf:"bytes,11,opt,name=agent_endpoint,json=agentEndpoint,proto3" json:"agent_endpoint,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Server) Reset() {
@@ -107,12 +112,52 @@ func (x *Server) GetUpdatedAt() string {
 	return ""
 }
 
+func (x *Server) GetHealthCheckMethod() string {
+	if x != nil {
+		return x.HealthCheckMethod
+	}
+	return ""
+}
+
+func (x *Server) GetSshPort() int32 {
+	if x != nil {
+		return x.SshPort
+	}
+	return 0
+}
+
+func (x *Server) GetSshUser() string {
+	if x != nil {
+		return x.SshUser
+	}
+	return ""
+}
+
+func (x *Server) GetSshKey() string {
+	if x != nil {
+		return x.SshKey
+	}
+	return ""
+}
+
+func (x *Server) GetAgentEndpoint() string {
+	if x != nil {
+		return x.AgentEndpoint
+	}
+	return ""
+}
+
 type CreateServerRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServerName    string                 `protobuf:"bytes,1,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
-	Ipv4          string                 `protobuf:"bytes,2,opt,name=ipv4,proto3" json:"ipv4,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	ServerName        string                 `protobuf:"bytes,1,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
+	Ipv4              string                 `protobuf:"bytes,2,opt,name=ipv4,proto3" json:"ipv4,omitempty"`
+	HealthCheckMethod string                 `protobuf:"bytes,3,opt,name=health_check_method,json=healthCheckMethod,proto3" json:"health_check_method,omitempty"`
+	SshPort           int32                  `protobuf:"varint,4,opt,name=ssh_port,json=sshPort,proto3" json:"ssh_port,omitempty"`
+	SshUser           string                 `protobuf:"bytes,5,opt,name=ssh_user,json=sshUser,proto3" json:"ssh_user,omitempty"`
+	SshKey            string                 `protobuf:"bytes,6,opt,name=ssh_key,json=sshKey,proto3" json:"ssh_key,omitempty"`
+	AgentEndpoint     string                 `protobuf:"bytes,7,opt,name=agent_endpoint,json=agentEndpoint,proto3" json:"agent_endpoint,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *CreateServerRequest) Reset() {
@@ -155,6 +200,41 @@ func (x *CreateServerRequest) GetServerName() string {
 func (x *CreateServerRequest) GetIpv4() string {
 	if x != nil {
 		return x.Ipv4
+	}
+	return ""
+}
+
+func (x *CreateServerRequest) GetHealthCheckMethod() string {
+	if x != nil {
+		return x.HealthCheckMethod
+	}
+	return ""
+}
+
+func (x *CreateServerRequest) GetSshPort() int32 {
+	if x != nil {
+		return x.SshPort
+	}
+	return 0
+}
+
+func (x *CreateServerRequest) GetSshUser() string {
+	if x != nil {
+		return x.SshUser
+	}
+	return ""
+}
+
+func (x *CreateServerRequest) GetSshKey() string {
+	if x != nil {
+		return x.SshKey
+	}
+	return ""
+}
+
+func (x *CreateServerRequest) GetAgentEndpoint() string {
+	if x != nil {
+		return x.AgentEndpoint
 	}
 	return ""
 }
@@ -204,12 +284,17 @@ func (x *CreateServerResponse) GetServer() *Server {
 }
 
 type UpdateServerRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	ServerName    string                 `protobuf:"bytes,2,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
-	Ipv4          string                 `protobuf:"bytes,3,opt,name=ipv4,proto3" json:"ipv4,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	ServerId          string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	ServerName        string                 `protobuf:"bytes,2,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
+	Ipv4              string                 `protobuf:"bytes,3,opt,name=ipv4,proto3" json:"ipv4,omitempty"`
+	HealthCheckMethod string                 `protobuf:"bytes,4,opt,name=health_check_method,json=healthCheckMethod,proto3" json:"health_check_method,omitempty"`
+	SshPort           int32                  `protobuf:"varint,5,opt,name=ssh_port,json=sshPort,proto3" json:"ssh_port,omitempty"`
+	SshUser           string                 `protobuf:"bytes,6,opt,name=ssh_user,json=sshUser,proto3" json:"ssh_user,omitempty"`
+	SshKey            string                 `protobuf:"bytes,7,opt,name=ssh_key,json=sshKey,proto3" json:"ssh_key,omitempty"`
+	AgentEndpoint     string                 `protobuf:"bytes,8,opt,name=agent_endpoint,json=agentEndpoint,proto3" json:"agent_endpoint,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *UpdateServerRequest) Reset() {
@@ -259,6 +344,41 @@ func (x *UpdateServerRequest) GetServerName() string {
 func (x *UpdateServerRequest) GetIpv4() string {
 	if x != nil {
 		return x.Ipv4
+	}
+	return ""
+}
+
+func (x *UpdateServerRequest) GetHealthCheckMethod() string {
+	if x != nil {
+		return x.HealthCheckMethod
+	}
+	return ""
+}
+
+func (x *UpdateServerRequest) GetSshPort() int32 {
+	if x != nil {
+		return x.SshPort
+	}
+	return 0
+}
+
+func (x *UpdateServerRequest) GetSshUser() string {
+	if x != nil {
+		return x.SshUser
+	}
+	return ""
+}
+
+func (x *UpdateServerRequest) GetSshKey() string {
+	if x != nil {
+		return x.SshKey
+	}
+	return ""
+}
+
+func (x *UpdateServerRequest) GetAgentEndpoint() string {
+	if x != nil {
+		return x.AgentEndpoint
 	}
 	return ""
 }
@@ -823,7 +943,7 @@ var File_server_management_v1_server_proto protoreflect.FileDescriptor
 
 const file_server_management_v1_server_proto_rawDesc = "" +
 	"\n" +
-	"!server_management/v1/server.proto\x12\x14server_management.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bbuf/validate/validate.proto\"\xbf\x01\n" +
+	"!server_management/v1/server.proto\x12\x14server_management.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1bbuf/validate/validate.proto\"\xe5\x02\n" +
 	"\x06Server\x12\x1b\n" +
 	"\tserver_id\x18\x01 \x01(\tR\bserverId\x12\x1f\n" +
 	"\vserver_name\x18\x02 \x01(\tR\n" +
@@ -833,20 +953,40 @@ const file_server_management_v1_server_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x05 \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\tR\tupdatedAt\"_\n" +
+	"updated_at\x18\x06 \x01(\tR\tupdatedAt\x12.\n" +
+	"\x13health_check_method\x18\a \x01(\tR\x11healthCheckMethod\x12\x19\n" +
+	"\bssh_port\x18\b \x01(\x05R\asshPort\x12\x19\n" +
+	"\bssh_user\x18\t \x01(\tR\asshUser\x12\x17\n" +
+	"\assh_key\x18\n" +
+	" \x01(\tR\x06sshKey\x12%\n" +
+	"\x0eagent_endpoint\x18\v \x01(\tR\ragentEndpoint\"\xb1\x02\n" +
 	"\x13CreateServerRequest\x12+\n" +
 	"\vserver_name\x18\x01 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x01\x18\xff\x01R\n" +
 	"serverName\x12\x1b\n" +
-	"\x04ipv4\x18\x02 \x01(\tB\a\xbaH\x04r\x02x\x01R\x04ipv4\"L\n" +
+	"\x04ipv4\x18\x02 \x01(\tB\a\xbaH\x04r\x02x\x01R\x04ipv4\x12Z\n" +
+	"\x13health_check_method\x18\x03 \x01(\tB*\xbaH'r%R\x04ICMPR\x03SSHR\n" +
+	"AGENT_PULLR\n" +
+	"AGENT_PUSHR\x00R\x11healthCheckMethod\x12\x19\n" +
+	"\bssh_port\x18\x04 \x01(\x05R\asshPort\x12\x19\n" +
+	"\bssh_user\x18\x05 \x01(\tR\asshUser\x12\x17\n" +
+	"\assh_key\x18\x06 \x01(\tR\x06sshKey\x12%\n" +
+	"\x0eagent_endpoint\x18\a \x01(\tR\ragentEndpoint\"L\n" +
 	"\x14CreateServerResponse\x124\n" +
-	"\x06server\x18\x01 \x01(\v2\x1c.server_management.v1.ServerR\x06server\"\x86\x01\n" +
+	"\x06server\x18\x01 \x01(\v2\x1c.server_management.v1.ServerR\x06server\"\xd8\x02\n" +
 	"\x13UpdateServerRequest\x12%\n" +
 	"\tserver_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\bserverId\x12+\n" +
 	"\vserver_name\x18\x02 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x01\x18\xff\x01R\n" +
 	"serverName\x12\x1b\n" +
-	"\x04ipv4\x18\x03 \x01(\tB\a\xbaH\x04r\x02x\x01R\x04ipv4\"L\n" +
+	"\x04ipv4\x18\x03 \x01(\tB\a\xbaH\x04r\x02x\x01R\x04ipv4\x12Z\n" +
+	"\x13health_check_method\x18\x04 \x01(\tB*\xbaH'r%R\x04ICMPR\x03SSHR\n" +
+	"AGENT_PULLR\n" +
+	"AGENT_PUSHR\x00R\x11healthCheckMethod\x12\x19\n" +
+	"\bssh_port\x18\x05 \x01(\x05R\asshPort\x12\x19\n" +
+	"\bssh_user\x18\x06 \x01(\tR\asshUser\x12\x17\n" +
+	"\assh_key\x18\a \x01(\tR\x06sshKey\x12%\n" +
+	"\x0eagent_endpoint\x18\b \x01(\tR\ragentEndpoint\"L\n" +
 	"\x14UpdateServerResponse\x124\n" +
 	"\x06server\x18\x01 \x01(\v2\x1c.server_management.v1.ServerR\x06server\"<\n" +
 	"\x13DeleteServerRequest\x12%\n" +

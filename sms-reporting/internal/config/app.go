@@ -13,22 +13,13 @@ type LoggerConfig struct {
 	LogCompress   bool
 }
 
-type SMTPConfig struct {
-	Host     string
-	Port     string
-	UseAuth  bool
-	UseTLS   bool
-	Username string
-	Password string
-	From     string
-	FromName string
-}
-
 type ReportingConfig struct {
-	WorkerCount  int
-	JobQueueSize int
-	AdminEmail   string
-	CronSpec     string
+	WorkerCount        int
+	JobQueueSize       int
+	AdminEmail         string
+	CronSpec                 string
+	NotificationStream       string
+	NotificationStreamMaxLen int64
 }
 
 type ConsumerConfig struct {
@@ -47,7 +38,6 @@ type Config struct {
 	Env   string
 
 	Logger    LoggerConfig
-	SMTP      SMTPConfig
 	Reporting ReportingConfig
 	Consumer  ConsumerConfig
 }
@@ -91,6 +81,11 @@ func Load() (*Config, error) {
 		logCompress = true
 	}
 
+	notificationMaxLen, err := GetEnvInt("NOTIFICATION_STREAM_MAXLEN", 100000)
+	if err != nil {
+		notificationMaxLen = 100000
+	}
+
 	cfg := &Config{
 		GRPCPort: GetEnvDefault("GRPC_PORT", "50053"),
 		HTTPPort: httpPort,
@@ -104,21 +99,13 @@ func Load() (*Config, error) {
 			LogMaxAge:     logMaxAge,
 			LogCompress:   logCompress,
 		},
-		SMTP: SMTPConfig{
-			Host:     GetEnvDefault("SMTP_HOST", "localhost"),
-			Port:     GetEnvDefault("SMTP_PORT", "1025"),
-			UseAuth:  GetEnvDefault("SMTP_USE_AUTH", "false") == "true",
-			UseTLS:   GetEnvDefault("SMTP_USE_TLS", "false") == "true",
-			Username: GetEnvDefault("SMTP_USERNAME", ""),
-			Password: GetEnvDefault("SMTP_PASSWORD", ""),
-			From:     GetEnvDefault("SMTP_FROM", "no-reply@sms.com"),
-			FromName: GetEnvDefault("SMTP_FROM_NAME", "SMS Server Management"),
-		},
 		Reporting: ReportingConfig{
-			WorkerCount:  workerCount,
-			JobQueueSize: jobQueueSize,
-			AdminEmail:   GetEnvDefault("ADMIN_EMAIL", "admin@sms.com"),
-			CronSpec:     GetEnvDefault("SCHEDULER_CRON_SPEC", "0 0 * * *"),
+			WorkerCount:              workerCount,
+			JobQueueSize:             jobQueueSize,
+			AdminEmail:               GetEnvDefault("ADMIN_EMAIL", "admin@sms.com"),
+			CronSpec:                 GetEnvDefault("SCHEDULER_CRON_SPEC", "0 0 * * *"),
+			NotificationStream:       GetEnvDefault("NOTIFICATION_STREAM", "notification_events"),
+			NotificationStreamMaxLen: int64(notificationMaxLen),
 		},
 		Consumer: ConsumerConfig{
 			Name:               GetEnvDefault("CONSUMER_NAME", "reporting_worker"),

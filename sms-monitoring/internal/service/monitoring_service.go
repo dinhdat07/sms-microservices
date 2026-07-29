@@ -52,8 +52,9 @@ func (s *monitoringServiceImpl) Evaluate(ctx context.Context, serverID string, i
 	retryCount := state.RetryCount
 
 	// State Machine Evaluation
-	var newStatus serverDomain.ServerStatus
+	newStatus := currentStatus
 	var statusChanged bool
+	var retryChanged bool
 
 	if pingSuccess {
 		if currentStatus == serverDomain.ServerStatusOffline || currentStatus == serverDomain.ServerStatusUnknown {
@@ -61,32 +62,41 @@ func (s *monitoringServiceImpl) Evaluate(ctx context.Context, serverID string, i
 			newStatus = serverDomain.ServerStatusOnline
 			statusChanged = true
 			retryCount = 0
+			retryChanged = true
 		} else {
 			// Already online, reset retry count if > 0
-			retryCount = 0
+			if retryCount > 0 {
+				retryCount = 0
+				retryChanged = true
+			}
 		}
 	} else {
 		if currentStatus == serverDomain.ServerStatusOnline || currentStatus == serverDomain.ServerStatusUnknown {
 			retryCount++
+			retryChanged = true
 			if retryCount >= s.failureThreshold || currentStatus == serverDomain.ServerStatusUnknown {
 				newStatus = serverDomain.ServerStatusOffline
 				statusChanged = true
-				retryCount = 0
+				retryCount = s.failureThreshold // Cap it here
 			}
 		} else {
-			// Already offline
-			retryCount++
+			// Already offline, cap retryCount to failureThreshold to prevent infinite increments
+			if retryCount < s.failureThreshold {
+				retryCount++
+				retryChanged = true
+			} else if retryCount > s.failureThreshold {
+				retryCount = s.failureThreshold
+				retryChanged = true
+			}
 		}
 	}
 
-	// Update Redis cache
-	if statusChanged {
+	// Update Redis cache ONLY if something changed to prevent write amplification
+	if statusChanged || retryChanged {
 		err = s.stateStore.SetServerState(ctx, serverID, string(newStatus), retryCount)
-	} else {
-		err = s.stateStore.SetServerState(ctx, serverID, string(currentStatus), retryCount)
-	}
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	// Publish Event via Publisher ONLY if state actually changes

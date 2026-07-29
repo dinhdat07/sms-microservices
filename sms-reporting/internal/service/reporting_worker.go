@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"sync"
 
 	"sms-reporting/internal/domain"
 	"sms-reporting/internal/infrastructure/logger"
+	"sms-reporting/internal/infrastructure/messagebroker"
 	"sms-reporting/internal/repository"
 
 	"go.uber.org/zap"
@@ -43,12 +45,13 @@ type reportingWorkerImpl struct {
 	repo        repository.ReportingRepository
 	uptimeCalc  domain.UptimeCalculator
 	jobQueue    chan *domain.ReportRequest
-	workerCount int
-	notifier    domain.ReportNotifier
-	wg          sync.WaitGroup
+	workerCount        int
+	publisher          messagebroker.Publisher
+	notificationStream string
+	wg                 sync.WaitGroup
 }
 
-func NewReportingWorker(repo repository.ReportingRepository, uptimeCalc domain.UptimeCalculator, workerCount int, jobQueueSize int, notifier domain.ReportNotifier) ReportingWorker {
+func NewReportingWorker(repo repository.ReportingRepository, uptimeCalc domain.UptimeCalculator, workerCount int, jobQueueSize int, publisher messagebroker.Publisher, notificationStream string) ReportingWorker {
 	if workerCount <= 0 {
 		workerCount = 5 // Default to 5 concurrent workers
 	}
@@ -56,11 +59,12 @@ func NewReportingWorker(repo repository.ReportingRepository, uptimeCalc domain.U
 		jobQueueSize = 100 // Default to 100 capacity
 	}
 	return &reportingWorkerImpl{
-		repo:        repo,
-		uptimeCalc:  uptimeCalc,
-		jobQueue:    make(chan *domain.ReportRequest, jobQueueSize), // Buffered queue
-		workerCount: workerCount,
-		notifier:    notifier,
+		repo:               repo,
+		uptimeCalc:         uptimeCalc,
+		jobQueue:           make(chan *domain.ReportRequest, jobQueueSize), // Buffered queue
+		workerCount:        workerCount,
+		publisher:          publisher,
+		notificationStream: notificationStream,
 	}
 }
 
@@ -171,12 +175,24 @@ func (w *reportingWorkerImpl) doWork(ctx context.Context, req *domain.ReportRequ
 
 	logger.Log.Sugar().Infof("[ReportingWorker] Sending email to %s", req.RequestorEmail)
 
-	// Call internal Notification via domain.ReportNotifier interface
-	if w.notifier != nil {
-		err := w.notifier.SendReportEmail(ctx, req.RequestorEmail, "Server Status Report", htmlStr)
+	// Publish notification event
+	if w.publisher != nil {
+		payload := domain.NotificationEvent{
+			To:      req.RequestorEmail,
+			Subject: "Server Status Report",
+			Body:    htmlStr,
+		}
+		payloadBytes, _ := json.Marshal(payload)
+
+		values := []interface{}{
+			"event_type", domain.EventNotificationRequested,
+			"payload", string(payloadBytes),
+		}
+
+		err := w.publisher.Publish(ctx, w.notificationStream, values)
 		if err != nil {
-			logger.Log.Sugar().Errorf("[ReportingWorker] Error sending email: %v", err)
-			return fmt.Errorf("failed to send email: %w", err)
+			logger.Log.Sugar().Errorf("[ReportingWorker] Error publishing notification event: %v", err)
+			return fmt.Errorf("failed to publish notification event: %w", err)
 		}
 	}
 

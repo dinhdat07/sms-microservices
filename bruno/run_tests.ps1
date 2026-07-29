@@ -29,8 +29,11 @@ Write-Host "=== Cleaning up stale test data ===" -ForegroundColor Cyan
 # ---- Run tests ----
 Write-Host "=== Running Bruno tests ===" -ForegroundColor Cyan
 # Run Bruno in Docker container attached to the network so it can reach traefik
-docker run --rm -v "${PWD}:/loc" -w /loc --network $network node:20-alpine sh -c "npx -y @usebruno/cli run auth servers reporting health authorization --env local --env-var baseURL=http://traefik"
+docker run --rm -v "${PWD}:/loc" -w /loc --network $network node:20-alpine sh -c "npx -y @usebruno/cli run auth servers reporting health authorization agent --env local --env-var baseURL=http://traefik"
 $testExitCode = $LASTEXITCODE
+
+Write-Host "=== Post-test Cleanup ===" -ForegroundColor Cyan
+& ".\cleanup.ps1" -BaseURL "http://localhost"
 
 if ($Target -eq 'ci') {
     Write-Host "=== Tearing down Docker Compose stack ===" -ForegroundColor Cyan

@@ -14,29 +14,22 @@
 
 ## Quick Start
 
-### 1. Start Infrastructure (NO Kafka)
+### 1. Start Infrastructure
 
 ```bash
-cd backend/server-management-service
-docker-compose up -d postgres redis elasticsearch mailhog
+# In the root 'sms' directory
+docker compose up -d
 docker ps --filter "name=sms_" --format "table {{.Names}}\t{{.Status}}"
 ```
 
-### 2. Start API
-
-```bash
-go run ./cmd/api
-# Wait for: grpc listening on :50051
-```
-
-### 3. Generate Test Fixtures
+### 2. Generate Test Fixtures
 
 ```bash
 cd bruno/testdata
 go run generate_fixtures.go
 ```
 
-### 4. Run Tests
+### 3. Run Tests
 
 **GUI:** Open Bruno → Open Collection → `bruno/` → select `local` env → Run
 
@@ -50,12 +43,11 @@ go run generate_fixtures.go
 | Service | Port | Used For |
 |---------|------|----------|
 | PostgreSQL | 5432 | Auth users, server CRUD |
-| Redis | 6379 | Server ID cache, distributed lock |
+| Redis | 6379 | Server ID cache, distributed lock, event streams |
 | Elasticsearch | 9200 | Observation logs (reporting reads) |
 | MailHog | 1025 | SMTP sink for report emails |
 
-> **Kafka is NOT used.** Reporting runs via internal Goroutine Worker Pool
-> per DEVELOPMENT_GUIDE.md.
+> **Event Streams:** Notification works asynchronously using Redis Streams (`sms-reporting` publishes, `sms-notification` consumes).
 
 ## Test Case Summary (~45 cases)
 
@@ -71,7 +63,7 @@ go run generate_fixtures.go
 
 | Variable | Default |
 |----------|---------|
-| `baseURL` | `http://localhost:8000` |
+| `baseURL` | `http://localhost` |
 | `adminEmail` | `admin@portal.local` |
 | `adminPassword` | `Admin@123456` |
 | `userEmail` | `user@portal.local` |

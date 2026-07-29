@@ -1,14 +1,13 @@
 meta {
-  name: Health Check
+  name: Health Check Identity
   type: http
   seq: 42
 }
 
 get {
-  url: {{baseURL}}/health
+  url: {{baseURL}}/health/identity
 }
 
 assert {
   res.status: eq 200
-  
 }

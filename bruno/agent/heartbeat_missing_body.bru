@@ -1,0 +1,23 @@
+meta {
+  name: heartbeat_missing_body
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseURL}}/api/v1/agent/heartbeat
+  body: json
+  auth: none
+}
+
+headers {
+  X-Master-Key: 0123456789abcdef0123456789abcdef
+}
+
+body:json {
+  {}
+}
+
+assert {
+  res.status: eq 400
+}
