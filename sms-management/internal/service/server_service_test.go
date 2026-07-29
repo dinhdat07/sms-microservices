@@ -607,3 +607,30 @@ func TestUpdateServer_NilServer(t *testing.T) {
 	assert.ErrorIs(t, err, service.ErrServerNotFound)
 }
 
+func TestUpdateServer_MethodSSHEmptyKey(t *testing.T) {
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := service.NewServerService(repo, outbox)
+
+	existingServer := &domain.Server{
+		ServerID:          "id-1",
+		ServerName:        "srv-1",
+		IPv4:              "1.1.1.1",
+		HealthCheckMethod: domain.MethodICMP, // previously ICMP, no SSH key
+		SSHKey:            "",
+	}
+
+	repo.On("GetByID", mock.Anything, "id-1").Return(existingServer, nil).Once()
+
+	_, err := svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{
+		ServerName:        "srv-1",
+		IPv4:              "1.1.1.1",
+		HealthCheckMethod: domain.MethodSSH,
+		SSHPort:           22,
+		SSHUser:           "root",
+		SSHKey:            "", // attempting to leave it empty
+	})
+
+	assert.ErrorIs(t, err, service.ErrInvalidSSHKey)
+}
+

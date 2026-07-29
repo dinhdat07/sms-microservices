@@ -84,7 +84,10 @@ func (r *GormServerRepository) Update(ctx context.Context, server *domain.Server
 	server.ServerName = strings.TrimSpace(server.ServerName)
 	server.IPv4 = strings.TrimSpace(server.IPv4)
 
-	result := r.getDB(ctx).Model(server).Select("server_name", "ipv4", "current_status", "consecutive_failures").Updates(server)
+	result := r.getDB(ctx).Model(server).Select(
+		"server_name", "ipv4", "current_status", "consecutive_failures",
+		"health_check_method", "ssh_port", "ssh_user", "ssh_key", "agent_endpoint",
+	).Updates(server)
 	if result.Error != nil {
 		return result.Error
 	}
