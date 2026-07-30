@@ -51,6 +51,41 @@ func (_m *MockUptimeCalculator) CalculateUptime(ctx context.Context, startTime t
 	return r0, r1
 }
 
+// CalculateRawUptimeStats provides a mock function with given fields: ctx, startTime, endTime
+func (_m *MockUptimeCalculator) CalculateRawUptimeStats(ctx context.Context, startTime time.Time, endTime time.Time) (int64, int64, error) {
+	ret := _m.Called(ctx, startTime, endTime)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CalculateRawUptimeStats")
+	}
+
+	var r0 int64
+	var r1 int64
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time, time.Time) (int64, int64, error)); ok {
+		return rf(ctx, startTime, endTime)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time, time.Time) int64); ok {
+		r0 = rf(ctx, startTime, endTime)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, time.Time, time.Time) int64); ok {
+		r1 = rf(ctx, startTime, endTime)
+	} else {
+		r1 = ret.Get(1).(int64)
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, time.Time, time.Time) error); ok {
+		r2 = rf(ctx, startTime, endTime)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // MockUptimeCalculator_CalculateUptime_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CalculateUptime'
 type MockUptimeCalculator_CalculateUptime_Call struct {
 	*mock.Call

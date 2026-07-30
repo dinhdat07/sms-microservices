@@ -4,11 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
 
-	"sms-reporting/internal/domain"
 	"sms-reporting/internal/infrastructure/database"
 	"sms-reporting/internal/infrastructure/logger"
 	"sms-reporting/internal/service"
@@ -17,26 +15,26 @@ import (
 const schedulerLockKey = "lock:reporting_scheduler"
 
 type Scheduler struct {
-	cron            *cron.Cron
-	reportingWorker service.ReportingWorker
-	redisClient     redis.UniversalClient
-	cronSpec        string
-	adminEmail      string
+	cron             *cron.Cron
+	reportingService service.ReportingService
+	redisClient      redis.UniversalClient
+	cronSpec         string
+	adminEmail       string
 }
 
-func NewScheduler(worker service.ReportingWorker, redisClient redis.UniversalClient, cronSpec string, adminEmail string) *Scheduler {
+func NewScheduler(reportingService service.ReportingService, redisClient redis.UniversalClient, cronSpec string, adminEmail string) *Scheduler {
 	if cronSpec == "" {
-		cronSpec = "0 0 * * *" // Default: Midnight every day
+		cronSpec = "0 0 * * *"
 	}
 	if adminEmail == "" {
 		adminEmail = "admin@example.com"
 	}
 	return &Scheduler{
-		cron:            cron.New(cron.WithLocation(time.Local)),
-		reportingWorker: worker,
-		redisClient:     redisClient,
-		cronSpec:        cronSpec,
-		adminEmail:      adminEmail,
+		cron:             cron.New(cron.WithLocation(time.Local)),
+		reportingService: reportingService,
+		redisClient:      redisClient,
+		cronSpec:         cronSpec,
+		adminEmail:       adminEmail,
 	}
 }
 
@@ -60,14 +58,16 @@ func (s *Scheduler) Start() error {
 		startTime := time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, now.Location())
 		endTime := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
-		req, err := domain.NewReportRequest(s.adminEmail, startTime, endTime, "cron-"+uuid.New().String())
-		if err != nil {
-			logger.Log.Sugar().Errorf("Failed to create daily report request: %v", err)
-			return
+		if err := s.reportingService.ExecuteDailyMaintenance(context.Background(), startTime, endTime); err != nil {
+			logger.Log.Sugar().Errorf("Failed to execute daily maintenance: %v", err)
 		}
 
-		s.reportingWorker.EnqueueReport(req)
-		logger.Log.Sugar().Info("Daily report request enqueued successfully.")
+		err = s.reportingService.RequestReport(context.Background(), s.adminEmail, startTime.Format("2006-01-02"), endTime.Format("2006-01-02"))
+		if err != nil {
+			logger.Log.Sugar().Errorf("Failed to request daily report: %v", err)
+		} else {
+			logger.Log.Sugar().Info("Daily report request enqueued successfully")
+		}
 	})
 
 	if err != nil {
@@ -84,3 +84,5 @@ func (s *Scheduler) Stop() {
 		s.cron.Stop()
 	}
 }
+
+

@@ -4,6 +4,7 @@ package mock
 
 import (
 	context "context"
+	time "time"
 	domain "sms-reporting/internal/domain"
 
 	mock "github.com/stretchr/testify/mock"
@@ -86,6 +87,55 @@ func (_m *MockReportingRepository) DeleteReportingServer(ctx context.Context, se
 
 	return r0
 }
+
+// GetDailyUptimeStats provides a mock function with given fields: ctx, startDate, endDate
+func (_m *MockReportingRepository) GetDailyUptimeStats(ctx context.Context, startDate time.Time, endDate time.Time) ([]domain.DailyUptimeStat, error) {
+	ret := _m.Called(ctx, startDate, endDate)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDailyUptimeStats")
+	}
+
+	var r0 []domain.DailyUptimeStat
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time, time.Time) ([]domain.DailyUptimeStat, error)); ok {
+		return rf(ctx, startDate, endDate)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time, time.Time) []domain.DailyUptimeStat); ok {
+		r0 = rf(ctx, startDate, endDate)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.DailyUptimeStat)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, time.Time, time.Time) error); ok {
+		r1 = rf(ctx, startDate, endDate)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SaveDailyUptimeStat provides a mock function with given fields: ctx, stat
+func (_m *MockReportingRepository) SaveDailyUptimeStat(ctx context.Context, stat *domain.DailyUptimeStat) error {
+	ret := _m.Called(ctx, stat)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveDailyUptimeStat")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.DailyUptimeStat) error); ok {
+		r0 = rf(ctx, stat)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 
 // MockReportingRepository_DeleteReportingServer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteReportingServer'
 type MockReportingRepository_DeleteReportingServer_Call struct {

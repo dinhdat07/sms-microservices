@@ -341,6 +341,7 @@ services:
       - DB_URL_FILE=/run/secrets/db_url
       - REPORTING_WORKER_COUNT=20
       - REPORTING_JOB_QUEUE_SIZE=5000
+      - SCHEDULER_CRON_SPEC=* * * * *
     networks:
       - default
     image: whaleplay710/sms-reporting:v1.0.7

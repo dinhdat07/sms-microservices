@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"time"
 
 	"sms-reporting/internal/domain"
 	"sms-reporting/internal/repository"
@@ -59,4 +60,19 @@ func (r *gormReportingRepository) UpdateReportingServerStatus(ctx context.Contex
 
 func (r *gormReportingRepository) DeleteReportingServer(ctx context.Context, serverID string) error {
 	return r.db.WithContext(ctx).Where("server_id = ?", serverID).Delete(&domain.ReportingServer{}).Error
+}
+
+func (r *gormReportingRepository) SaveDailyUptimeStat(ctx context.Context, stat *domain.DailyUptimeStat) error {
+	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "date"}},
+		DoUpdates: clause.AssignmentColumns([]string{"total_ping_count", "success_ping_count", "updated_at"}),
+	}).Create(stat).Error
+}
+
+func (r *gormReportingRepository) GetDailyUptimeStats(ctx context.Context, startDate time.Time, endDate time.Time) ([]domain.DailyUptimeStat, error) {
+	var stats []domain.DailyUptimeStat
+	err := r.db.WithContext(ctx).
+		Where("date >= ? AND date <= ?", startDate.Format("2006-01-02"), endDate.Format("2006-01-02")).
+		Find(&stats).Error
+	return stats, err
 }

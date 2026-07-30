@@ -137,3 +137,51 @@ func TestReportingRepository_DeleteReportingServer(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestReportingRepository_SaveDailyUptimeStat(t *testing.T) {
+	db, mock := setupDB(t)
+	repo := NewGormReportingRepository(db)
+	ctx := context.Background()
+
+	statID := uuid.MustParse("12345678-1234-1234-1234-123456789012")
+	stat := &domain.DailyUptimeStat{
+		ID:               statID,
+		Date:             time.Now(),
+		TotalPingCount:   100,
+		SuccessPingCount: 95,
+	}
+
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "reporting_schema"."daily_uptime_stats" ("id","date","total_ping_count","success_ping_count","created_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT ("date") DO UPDATE SET "total_ping_count"="excluded"."total_ping_count","success_ping_count"="excluded"."success_ping_count","updated_at"="excluded"."updated_at"`)).
+		WithArgs(stat.ID, sqlmock.AnyArg(), stat.TotalPingCount, stat.SuccessPingCount, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	err := repo.SaveDailyUptimeStat(ctx, stat)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestReportingRepository_GetDailyUptimeStats(t *testing.T) {
+	db, mock := setupDB(t)
+	repo := NewGormReportingRepository(db)
+	ctx := context.Background()
+
+	now := time.Now()
+	startTime := now.Add(-48 * time.Hour)
+	endTime := now
+
+	statID := uuid.MustParse("12345678-1234-1234-1234-123456789012")
+	
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "reporting_schema"."daily_uptime_stats" WHERE date >= $1 AND date <= $2`)).
+		WithArgs(startTime.Format("2006-01-02"), endTime.Format("2006-01-02")).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "date", "total_ping_count", "success_ping_count"}).
+			AddRow(statID.String(), now.Add(-24*time.Hour), 100, 95))
+
+	stats, err := repo.GetDailyUptimeStats(ctx, startTime, endTime)
+	assert.NoError(t, err)
+	assert.Len(t, stats, 1)
+	assert.Equal(t, int64(100), stats[0].TotalPingCount)
+	assert.Equal(t, int64(95), stats[0].SuccessPingCount)
+
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+

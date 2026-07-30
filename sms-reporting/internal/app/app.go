@@ -50,7 +50,7 @@ func NewApp() (*App, error) {
 	if err := db.Exec("CREATE SCHEMA IF NOT EXISTS reporting_schema;").Error; err != nil {
 		return nil, fmt.Errorf("failed to create schema: %w", err)
 	}
-	if err := db.AutoMigrate(&domain.ReportRequest{}, &domain.ReportingServer{}); err != nil {
+	if err := db.AutoMigrate(&domain.ReportRequest{}, &domain.ReportingServer{}, &domain.DailyUptimeStat{}); err != nil {
 		return nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 
@@ -79,10 +79,11 @@ func NewApp() (*App, error) {
 
 	// Initialize Repos & Services
 	repo := impl.NewGormReportingRepository(db)
-	uptimeCalc := elasticsearch.NewESUptimeCalculator(esClient, esCfg.ServerIndex)
+	esRawProvider := elasticsearch.NewESRawUptimeProvider(esClient, esCfg.ServerIndex)
+	blendedUptimeCalc := service.NewBlendedUptimeCalculator(repo, esRawProvider)
 
-	worker := service.NewReportingWorker(repo, uptimeCalc, cfg.Reporting.WorkerCount, cfg.Reporting.JobQueueSize, publisher, cfg.Reporting.NotificationStream)
-	svc := service.NewReportingService(repo, worker)
+	worker := service.NewReportingWorker(repo, blendedUptimeCalc, cfg.Reporting.WorkerCount, cfg.Reporting.JobQueueSize, publisher, cfg.Reporting.NotificationStream)
+	svc := service.NewReportingService(repo, worker, esRawProvider)
 	handler := grpchandler.NewReportingGrpcHandler(svc)
 
 	// Setup gRPC Server
@@ -92,8 +93,7 @@ func NewApp() (*App, error) {
 	subscriber := messagebroker.NewRedisSubscriber(redisClient)
 	eventStream := consumer.NewEventConsumer(subscriber, repo, cfg.Consumer)
 
-	// Initialize Scheduler
-	sched := NewScheduler(worker, redisClient, cfg.Reporting.CronSpec, cfg.Reporting.AdminEmail)
+	sched := NewScheduler(svc, redisClient, cfg.Reporting.CronSpec, cfg.Reporting.AdminEmail)
 
 	authorizer := security.NewAuthorizer()
 	methodPermissions := map[string]security.PermissionCode{

@@ -3,9 +3,11 @@ package elasticsearch
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"sms-reporting/internal/domain"
+	"sms-reporting/internal/infrastructure/logger"
 
 	esv8 "github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/count"
@@ -13,26 +15,29 @@ import (
 )
 
 // ESUptimeCalculator implements domain.UptimeCalculator using Elasticsearch.
-type ESUptimeCalculator struct {
-	esClient *esv8.TypedClient
-	esIndex  string
+type ESRawUptimeProvider struct {
+	client *esv8.TypedClient
+	index  string
 }
 
-func NewESUptimeCalculator(esClient *esv8.TypedClient, esIndex string) domain.UptimeCalculator {
-	return &ESUptimeCalculator{esClient: esClient, esIndex: esIndex}
+func NewESRawUptimeProvider(client *esv8.TypedClient, index string) domain.RawUptimeProvider {
+	return &ESRawUptimeProvider{
+		client: client,
+		index:  index,
+	}
 }
 
-func (c *ESUptimeCalculator) CalculateUptime(ctx context.Context, startTime, endTime time.Time) (float64, error) {
-	if c.esClient == nil {
-		return 0, nil
+func (c *ESRawUptimeProvider) CalculateRawUptimeStats(ctx context.Context, startTime time.Time, endTime time.Time) (int64, int64, error) {
+	if c.client == nil {
+		return 0, 0, nil
 	}
 
 	startStr := startTime.Format("2006-01-02T15:04:05Z")
 	endStr := endTime.Format("2006-01-02T15:04:05Z")
 
 	// Total Observations
-	totalCountReq, err := c.esClient.Count().
-		Index(c.esIndex).
+	totalCountReq, err := c.client.Count().
+		Index(c.index).
 		Request(&count.Request{
 			Query: &types.Query{
 				Range: map[string]types.RangeQuery{
@@ -45,16 +50,16 @@ func (c *ESUptimeCalculator) CalculateUptime(ctx context.Context, startTime, end
 		}).Do(ctx)
 
 	if err != nil {
-		return 0, fmt.Errorf("failed to count total observations: %w", err)
+		return 0, 0, fmt.Errorf("failed to count total observations: %w", err)
 	}
 
 	if totalCountReq.Count == 0 {
-		return 0, nil
+		return 0, 0, nil
 	}
 
 	// Success Observations
-	successCountReq, err := c.esClient.Count().
-		Index(c.esIndex).
+	successCountReq, err := c.client.Count().
+		Index(c.index).
 		Request(&count.Request{
 			Query: &types.Query{
 				Bool: &types.BoolQuery{
@@ -78,8 +83,28 @@ func (c *ESUptimeCalculator) CalculateUptime(ctx context.Context, startTime, end
 		}).Do(ctx)
 
 	if err != nil {
-		return 0, fmt.Errorf("failed to count success observations: %w", err)
+		return 0, 0, fmt.Errorf("failed to count success observations: %w", err)
 	}
 
-	return (float64(successCountReq.Count) / float64(totalCountReq.Count)) * 100, nil
+	return successCountReq.Count, totalCountReq.Count, nil
+}
+
+func (c *ESRawUptimeProvider) CleanupOldData(ctx context.Context, olderThan time.Time) error {
+	cleanupQuery := fmt.Sprintf(`{
+		"query": {
+			"range": {
+				"timestamp": {
+					"lt": "%s"
+				}
+			}
+		}
+	}`, olderThan.UTC().Format(time.RFC3339Nano))
+
+	res, err := c.client.DeleteByQuery(c.index).Raw(strings.NewReader(cleanupQuery)).Do(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to execute _delete_by_query: %w", err)
+	}
+
+	logger.Log.Sugar().Infof("Elasticsearch cleanup executed. Deleted docs: %d", res.Deleted)
+	return nil
 }

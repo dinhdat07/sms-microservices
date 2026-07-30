@@ -12,17 +12,20 @@ import (
 
 type ReportingService interface {
 	RequestReport(ctx context.Context, email string, startDate string, endDate string) error
+	ExecuteDailyMaintenance(ctx context.Context, startTime time.Time, endTime time.Time) error
 }
 
 type reportingServiceImpl struct {
-	repo   repository.ReportingRepository
-	worker ReportingWorker
+	repo        repository.ReportingRepository
+	worker      ReportingWorker
+	rawProvider domain.RawUptimeProvider
 }
 
-func NewReportingService(repo repository.ReportingRepository, worker ReportingWorker) ReportingService {
+func NewReportingService(repo repository.ReportingRepository, worker ReportingWorker, rawProvider domain.RawUptimeProvider) ReportingService {
 	return &reportingServiceImpl{
-		repo:   repo,
-		worker: worker,
+		repo:        repo,
+		worker:      worker,
+		rawProvider: rawProvider,
 	}
 }
 
@@ -55,6 +58,38 @@ func (s *reportingServiceImpl) RequestReport(ctx context.Context, email string, 
 
 	// Enqueue report request to the worker pool
 	s.worker.EnqueueReport(req)
+
+	return nil
+}
+
+func (s *reportingServiceImpl) ExecuteDailyMaintenance(ctx context.Context, startTime time.Time, endTime time.Time) error {
+	// 1. Rollup Data
+	if s.rawProvider != nil {
+		successCount, totalCount, err := s.rawProvider.CalculateRawUptimeStats(ctx, startTime, endTime.Add(-time.Nanosecond))
+		if err != nil {
+			return err
+		}
+
+		stat := &domain.DailyUptimeStat{
+			ID:               uuid.New(),
+			Date:             startTime,
+			TotalPingCount:   totalCount,
+			SuccessPingCount: successCount,
+		}
+
+		if err := s.repo.SaveDailyUptimeStat(ctx, stat); err != nil {
+			return err
+		}
+	}
+
+	// 2. Cleanup Old Data
+	if s.rawProvider != nil {
+		// Clean up data older than 7 days from now
+		olderThan := time.Now().Add(-7 * 24 * time.Hour)
+		if err := s.rawProvider.CleanupOldData(ctx, olderThan); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

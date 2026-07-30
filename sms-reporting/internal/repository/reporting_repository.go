@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"sms-reporting/internal/domain"
 )
@@ -21,4 +22,7 @@ type ReportingRepository interface {
 	UpsertReportingServer(ctx context.Context, server *domain.ReportingServer) error
 	UpdateReportingServerStatus(ctx context.Context, serverID string, status string) error
 	DeleteReportingServer(ctx context.Context, serverID string) error
+
+	SaveDailyUptimeStat(ctx context.Context, stat *domain.DailyUptimeStat) error
+	GetDailyUptimeStats(ctx context.Context, startDate time.Time, endDate time.Time) ([]domain.DailyUptimeStat, error)
 }

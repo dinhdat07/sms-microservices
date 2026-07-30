@@ -21,15 +21,16 @@ func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	return m.roundTripFunc(req)
 }
 
-func TestESUptimeCalculator_CalculateUptime_NilClient(t *testing.T) {
-	calc := NewESUptimeCalculator(nil, "observations")
-	uptime, err := calc.CalculateUptime(context.Background(), time.Now(), time.Now())
+func TestESRawUptimeProvider_CalculateRawUptimeStats_NilClient(t *testing.T) {
+	calc := NewESRawUptimeProvider(nil, "observations")
+	success, total, err := calc.CalculateRawUptimeStats(context.Background(), time.Now(), time.Now())
 	
 	assert.NoError(t, err)
-	assert.Equal(t, float64(0), uptime)
+	assert.Equal(t, int64(0), success)
+	assert.Equal(t, int64(0), total)
 }
 
-func TestESUptimeCalculator_CalculateUptime_Success(t *testing.T) {
+func TestESRawUptimeProvider_CalculateRawUptimeStats_Success(t *testing.T) {
 	requestCount := 0
 	transport := &mockRoundTripper{
 		roundTripFunc: func(req *http.Request) (*http.Response, error) {
@@ -56,18 +57,17 @@ func TestESUptimeCalculator_CalculateUptime_Success(t *testing.T) {
 		Transport: transport,
 	}
 	es, _ := esv8.NewTypedClient(cfg)
-	// mock the elastictransport Logger to avoid nil pointer panic inside TypedClient when error occurs sometimes
-	// (removed because logger is unexported in the newer version)
 
-	calc := NewESUptimeCalculator(es, "observations")
+	calc := NewESRawUptimeProvider(es, "observations")
 
-	uptime, err := calc.CalculateUptime(context.Background(), time.Now(), time.Now())
+	success, total, err := calc.CalculateRawUptimeStats(context.Background(), time.Now(), time.Now())
 	
 	assert.NoError(t, err)
-	assert.Equal(t, 99.0, uptime)
+	assert.Equal(t, int64(99), success)
+	assert.Equal(t, int64(100), total)
 }
 
-func TestESUptimeCalculator_CalculateUptime_TotalCountError(t *testing.T) {
+func TestESRawUptimeProvider_CalculateRawUptimeStats_TotalCountError(t *testing.T) {
 	transport := &mockRoundTripper{
 		roundTripFunc: func(req *http.Request) (*http.Response, error) {
 			return nil, assert.AnError
@@ -79,40 +79,15 @@ func TestESUptimeCalculator_CalculateUptime_TotalCountError(t *testing.T) {
 	}
 	es, _ := esv8.NewTypedClient(cfg)
 
-	calc := NewESUptimeCalculator(es, "observations")
-	uptime, err := calc.CalculateUptime(context.Background(), time.Now(), time.Now())
+	calc := NewESRawUptimeProvider(es, "observations")
+	success, total, err := calc.CalculateRawUptimeStats(context.Background(), time.Now(), time.Now())
 	
 	assert.Error(t, err)
-	assert.Equal(t, float64(0), uptime)
+	assert.Equal(t, int64(0), success)
+	assert.Equal(t, int64(0), total)
 }
 
-func TestESUptimeCalculator_CalculateUptime_ZeroTotalCount(t *testing.T) {
-	transport := &mockRoundTripper{
-		roundTripFunc: func(req *http.Request) (*http.Response, error) {
-			body := `{"count": 0}`
-			res := &http.Response{
-				StatusCode: 200,
-				Body:       io.NopCloser(strings.NewReader(body)),
-				Header:     make(http.Header),
-			}
-			res.Header.Set("X-Elastic-Product", "Elasticsearch")
-			return res, nil
-		},
-	}
-
-	cfg := esv8.Config{
-		Transport: transport,
-	}
-	es, _ := esv8.NewTypedClient(cfg)
-
-	calc := NewESUptimeCalculator(es, "observations")
-	uptime, err := calc.CalculateUptime(context.Background(), time.Now(), time.Now())
-	
-	assert.NoError(t, err)
-	assert.Equal(t, float64(0), uptime)
-}
-
-func TestESUptimeCalculator_CalculateUptime_SuccessCountError(t *testing.T) {
+func TestESRawUptimeProvider_CalculateRawUptimeStats_SuccessCountError(t *testing.T) {
 	requestCount := 0
 	transport := &mockRoundTripper{
 		roundTripFunc: func(req *http.Request) (*http.Response, error) {
@@ -137,9 +112,53 @@ func TestESUptimeCalculator_CalculateUptime_SuccessCountError(t *testing.T) {
 	}
 	es, _ := esv8.NewTypedClient(cfg)
 
-	calc := NewESUptimeCalculator(es, "observations")
-	uptime, err := calc.CalculateUptime(context.Background(), time.Now(), time.Now())
+	calc := NewESRawUptimeProvider(es, "observations")
+	success, total, err := calc.CalculateRawUptimeStats(context.Background(), time.Now(), time.Now())
 	
 	assert.Error(t, err)
-	assert.Equal(t, float64(0), uptime)
+	assert.Equal(t, int64(0), success)
+	assert.Equal(t, int64(0), total)
+}
+
+func TestESRawUptimeProvider_CleanupOldData_Success(t *testing.T) {
+	transport := &mockRoundTripper{
+		roundTripFunc: func(req *http.Request) (*http.Response, error) {
+			body := `{"deleted": 50}`
+			res := &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(body)),
+				Header:     make(http.Header),
+			}
+			res.Header.Set("X-Elastic-Product", "Elasticsearch")
+			return res, nil
+		},
+	}
+
+	cfg := esv8.Config{
+		Transport: transport,
+	}
+	es, _ := esv8.NewTypedClient(cfg)
+
+	calc := NewESRawUptimeProvider(es, "observations")
+	err := calc.CleanupOldData(context.Background(), time.Now())
+	
+	assert.NoError(t, err)
+}
+
+func TestESRawUptimeProvider_CleanupOldData_Error(t *testing.T) {
+	transport := &mockRoundTripper{
+		roundTripFunc: func(req *http.Request) (*http.Response, error) {
+			return nil, assert.AnError
+		},
+	}
+
+	cfg := esv8.Config{
+		Transport: transport,
+	}
+	es, _ := esv8.NewTypedClient(cfg)
+
+	calc := NewESRawUptimeProvider(es, "observations")
+	err := calc.CleanupOldData(context.Background(), time.Now())
+	
+	assert.Error(t, err)
 }
