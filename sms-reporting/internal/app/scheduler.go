@@ -62,7 +62,7 @@ func (s *Scheduler) Start() error {
 			logger.Log.Sugar().Errorf("Failed to execute daily maintenance: %v", err)
 		}
 
-		err = s.reportingService.RequestReport(context.Background(), s.adminEmail, startTime.Format("2006-01-02"), endTime.Format("2006-01-02"))
+		err = s.reportingService.RequestReport(context.Background(), s.adminEmail, startTime.Format("2006-01-02"), startTime.Format("2006-01-02"))
 		if err != nil {
 			logger.Log.Sugar().Errorf("Failed to request daily report: %v", err)
 		} else {
