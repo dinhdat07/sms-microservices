@@ -295,6 +295,36 @@
           "ServerManagementService"
         ]
       }
+    },
+    "/api/v1/servers/{serverId}/agent-token": {
+      "get": {
+        "operationId": "ServerManagementService_GetAgentToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetAgentTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerManagementService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -404,6 +434,14 @@
           "format": "byte"
         },
         "filename": {
+          "type": "string"
+        }
+      }
+    },
+    "v1GetAgentTokenResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
           "type": "string"
         }
       }

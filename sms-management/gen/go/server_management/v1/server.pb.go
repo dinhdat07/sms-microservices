@@ -939,6 +939,94 @@ func (x *ExportServersResponse) GetFilename() string {
 	return ""
 }
 
+type GetAgentTokenRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAgentTokenRequest) Reset() {
+	*x = GetAgentTokenRequest{}
+	mi := &file_server_management_v1_server_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAgentTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAgentTokenRequest) ProtoMessage() {}
+
+func (x *GetAgentTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_server_management_v1_server_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAgentTokenRequest.ProtoReflect.Descriptor instead.
+func (*GetAgentTokenRequest) Descriptor() ([]byte, []int) {
+	return file_server_management_v1_server_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetAgentTokenRequest) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+type GetAgentTokenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAgentTokenResponse) Reset() {
+	*x = GetAgentTokenResponse{}
+	mi := &file_server_management_v1_server_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAgentTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAgentTokenResponse) ProtoMessage() {}
+
+func (x *GetAgentTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_server_management_v1_server_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAgentTokenResponse.ProtoReflect.Descriptor instead.
+func (*GetAgentTokenResponse) Descriptor() ([]byte, []int) {
+	return file_server_management_v1_server_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetAgentTokenResponse) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
 var File_server_management_v1_server_proto protoreflect.FileDescriptor
 
 const file_server_management_v1_server_proto_rawDesc = "" +
@@ -1034,14 +1122,19 @@ const file_server_management_v1_server_proto_rawDesc = "" +
 	"created_to\x18\b \x01(\tR\tcreatedTo\"V\n" +
 	"\x15ExportServersResponse\x12!\n" +
 	"\ffile_content\x18\x01 \x01(\fR\vfileContent\x12\x1a\n" +
-	"\bfilename\x18\x02 \x01(\tR\bfilename2\xd0\x06\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\"=\n" +
+	"\x14GetAgentTokenRequest\x12%\n" +
+	"\tserver_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\bserverId\"-\n" +
+	"\x15GetAgentTokenResponse\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token2\xec\a\n" +
 	"\x17ServerManagementService\x12\x81\x01\n" +
 	"\fCreateServer\x12).server_management.v1.CreateServerRequest\x1a*.server_management.v1.CreateServerResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/api/v1/servers\x12\x8d\x01\n" +
 	"\fUpdateServer\x12).server_management.v1.UpdateServerRequest\x1a*.server_management.v1.UpdateServerResponse\"&\x82\xd3\xe4\x93\x02 :\x01*\x1a\x1b/api/v1/servers/{server_id}\x12\x8a\x01\n" +
 	"\fDeleteServer\x12).server_management.v1.DeleteServerRequest\x1a*.server_management.v1.DeleteServerResponse\"#\x82\xd3\xe4\x93\x02\x1d*\x1b/api/v1/servers/{server_id}\x12{\n" +
 	"\vViewServers\x12(.server_management.v1.ViewServersRequest\x1a).server_management.v1.ViewServersResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/api/v1/servers\x12\x8b\x01\n" +
 	"\rImportServers\x12*.server_management.v1.ImportServersRequest\x1a+.server_management.v1.ImportServersResponse\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/api/v1/servers/import\x12\x88\x01\n" +
-	"\rExportServers\x12*.server_management.v1.ExportServersRequest\x1a+.server_management.v1.ExportServersResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/api/v1/servers/exportBKZIserver-management-service/gen/go/server_management/v1;server_managementv1b\x06proto3"
+	"\rExportServers\x12*.server_management.v1.ExportServersRequest\x1a+.server_management.v1.ExportServersResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/api/v1/servers/export\x12\x99\x01\n" +
+	"\rGetAgentToken\x12*.server_management.v1.GetAgentTokenRequest\x1a+.server_management.v1.GetAgentTokenResponse\"/\x82\xd3\xe4\x93\x02)\x12'/api/v1/servers/{server_id}/agent-tokenBKZIserver-management-service/gen/go/server_management/v1;server_managementv1b\x06proto3"
 
 var (
 	file_server_management_v1_server_proto_rawDescOnce sync.Once
@@ -1055,7 +1148,7 @@ func file_server_management_v1_server_proto_rawDescGZIP() []byte {
 	return file_server_management_v1_server_proto_rawDescData
 }
 
-var file_server_management_v1_server_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_server_management_v1_server_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_server_management_v1_server_proto_goTypes = []any{
 	(*Server)(nil),                // 0: server_management.v1.Server
 	(*CreateServerRequest)(nil),   // 1: server_management.v1.CreateServerRequest
@@ -1070,6 +1163,8 @@ var file_server_management_v1_server_proto_goTypes = []any{
 	(*ImportServersResponse)(nil), // 10: server_management.v1.ImportServersResponse
 	(*ExportServersRequest)(nil),  // 11: server_management.v1.ExportServersRequest
 	(*ExportServersResponse)(nil), // 12: server_management.v1.ExportServersResponse
+	(*GetAgentTokenRequest)(nil),  // 13: server_management.v1.GetAgentTokenRequest
+	(*GetAgentTokenResponse)(nil), // 14: server_management.v1.GetAgentTokenResponse
 }
 var file_server_management_v1_server_proto_depIdxs = []int32{
 	0,  // 0: server_management.v1.CreateServerResponse.server:type_name -> server_management.v1.Server
@@ -1081,14 +1176,16 @@ var file_server_management_v1_server_proto_depIdxs = []int32{
 	7,  // 6: server_management.v1.ServerManagementService.ViewServers:input_type -> server_management.v1.ViewServersRequest
 	9,  // 7: server_management.v1.ServerManagementService.ImportServers:input_type -> server_management.v1.ImportServersRequest
 	11, // 8: server_management.v1.ServerManagementService.ExportServers:input_type -> server_management.v1.ExportServersRequest
-	2,  // 9: server_management.v1.ServerManagementService.CreateServer:output_type -> server_management.v1.CreateServerResponse
-	4,  // 10: server_management.v1.ServerManagementService.UpdateServer:output_type -> server_management.v1.UpdateServerResponse
-	6,  // 11: server_management.v1.ServerManagementService.DeleteServer:output_type -> server_management.v1.DeleteServerResponse
-	8,  // 12: server_management.v1.ServerManagementService.ViewServers:output_type -> server_management.v1.ViewServersResponse
-	10, // 13: server_management.v1.ServerManagementService.ImportServers:output_type -> server_management.v1.ImportServersResponse
-	12, // 14: server_management.v1.ServerManagementService.ExportServers:output_type -> server_management.v1.ExportServersResponse
-	9,  // [9:15] is the sub-list for method output_type
-	3,  // [3:9] is the sub-list for method input_type
+	13, // 9: server_management.v1.ServerManagementService.GetAgentToken:input_type -> server_management.v1.GetAgentTokenRequest
+	2,  // 10: server_management.v1.ServerManagementService.CreateServer:output_type -> server_management.v1.CreateServerResponse
+	4,  // 11: server_management.v1.ServerManagementService.UpdateServer:output_type -> server_management.v1.UpdateServerResponse
+	6,  // 12: server_management.v1.ServerManagementService.DeleteServer:output_type -> server_management.v1.DeleteServerResponse
+	8,  // 13: server_management.v1.ServerManagementService.ViewServers:output_type -> server_management.v1.ViewServersResponse
+	10, // 14: server_management.v1.ServerManagementService.ImportServers:output_type -> server_management.v1.ImportServersResponse
+	12, // 15: server_management.v1.ServerManagementService.ExportServers:output_type -> server_management.v1.ExportServersResponse
+	14, // 16: server_management.v1.ServerManagementService.GetAgentToken:output_type -> server_management.v1.GetAgentTokenResponse
+	10, // [10:17] is the sub-list for method output_type
+	3,  // [3:10] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
@@ -1105,7 +1202,7 @@ func file_server_management_v1_server_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_server_management_v1_server_proto_rawDesc), len(file_server_management_v1_server_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

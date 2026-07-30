@@ -46,6 +46,12 @@ service ServerManagementService {
       get: "/api/v1/servers/export"
     };
   }
+
+  rpc GetAgentToken(GetAgentTokenRequest) returns (GetAgentTokenResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/servers/{server_id}/agent-token"
+    };
+  }
 }
 
 message Server {
@@ -157,4 +163,12 @@ message ExportServersRequest {
 message ExportServersResponse {
   bytes file_content = 1;
   string filename = 2;
+}
+
+message GetAgentTokenRequest {
+  string server_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message GetAgentTokenResponse {
+  string token = 1;
 }

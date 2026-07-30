@@ -17,7 +17,7 @@ import (
 )
 
 func newTestService(repo repository.ServerRepository, outbox repository.OutboxRepository) service.ServerService {
-	return service.NewServerService(repo, outbox)
+	return service.NewServerService(repo, outbox, "dummy_secret")
 }
 
 func mockTx(repo *repomock.MockServerRepository) {
@@ -621,7 +621,7 @@ func TestImportServers_BatchCreateError(t *testing.T) {
 func TestSearchServers_InvalidStatus(t *testing.T) {
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	_, _, err := svc.SearchServers(context.Background(), repository.ServerListFilter{
 		Status: "INVALID_STATUS",
@@ -633,7 +633,7 @@ func TestSearchServers_InvalidStatus(t *testing.T) {
 func TestDeleteServer_NilServer(t *testing.T) {
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	repo.On("GetByID", mock.Anything, "id-1").Return(nil, nil).Once()
 	err := svc.DeleteServer(context.Background(), "id-1")
@@ -644,7 +644,7 @@ func TestDeleteServer_NilServer(t *testing.T) {
 func TestUpdateServer_NilServer(t *testing.T) {
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	repo.On("GetByID", mock.Anything, "id-1").Return(nil, nil).Once()
 	_, err := svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "test"})
@@ -654,7 +654,7 @@ func TestUpdateServer_NilServer(t *testing.T) {
 func TestUpdateServer_MethodSSHEmptyKey(t *testing.T) {
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	existingServer := &domain.Server{
 		ServerID:          "id-1",
@@ -681,7 +681,7 @@ func TestUpdateServer_MethodSSHEmptyKey(t *testing.T) {
 func TestUpdateServer_SSHValidations(t *testing.T) {
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	existingServer := &domain.Server{ServerID: "id-1"}
 	repo.On("GetByID", mock.Anything, "id-1").Return(existingServer, nil)
@@ -702,7 +702,7 @@ func TestUpdateServer_SSHValidations(t *testing.T) {
 func TestUpdateServer_AgentValidations(t *testing.T) {
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	existingServer := &domain.Server{ServerID: "id-1"}
 	repo.On("GetByID", mock.Anything, "id-1").Return(existingServer, nil)

@@ -243,6 +243,45 @@ func local_request_ServerManagementService_ExportServers_0(ctx context.Context, 
 	return msg, metadata, err
 }
 
+func request_ServerManagementService_GetAgentToken_0(ctx context.Context, marshaler runtime.Marshaler, client ServerManagementServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetAgentTokenRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	if req.Body != nil {
+		_, _ = io.Copy(io.Discard, req.Body)
+	}
+	val, ok := pathParams["server_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "server_id")
+	}
+	protoReq.ServerId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "server_id", err)
+	}
+	msg, err := client.GetAgentToken(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_ServerManagementService_GetAgentToken_0(ctx context.Context, marshaler runtime.Marshaler, server ServerManagementServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetAgentTokenRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	val, ok := pathParams["server_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "server_id")
+	}
+	protoReq.ServerId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "server_id", err)
+	}
+	msg, err := server.GetAgentToken(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 // RegisterServerManagementServiceHandlerServer registers the http handlers for service ServerManagementService to "mux".
 // UnaryRPC     :call ServerManagementServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -368,6 +407,26 @@ func RegisterServerManagementServiceHandlerServer(ctx context.Context, mux *runt
 			return
 		}
 		forward_ServerManagementService_ExportServers_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_ServerManagementService_GetAgentToken_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/server_management.v1.ServerManagementService/GetAgentToken", runtime.WithHTTPPathPattern("/api/v1/servers/{server_id}/agent-token"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_ServerManagementService_GetAgentToken_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_ServerManagementService_GetAgentToken_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
@@ -511,6 +570,23 @@ func RegisterServerManagementServiceHandlerClient(ctx context.Context, mux *runt
 		}
 		forward_ServerManagementService_ExportServers_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_ServerManagementService_GetAgentToken_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/server_management.v1.ServerManagementService/GetAgentToken", runtime.WithHTTPPathPattern("/api/v1/servers/{server_id}/agent-token"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_ServerManagementService_GetAgentToken_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_ServerManagementService_GetAgentToken_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	return nil
 }
 
@@ -521,6 +597,7 @@ var (
 	pattern_ServerManagementService_ViewServers_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "servers"}, ""))
 	pattern_ServerManagementService_ImportServers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "servers", "import"}, ""))
 	pattern_ServerManagementService_ExportServers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "servers", "export"}, ""))
+	pattern_ServerManagementService_GetAgentToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "servers", "server_id", "agent-token"}, ""))
 )
 
 var (
@@ -530,4 +607,5 @@ var (
 	forward_ServerManagementService_ViewServers_0   = runtime.ForwardResponseMessage
 	forward_ServerManagementService_ImportServers_0 = runtime.ForwardResponseMessage
 	forward_ServerManagementService_ExportServers_0 = runtime.ForwardResponseMessage
+	forward_ServerManagementService_GetAgentToken_0 = runtime.ForwardResponseMessage
 )

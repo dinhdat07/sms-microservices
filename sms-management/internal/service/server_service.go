@@ -11,6 +11,8 @@ import (
 	"sms-management/internal/domain"
 	"sms-management/internal/infrastructure/security"
 	"sms-management/internal/repository"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var (
@@ -62,17 +64,20 @@ type ServerService interface {
 
 	ImportServers(ctx context.Context, fileBytes []byte) (*ImportResult, error)
 	ExportServers(ctx context.Context, filter repository.ServerListFilter) ([]byte, string, error)
+	GenerateAgentToken(ctx context.Context, serverID string) (string, error)
 }
 
 type serverService struct {
-	repo       repository.ServerRepository
-	outboxRepo repository.OutboxRepository
+	repo               repository.ServerRepository
+	outboxRepo         repository.OutboxRepository
+	agentSigningSecret string
 }
 
-func NewServerService(repo repository.ServerRepository, outboxRepo repository.OutboxRepository) ServerService {
+func NewServerService(repo repository.ServerRepository, outboxRepo repository.OutboxRepository, agentSigningSecret string) ServerService {
 	return &serverService{
-		repo:       repo,
-		outboxRepo: outboxRepo,
+		repo:               repo,
+		outboxRepo:         outboxRepo,
+		agentSigningSecret: agentSigningSecret,
 	}
 }
 
@@ -312,4 +317,29 @@ func (s *serverService) SearchServers(ctx context.Context, filter repository.Ser
 	}
 
 	return s.repo.Search(ctx, filter)
+}
+
+func (s *serverService) GenerateAgentToken(ctx context.Context, serverID string) (string, error) {
+	server, err := s.repo.GetByID(ctx, serverID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return "", ErrServerNotFound
+		}
+		return "", err
+	}
+	if server == nil {
+		return "", ErrServerNotFound
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"server_id": serverID,
+		"bound_ip":  server.IPv4,
+	})
+
+	tokenString, err := token.SignedString([]byte(s.agentSigningSecret))
+	if err != nil {
+		return "", fmt.Errorf("failed to sign agent token: %w", err)
+	}
+
+	return tokenString, nil
 }

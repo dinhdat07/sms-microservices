@@ -25,6 +25,7 @@ const (
 	ServerManagementService_ViewServers_FullMethodName   = "/server_management.v1.ServerManagementService/ViewServers"
 	ServerManagementService_ImportServers_FullMethodName = "/server_management.v1.ServerManagementService/ImportServers"
 	ServerManagementService_ExportServers_FullMethodName = "/server_management.v1.ServerManagementService/ExportServers"
+	ServerManagementService_GetAgentToken_FullMethodName = "/server_management.v1.ServerManagementService/GetAgentToken"
 )
 
 // ServerManagementServiceClient is the client API for ServerManagementService service.
@@ -37,6 +38,7 @@ type ServerManagementServiceClient interface {
 	ViewServers(ctx context.Context, in *ViewServersRequest, opts ...grpc.CallOption) (*ViewServersResponse, error)
 	ImportServers(ctx context.Context, in *ImportServersRequest, opts ...grpc.CallOption) (*ImportServersResponse, error)
 	ExportServers(ctx context.Context, in *ExportServersRequest, opts ...grpc.CallOption) (*ExportServersResponse, error)
+	GetAgentToken(ctx context.Context, in *GetAgentTokenRequest, opts ...grpc.CallOption) (*GetAgentTokenResponse, error)
 }
 
 type serverManagementServiceClient struct {
@@ -107,6 +109,16 @@ func (c *serverManagementServiceClient) ExportServers(ctx context.Context, in *E
 	return out, nil
 }
 
+func (c *serverManagementServiceClient) GetAgentToken(ctx context.Context, in *GetAgentTokenRequest, opts ...grpc.CallOption) (*GetAgentTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAgentTokenResponse)
+	err := c.cc.Invoke(ctx, ServerManagementService_GetAgentToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServerManagementServiceServer is the server API for ServerManagementService service.
 // All implementations must embed UnimplementedServerManagementServiceServer
 // for forward compatibility.
@@ -117,6 +129,7 @@ type ServerManagementServiceServer interface {
 	ViewServers(context.Context, *ViewServersRequest) (*ViewServersResponse, error)
 	ImportServers(context.Context, *ImportServersRequest) (*ImportServersResponse, error)
 	ExportServers(context.Context, *ExportServersRequest) (*ExportServersResponse, error)
+	GetAgentToken(context.Context, *GetAgentTokenRequest) (*GetAgentTokenResponse, error)
 	mustEmbedUnimplementedServerManagementServiceServer()
 }
 
@@ -144,6 +157,9 @@ func (UnimplementedServerManagementServiceServer) ImportServers(context.Context,
 }
 func (UnimplementedServerManagementServiceServer) ExportServers(context.Context, *ExportServersRequest) (*ExportServersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExportServers not implemented")
+}
+func (UnimplementedServerManagementServiceServer) GetAgentToken(context.Context, *GetAgentTokenRequest) (*GetAgentTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAgentToken not implemented")
 }
 func (UnimplementedServerManagementServiceServer) mustEmbedUnimplementedServerManagementServiceServer() {
 }
@@ -275,6 +291,24 @@ func _ServerManagementService_ExportServers_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServerManagementService_GetAgentToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAgentTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerManagementServiceServer).GetAgentToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerManagementService_GetAgentToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerManagementServiceServer).GetAgentToken(ctx, req.(*GetAgentTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ServerManagementService_ServiceDesc is the grpc.ServiceDesc for ServerManagementService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -305,6 +339,10 @@ var ServerManagementService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExportServers",
 			Handler:    _ServerManagementService_ExportServers_Handler,
+		},
+		{
+			MethodName: "GetAgentToken",
+			Handler:    _ServerManagementService_GetAgentToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

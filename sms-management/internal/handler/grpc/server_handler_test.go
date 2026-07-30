@@ -68,6 +68,11 @@ func (m *mockSvc) ExportServers(ctx context.Context, filter repository.ServerLis
 	return b, args.String(1), args.Error(2)
 }
 
+func (m *mockSvc) GenerateAgentToken(ctx context.Context, serverID string) (string, error) {
+	args := m.Called(ctx, serverID)
+	return args.String(0), args.Error(1)
+}
+
 func TestHandler_CreateServer_Success(t *testing.T) {
 	svc := new(mockSvc)
 	h := NewServerManagementServer(svc)

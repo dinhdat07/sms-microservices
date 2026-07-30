@@ -44,7 +44,7 @@ func TestImportServers_ValidFile(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	mockTx(repo)
 
@@ -71,7 +71,7 @@ func TestExportServers_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	servers := []*domain.Server{
 		{ServerID: "id-1", ServerName: "srv-a", IPv4: "1.1.1.1", CurrentStatus: domain.ServerStatusOnline},
@@ -91,7 +91,7 @@ func TestImportServers_FileTooLarge(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	fileBytes := make([]byte, 2*1024*1024+1)
 	_, err := svc.ImportServers(ctx, fileBytes)
@@ -102,7 +102,7 @@ func TestImportServers_InvalidFormat(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	_, err := svc.ImportServers(ctx, []byte("invalid data"))
 	assert.ErrorIs(t, err, service.ErrInvalidFormat)
@@ -112,7 +112,7 @@ func TestImportServers_MissingColumns(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	headers := []string{"Unknown"}
 	data := [][]string{{"test"}}
@@ -126,7 +126,7 @@ func TestImportServers_Duplicates(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 	mockTx(repo)
 
 	headers := []string{"Server Name", "IPv4"}
@@ -157,7 +157,7 @@ func TestExportServers_Error(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	filter := repository.ServerListFilter{Page: 1, PageSize: 100}
 	repo.On("Search", ctx, filter).Return(nil, int32(0), errors.New("search error")).Once()
@@ -170,7 +170,7 @@ func TestImportServers_EmptyFile(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	headers := []string{}
 	data := [][]string{}
@@ -184,7 +184,7 @@ func TestImportServers_OutboxError(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 	mockTx(repo)
 
 	headers := []string{"Server Name", "IPv4"}
@@ -207,7 +207,7 @@ func TestImportServers_FindByNamesError(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
 	outbox := repomock.NewMockOutboxRepository(t)
-	svc := service.NewServerService(repo, outbox)
+	svc := service.NewServerService(repo, outbox, "dummy_secret")
 
 	headers := []string{"Server Name", "IPv4"}
 	data := [][]string{

@@ -242,6 +242,21 @@ func (s *ServerManagementServer) ExportServers(ctx context.Context, req *server_
 	}, nil
 }
 
+func (s *ServerManagementServer) GetAgentToken(ctx context.Context, req *server_managementv1.GetAgentTokenRequest) (*server_managementv1.GetAgentTokenResponse, error) {
+	if req == nil {
+		return nil, gstatus.Error(codes.InvalidArgument, "request is required")
+	}
+
+	token, err := s.serverService.GenerateAgentToken(ctx, req.GetServerId())
+	if err != nil {
+		return nil, mapError(err)
+	}
+
+	return &server_managementv1.GetAgentTokenResponse{
+		Token: token,
+	}, nil
+}
+
 func parseCreatedDateRange(createdFrom, createdTo string) (time.Time, time.Time, error) {
 	var from time.Time
 	var to time.Time

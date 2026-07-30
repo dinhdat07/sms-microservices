@@ -33,6 +33,10 @@ func (m *mockServerService) ExportServers(ctx context.Context, filter repository
 	return m.exportRes, m.exportName, m.exportErr
 }
 
+func (m *mockServerService) GenerateAgentToken(ctx context.Context, serverID string) (string, error) {
+	return "", nil
+}
+
 func (m *mockServerService) CreateServer(ctx context.Context, in service.CreateServerInput) (*domain.Server, error) {
 	return nil, nil
 }
