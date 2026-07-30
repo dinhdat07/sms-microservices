@@ -50,7 +50,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
 
             agentHandler = container "Agent Handler Service" "Receives telemetry data from agents installed on target servers." "Go" "Microservice" {
                 agentServer = component "Agent gRPC/REST Server" "Accepts heartbeat pushes from agents." "Go gRPC/HTTP Server"
-                agentService = component "Agent Service" "Validates X-Master-Key and processes payload." "Go Service"
+                agentService = component "Agent Service" "Validates Agent JWT token & IP Binding, and processes payload." "Go Service"
                 agentEventPublisher = component "Agent Event Publisher" "Publishes agent status to Redis streams." "Go Component"
             }
             
@@ -183,10 +183,11 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         notificationService -> smtpNotifier "Invokes email building"
         smtpNotifier -> smtp "Sends compiled email"
 
-        traefik -> agentServer "Routes /api/v1/agent/*" "HTTP/gRPC"
-        agentServer -> agentService "Delegates to"
-        agentService -> agentEventPublisher "Pushes validated state"
-        agentEventPublisher -> redis "ZADD monitoring:agent:heartbeats & XADD sms.events.heartbeat"
+        # Component level relationships (Agent)
+        traefik -> agentHandler "Routes /api/v1/agent/*" "HTTP"
+        agentHandler -> agentService "Delegates to"
+        agentService -> redis "Updates Heartbeat in ZSET monitoring:agent:heartbeats" "ZADD"
+        agentService -> redis "Publishes event to stream sms.events.heartbeat" "XADD"
         
         # Deployment Environment (Docker Swarm)
         deploymentEnvironment "Production" {

@@ -84,7 +84,7 @@ Hệ thống được thiết kế theo chuẩn C4, bóc tách thành các Conta
 * **SMS Monitoring Worker (Go)**: Background Worker tự động đồng bộ mục tiêu, thực thi Ping và đẩy log lên Elasticsearch.  
 * **SMS Reporting (Go)**: Dịch vụ tính toán % Uptime và quản lý các yêu cầu báo cáo.
 * **SMS Notification (Go)**: Dịch vụ độc lập xử lý hàng đợi và gửi email/thông báo qua SMTP.
-* **SMS Agent Handler (Go)**: Dịch vụ tiếp nhận heartbeat (Agent Push) từ các máy chủ đích có cài đặt Agent, xác thực qua X-Master-Key.
+* **SMS Agent Handler (Go)**: Dịch vụ tiếp nhận heartbeat (Agent Push) từ các máy chủ đích có cài đặt Agent, xác thực bằng cơ chế Stateless JWT phi trạng thái kết hợp ràng buộc IP (IP Binding).
 * **PostgreSQL (Database)**: CSDL quan hệ lưu metadata.  
 * **Redis (Streams & Cache)**: Event Bus trung tâm (Pub/Sub), Distributed Lock, và Cache trạng thái siêu tốc.  
 * **Elasticsearch (Log Storage)**: CSDL Time-series lưu trữ Observation Logs.
@@ -181,7 +181,7 @@ Dịch vụ hoàn toàn tự trị. Chứa Event Consumer để tự đồng b�
 Dịch vụ chuyên biệt tiếp nhận các yêu cầu thông báo từ Message Queue/Broker và đảm nhận việc render HTML Template, gửi cảnh báo qua Email/SMTP. Giúp giảm tải đáng kể cho hệ thống Reporting.
 
 ## 3.6 SMS Agent Handler
-Dịch vụ quản lý các Agent cài đặt tại máy chủ đích. Khác với ICMP, Agent sẽ chủ động thu thập trạng thái và đẩy (Heartbeat/Push) lên API của Agent Handler. Dịch vụ này thực hiện xác thực thông qua X-Master-Key và cập nhật trạng thái vào Redis Streams.
+Dịch vụ quản lý các Agent cài đặt tại máy chủ đích. Khác với ICMP, Agent sẽ chủ động thu thập trạng thái và đẩy (Heartbeat/Push) lên API của Agent Handler. Dịch vụ này thực hiện xác thực phi trạng thái (Stateless) thông qua JWT Token (kèm cơ chế IP Binding chống spoofing) và cập nhật trạng thái vào Redis Streams.
 #  
 
 # 
@@ -352,7 +352,7 @@ Monitoring Worker chạy theo chu kỳ 30 giây và sử dụng mô hình **Goro
 
 Hệ thống hỗ trợ 2 phương thức kiểm tra trạng thái:
 1. **ICMP (Ping)**: Agentless. Được thực hiện tự động bởi Cycle Scheduler và Ping Worker.
-2. **AGENT_PUSH (Heartbeat)**: Cần cài đặt Agent tại máy chủ đích. Agent sẽ chủ động đẩy trạng thái định kỳ lên hệ thống thông qua `sms-agent-handler` với xác thực `X-Master-Key`. Monitoring Worker sẽ quét (sweep) các server dùng phương thức này xem có bị quá hạn (Timeout) hay không để đánh giá OFFLINE.
+2. **AGENT_PUSH (Heartbeat)**: Cần cài đặt Agent tại máy chủ đích. Agent sẽ chủ động đẩy trạng thái định kỳ lên hệ thống thông qua `sms-agent-handler` với xác thực **JWT (kèm IP Binding)**. Monitoring Worker sẽ quét (sweep) các server dùng phương thức này xem có bị quá hạn (Timeout) hay không để đánh giá OFFLINE.
 
 Quy trình Phân bổ tải & Bầu chọn Producer (Producer Election) cho phương thức ICMP:
 
@@ -518,7 +518,10 @@ Dịch vụ `sms-agent-handler` được thiết kế tối giản để hứng 
 
 ![][image22]
 
-1. **Tiếp nhận & Xác thực**: Agent gửi HTTP POST mang theo Header `X-Master-Key`. Middleware sẽ đối chiếu khóa này, nếu sai lập tức chặn request (HTTP 401) để bảo vệ hệ thống khỏi các nỗ lực tấn công hoặc chèn dữ liệu rác.
+1. **Tiếp nhận & Xác thực**: Agent gửi HTTP POST mang theo Header `Authorization: Bearer <JWT>`. Middleware sẽ tiến hành:
+   - Verify chữ ký JWT bằng `AGENT_SIGNING_SECRET` chung.
+   - Trích xuất claim `bound_ip` và đối chiếu với IP thực của request (lọc qua Header `X-Forwarded-For` từ Traefik, bóc tách phần tử cuối cùng để chống Spoofing).
+   Nếu sai IP hoặc chữ ký không hợp lệ, lập tức chặn request (HTTP 401/403) để bảo vệ hệ thống khỏi các nỗ lực tấn công hoặc chèn dữ liệu rác.
 2. **Cập nhật mốc thời gian (ZADD)**: Đẩy `server_id` vào Redis Sorted Set `monitoring:agent:heartbeats` với `score` là Unix timestamp hiện tại. Cơ chế này đóng vai trò như một "Dead Man's Switch", cho phép `Agent Sweeper` của dịch vụ Monitoring quét và phát hiện Timeout nếu Agent đột ngột ngừng gửi dữ liệu.
 3. **Phát sự kiện (XADD)**: Đồng thời đẩy sự kiện lên Redis Stream `sms.events.heartbeat`. `Heartbeat Consumer` của Monitoring sẽ bắt sự kiện này để đánh giá Server đang ở trạng thái ONLINE.
 4. **Phản hồi**: Trả về HTTP 200 OK cho Agent với độ trễ cực thấp do mọi thao tác ở trên đều chỉ tương tác với bộ nhớ (Redis).
@@ -586,7 +589,7 @@ Sự phân tách kiến trúc thành hai nửa Command và Query độc lập tu
 
 * **Rate Limiting Kép**: Traefik giới hạn ở mức mạng (average 100 req/s), Management giới hạn ở mức ứng dụng (Application-level Limiter bằng Redis).  
 * **Xác thực ủy quyền & Chống CSRF (ForwardAuth)**: Mọi request giao diện đều bị Traefik chặn lại và hỏi ý kiến Identity qua /verify. Kiểm tra chéo CSRF Token giữa Cookie và Header. Traefik tự động đẩy Custom Headers (X-User-Role) xuống các service phía sau.
-* **Xác thực M2M (Machine-to-Machine)**: Đối với các Agent bên ngoài gọi về hệ thống, bảo mật được siết chặt qua cấu trúc Header `X-Master-Key` tại dịch vụ `sms-agent-handler`, từ chối ngay lập tức các truy cập trái phép.
+* **Xác thực M2M (Machine-to-Machine)**: Đối với các Agent bên ngoài gọi về hệ thống, bảo mật được siết chặt qua cơ chế **Stateless JWT phi trạng thái kết hợp IP Binding** tại dịch vụ `sms-agent-handler`. Token chỉ có hiệu lực với đúng địa chỉ IP đã được cấp phát, từ chối ngay lập tức mọi truy cập trái phép hoặc nỗ lực Header Spoofing.
 
 ## 6.2. Hạ tầng triển khai (Docker Swarm)
 
