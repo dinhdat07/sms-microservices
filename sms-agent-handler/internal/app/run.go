@@ -23,7 +23,7 @@ func (a *App) Run() error {
 
 	// Initialize Handlers
 	heartbeatHandler := rest.NewHeartbeatHandler(a.RedisClient, a.logger)
-	authMiddleware := rest.NewMasterKeyAuthMiddleware(a.cfg.MasterKey, a.logger)
+	authMiddleware := rest.NewAgentJWTAuthMiddleware(a.cfg.AgentSigningSecret, a.logger)
 
 	// Setup Router
 	r := mux.NewRouter()

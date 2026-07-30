@@ -11,10 +11,11 @@ import (
 
 	"sms-simulator/internal/nft"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
 )
 
-func StartAgentPushWorker(rdb redis.UniversalClient, endpoint string, masterKey string) {
+func StartAgentPushWorker(rdb redis.UniversalClient, endpoint string, agentSigningSecret string) {
 	go func() {
 		ctx := context.Background()
 		client := &http.Client{Timeout: 2 * time.Second}
@@ -67,7 +68,13 @@ func StartAgentPushWorker(rdb redis.UniversalClient, endpoint string, masterKey 
 				req, _ := http.NewRequest("POST", endpoint, bytes.NewBuffer(payload))
 				req.Header.Set("Content-Type", "application/json")
 				
-				req.Header.Set("X-Master-Key", masterKey)
+				token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+					"server_id": id,
+					"bound_ip":  ip,
+				})
+				tokenString, _ := token.SignedString([]byte(agentSigningSecret))
+
+				req.Header.Set("Authorization", "Bearer "+tokenString)
 
 				go func(r *http.Request) {
 					resp, err := client.Do(r)

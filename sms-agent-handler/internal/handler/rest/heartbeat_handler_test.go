@@ -2,6 +2,7 @@ package rest
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -16,37 +17,22 @@ import (
 func TestHandleHeartbeat(t *testing.T) {
 	logger := zap.NewNop()
 
-	t.Run("invalid json payload", func(t *testing.T) {
+	t.Run("missing server_id in context", func(t *testing.T) {
 		mr, _ := miniredis.Run()
 		defer mr.Close()
 		rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
 		handler := NewHeartbeatHandler(rdb, logger)
 
-		req := httptest.NewRequest("POST", "/api/v1/agent/heartbeat", bytes.NewBuffer([]byte(`{invalid}`)))
+		req := httptest.NewRequest("POST", "/api/v1/agent/heartbeat", bytes.NewBuffer([]byte(`{}`)))
 		rec := httptest.NewRecorder()
 
 		handler.HandleHeartbeat(rec, req)
 
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		assert.Contains(t, rec.Body.String(), "Invalid payload")
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+		assert.Contains(t, rec.Body.String(), "server_id is missing from context")
 	})
 
-	t.Run("missing server_id", func(t *testing.T) {
-		mr, _ := miniredis.Run()
-		defer mr.Close()
-		rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
-		handler := NewHeartbeatHandler(rdb, logger)
 
-		payload := map[string]string{}
-		body, _ := json.Marshal(payload)
-		req := httptest.NewRequest("POST", "/api/v1/agent/heartbeat", bytes.NewBuffer(body))
-		rec := httptest.NewRecorder()
-
-		handler.HandleHeartbeat(rec, req)
-
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		assert.Contains(t, rec.Body.String(), "server_id is required")
-	})
 
 	t.Run("success", func(t *testing.T) {
 		mr, _ := miniredis.Run()
@@ -54,18 +40,17 @@ func TestHandleHeartbeat(t *testing.T) {
 		rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
 		handler := NewHeartbeatHandler(rdb, logger)
 
-		payload := map[string]string{"server_id": "srv-1"}
+		payload := map[string]interface{}{"cpu_usage": 50.5}
 		body, _ := json.Marshal(payload)
 		req := httptest.NewRequest("POST", "/api/v1/agent/heartbeat", bytes.NewBuffer(body))
+		ctx := context.WithValue(req.Context(), ServerIDKey, "srv-1")
+		req = req.WithContext(ctx)
 		rec := httptest.NewRecorder()
 
 		handler.HandleHeartbeat(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Contains(t, rec.Body.String(), "ok")
-		
-
-		// Wait stream check is not fully supported in simple miniredis.Require* but we know XAdd was called.
 	})
 
 	t.Run("redis down", func(t *testing.T) {
@@ -75,9 +60,11 @@ func TestHandleHeartbeat(t *testing.T) {
 		
 		mr.Close() // Force redis error
 
-		payload := map[string]string{"server_id": "srv-1"}
+		payload := map[string]interface{}{"cpu_usage": 50.5}
 		body, _ := json.Marshal(payload)
 		req := httptest.NewRequest("POST", "/api/v1/agent/heartbeat", bytes.NewBuffer(body))
+		ctx := context.WithValue(req.Context(), ServerIDKey, "srv-1")
+		req = req.WithContext(ctx)
 		rec := httptest.NewRecorder()
 
 		handler.HandleHeartbeat(rec, req)
