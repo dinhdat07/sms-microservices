@@ -1,0 +1,26 @@
+meta {
+  name: get_agent_token
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseURL}}/api/v1/servers/{{createdServerId}}/agent-token
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("agent_token", res.body.token);
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.token: isDefined
+}
