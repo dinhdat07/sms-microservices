@@ -425,11 +425,17 @@ Sử dụng Uptime Calculator truy vấn thẳng Elasticsearch (Aggregation) đ�
 
 Sử dụng Distributed Lock (SET NX) trên Redis để đảm bảo khi scale nhiều Replicas, chỉ có duy nhất 1 instance thực thi việc tạo và gửi email báo cáo mỗi ngày, tránh hiện tượng gửi email trùng lặp. 
 
-#### *C. Đồng bộ Dữ liệu Server (Event Consumer)*
+  #### *C. Đồng bộ Dữ liệu Server (Event Consumer)*
+  
+  Worker lắng nghe sự kiện CRUD từ Redis Streams để tự động cập nhật bản sao dữ liệu (Data Replication) vào CSDL Reporting, duy trì tính tự trị (autonomy). 
+  
+  ![][image20]
 
-Worker lắng nghe sự kiện CRUD từ Redis Streams để tự động cập nhật bản sao dữ liệu (Data Replication) vào CSDL Reporting, duy trì tính tự trị (autonomy). 
-
-![][image20]
+  #### *D. Tối ưu hoá Dữ liệu & Lưu trữ (Data Rollup & Retention)*
+  
+  Hệ thống xử lý khối lượng lớn raw logs sinh ra liên tục. Để tối ưu hoá, hai Cronjob Worker được bổ sung:
+  * **Rollup Worker (Reporting)**: Chạy định kỳ hàng ngày, truy vấn toàn bộ logs của ngày hôm trước, tính toán Uptime tổng hợp (Aggregation) theo từng Server, sau đó lưu kết quả đã nén gọn vào index `sms_daily_rollup`.
+  * **Cleanup Worker (Monitoring)**: Chạy định kỳ hàng ngày, thực thi lệnh `_delete_by_query` xuống Elasticsearch để xoá vĩnh viễn các bản ghi raw (`sms_observation_logs`) cũ hơn 30 ngày, nhằm giải phóng dung lượng đĩa cứng (Data Retention) mà không làm mất dữ liệu tính toán nhờ đã có Rollup.
 
 ### 
 
@@ -471,21 +477,22 @@ Worker lắng nghe sự kiện CRUD từ Redis Streams để tự động cập 
 
 Reporting truy vấn trực tiếp vào index sms\_observation\_logs thông qua Elasticsearch Aggregation Query để tính toán % Uptime trong khoảng thời gian báo cáo (tránh full-table scan trên PostgreSQL).
 
-###  4.4.3 Thuật toán tính Uptime
-
-Công thức: Uptime được tính trực tiếp từ các bản ghi Ping thu thập được theo công thức:
-
-Tỷ lệ Uptime   
-\= (Tổng số lần Ping thành công / Tổng số lần Ping) × 100
-
-Cơ chế truy vấn (tích hợp Elasticsearch): Để đảm bảo tốc độ phản hồi ổn định, thực hiện truy vấn trực tiếp trên index sms\_observation\_logs của Elasticsearch. Thuật toán thực hiện hai phép đếm:
-
-1. **Tổng số lần Ping:** Truy vấn theo khoảng thời gian (Range) trên trường timestamp từ startTime đến endTime để xác định tổng số lần kiểm tra đã được thực hiện.  
-2. **Số lần Ping thành công:** Kết hợp truy vấn Range với điều kiện is\_success \= true để xác định số lần máy chủ phản hồi thành công.
-
+###  4.4.3 Thuật toán tính Uptime (Blended Uptime)
+  
+Công thức cơ bản: Uptime được tính trực tiếp từ các bản ghi Ping/Heartbeat thu thập được theo công thức:
+  
+Tỷ lệ Uptime = (Tổng số lần Ping thành công / Tổng số lần Ping) × 100
+  
+**Cơ chế truy vấn lai (Blended Query):** Để đảm bảo tốc độ phản hồi siêu tốc đối với lượng dữ liệu khổng lồ trong nhiều ngày/tháng, thuật toán thực hiện truy vấn kết hợp (Blended) trên 2 index khác nhau của Elasticsearch:
+  
+1. **Dữ liệu Lịch sử (sms_daily_rollup):** Lấy tổng số Ping và Ping thành công từ các bản ghi Rollup đã được tính toán sẵn cho các ngày trong quá khứ. Truy vấn này diễn ra trong tíc tắc vì dữ liệu đã được nén/gom nhóm theo ngày.
+2. **Dữ liệu Gần nhất (sms_observation_logs):** Với những khoảng thời gian của ngày hiện tại (chưa được chạy Rollup), hệ thống tiếp tục truy vấn Aggregation Range trên raw logs để lấy số liệu tức thời.
+  
+Sau đó, hệ thống gộp (Merge) hai kết quả lại để tính ra con số cuối cùng. Điều này mang lại hiệu suất truy vấn O(1) bất kể thời gian báo cáo là 30 ngày hay 1 năm.
+  
 Các trường hợp đặc biệt và xử lý lỗi:
-
-* **Tránh chia cho 0:** Nếu Tổng số lần Ping \= 0 (ví dụ hệ thống vừa khởi tạo hoặc khoảng thời gian được chọn chưa có dữ liệu), thuật toán trả về 0,00%.  
+  
+* **Tránh chia cho 0:** Nếu Tổng số lần Ping = 0 (ví dụ hệ thống vừa khởi tạo hoặc khoảng thời gian được chọn chưa có dữ liệu), thuật toán trả về 0,00%.  
 * **Đồng nhất múi giờ:** Toàn bộ mốc thời gian được xử lý theo chuẩn UTC nhằm bảo đảm kết quả tính toán khớp với thời điểm ghi log của Monitoring Worker.
 
 ## 4.5 Nghiệp vụ Gửi thông báo (Notification)

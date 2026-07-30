@@ -38,8 +38,9 @@ workspace "SMS Microservices Architecture" "Server Management System" {
                 reportWorker = component "Report Worker" "Consumes in-memory channel to calculate uptime." "Go Worker"
                 eventConsumer = component "Event Consumer Worker" "Listens to server and status events to sync local DB. (Decoupled from DB errors)" "Go Worker"
                 reportService = component "Report Service" "Core business logic for report generation." "Go Service"
-                esUptimeCalc = component "ES Uptime Calculator" "Calculates uptime by querying observation logs." "Go Component"
+                esUptimeCalc = component "ES Uptime Calculator" "Calculates uptime by querying observation logs and daily rollups." "Go Component"
                 reportRepo = component "Reporting Repository (PostgreSQL)" "Manages report request status and synced server data." "Go Repository"
+                rollupWorker = component "Rollup Worker" "Cronjob triggering daily aggregation of ES logs into daily_rollup." "Go Cron"
             }
             
             notification = container "Notification Service" "Dedicated service for sending emails and alerts." "Go" "Microservice" {
@@ -65,6 +66,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
                 cacheRepo = component "Monitoring Cache (Redis)" "Local high-speed access to server targets." "Redis Hash & Set"
                 scheduler = component "Cycle Scheduler" "Elects leader (SET NX) and pushes ping targets into a shared queue." "Go Component"
                 queueRepo = component "Ping Queue (Redis)" "A shared queue storing targets to be pinged in the current cycle." "Redis List"
+                cleanupWorker = component "Cleanup Worker" "Cronjob triggering _delete_by_query to clean up old ES logs." "Go Cron"
             }
             
             postgres = container "Primary Database" "Stores Users, Sessions, and Server Metadata." "PostgreSQL 15" "Database"
@@ -159,6 +161,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         observationLogger -> es "Bulk inserts logs" "HTTP/9200"
         monitoringService -> cacheRepo "Gets and Sets Server State"
         monitoringService -> redis "Publishes to stream sms.events.server_status" "XADD"
+        cleanupWorker -> es "Executes _delete_by_query to prune logs > 30 days" "HTTP"
 
         cacheRepo -> redis "Commands" "TCP/6379"
         queueRepo -> redis "Commands" "TCP/6379"
@@ -173,6 +176,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         redis -> eventConsumer "Delivers streams sms.events.server & sms.events.server_status" "XREADGROUP"
         eventConsumer -> reportRepo "Syncs reporting_servers table"
         reportWorker -> reportRepo "Updates request status & reads synced servers"
+        rollupWorker -> es "Aggregates raw logs into daily_rollup" "HTTP"
         reportWorker -> esUptimeCalc "Delegates uptime calculation"
         reportWorker -> redis "Publishes NotificationRequested event" "XADD"
         redis -> notificationConsumer "Delivers NotificationRequested event" "XREADGROUP"
