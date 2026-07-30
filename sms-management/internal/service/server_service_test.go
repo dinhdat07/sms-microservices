@@ -100,6 +100,50 @@ func TestCreateServer_DBError(t *testing.T) {
 	assert.ErrorIs(t, err, dbErr)
 }
 
+func TestCreateServer_SSHValidations(t *testing.T) {
+	ctx := context.Background()
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := newTestService(repo, outbox)
+
+	repo.On("GetByName", ctx, mock.Anything).Return(nil, nil)
+	repo.On("GetByIPv4", ctx, mock.Anything).Return(nil, nil)
+
+	// Invalid Port
+	_, err := svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodSSH, ServerName: "s1", IPv4: "1.1.1.1", SSHPort: 0})
+	assert.ErrorIs(t, err, service.ErrInvalidSSHPort)
+
+	// Missing User
+	_, err = svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodSSH, ServerName: "s1", IPv4: "1.1.1.1", SSHPort: 22, SSHUser: ""})
+	assert.ErrorIs(t, err, service.ErrInvalidSSHUser)
+
+	// Missing Key
+	_, err = svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodSSH, ServerName: "s1", IPv4: "1.1.1.1", SSHPort: 22, SSHUser: "root", SSHKey: ""})
+	assert.ErrorIs(t, err, service.ErrInvalidSSHKey)
+
+	// Invalid Key format
+	_, err = svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodSSH, ServerName: "s1", IPv4: "1.1.1.1", SSHPort: 22, SSHUser: "root", SSHKey: "bad key"})
+	assert.ErrorIs(t, err, service.ErrInvalidSSHKeyFormat)
+}
+
+func TestCreateServer_AgentValidations(t *testing.T) {
+	ctx := context.Background()
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := newTestService(repo, outbox)
+
+	repo.On("GetByName", ctx, mock.Anything).Return(nil, nil)
+	repo.On("GetByIPv4", ctx, mock.Anything).Return(nil, nil)
+
+	// Missing Endpoint
+	_, err := svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodAgentPull, ServerName: "s1", IPv4: "1.1.1.1", AgentEndpoint: ""})
+	assert.ErrorIs(t, err, service.ErrInvalidAgentEndpoint)
+
+	// Invalid Endpoint URL
+	_, err = svc.CreateServer(ctx, service.CreateServerInput{HealthCheckMethod: domain.MethodAgentPull, ServerName: "s1", IPv4: "1.1.1.1", AgentEndpoint: "not-a-url"})
+	assert.ErrorIs(t, err, service.ErrInvalidAgentEndpointFormat)
+}
+
 func TestUpdateServer_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := repomock.NewMockServerRepository(t)
@@ -605,5 +649,70 @@ func TestUpdateServer_NilServer(t *testing.T) {
 	repo.On("GetByID", mock.Anything, "id-1").Return(nil, nil).Once()
 	_, err := svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodICMP, ServerName: "test"})
 	assert.ErrorIs(t, err, service.ErrServerNotFound)
+}
+
+func TestUpdateServer_MethodSSHEmptyKey(t *testing.T) {
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := service.NewServerService(repo, outbox)
+
+	existingServer := &domain.Server{
+		ServerID:          "id-1",
+		ServerName:        "srv-1",
+		IPv4:              "1.1.1.1",
+		HealthCheckMethod: domain.MethodICMP, // previously ICMP, no SSH key
+		SSHKey:            "",
+	}
+
+	repo.On("GetByID", mock.Anything, "id-1").Return(existingServer, nil).Once()
+
+	_, err := svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{
+		ServerName:        "srv-1",
+		IPv4:              "1.1.1.1",
+		HealthCheckMethod: domain.MethodSSH,
+		SSHPort:           22,
+		SSHUser:           "root",
+		SSHKey:            "", // attempting to leave it empty
+	})
+
+	assert.ErrorIs(t, err, service.ErrInvalidSSHKey)
+}
+
+func TestUpdateServer_SSHValidations(t *testing.T) {
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := service.NewServerService(repo, outbox)
+
+	existingServer := &domain.Server{ServerID: "id-1"}
+	repo.On("GetByID", mock.Anything, "id-1").Return(existingServer, nil)
+
+	// Invalid Port
+	_, err := svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodSSH, SSHPort: 0})
+	assert.ErrorIs(t, err, service.ErrInvalidSSHPort)
+
+	// Missing User
+	_, err = svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodSSH, SSHPort: 22, SSHUser: ""})
+	assert.ErrorIs(t, err, service.ErrInvalidSSHUser)
+
+	// Invalid Key format
+	_, err = svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodSSH, SSHPort: 22, SSHUser: "root", SSHKey: "bad key"})
+	assert.ErrorIs(t, err, service.ErrInvalidSSHKeyFormat)
+}
+
+func TestUpdateServer_AgentValidations(t *testing.T) {
+	repo := repomock.NewMockServerRepository(t)
+	outbox := repomock.NewMockOutboxRepository(t)
+	svc := service.NewServerService(repo, outbox)
+
+	existingServer := &domain.Server{ServerID: "id-1"}
+	repo.On("GetByID", mock.Anything, "id-1").Return(existingServer, nil)
+
+	// Missing Endpoint
+	_, err := svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodAgentPull, AgentEndpoint: ""})
+	assert.ErrorIs(t, err, service.ErrInvalidAgentEndpoint)
+
+	// Invalid Endpoint URL
+	_, err = svc.UpdateServer(context.Background(), "id-1", service.UpdateServerInput{HealthCheckMethod: domain.MethodAgentPull, AgentEndpoint: "not-a-url"})
+	assert.ErrorIs(t, err, service.ErrInvalidAgentEndpointFormat)
 }
 

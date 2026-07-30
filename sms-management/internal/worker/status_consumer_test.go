@@ -16,14 +16,27 @@ import (
 )
 
 func TestStatusConsumer_Start(t *testing.T) {
-	mockSub := new(brokerMock.MockSubscriber)
-	mockRepo := new(repoMock.MockServerRepository)
+	t.Run("success", func(t *testing.T) {
+		mockSub := new(brokerMock.MockSubscriber)
+		mockRepo := new(repoMock.MockServerRepository)
 
-	consumer := NewStatusConsumer(mockSub, mockRepo)
+		consumer := NewStatusConsumer(mockSub, mockRepo)
 
-	mockSub.On("Subscribe", mock.Anything, "sms.events.server_status", "management_group", "management_worker_1", mock.Anything).Return(nil)
+		mockSub.On("Subscribe", mock.Anything, "sms.events.server_status", "management_group", "management_worker_1", mock.Anything).Return(nil)
 
-	consumer.Start(context.Background())
+		consumer.Start(context.Background())
+	})
+
+	t.Run("error", func(t *testing.T) {
+		mockSub := new(brokerMock.MockSubscriber)
+		mockRepo := new(repoMock.MockServerRepository)
+
+		consumer := NewStatusConsumer(mockSub, mockRepo)
+
+		mockSub.On("Subscribe", mock.Anything, "sms.events.server_status", "management_group", "management_worker_1", mock.Anything).Return(errors.New("subscribe error"))
+
+		consumer.Start(context.Background())
+	})
 }
 
 func TestStatusConsumer_processMessage(t *testing.T) {
@@ -104,4 +117,52 @@ func TestStatusConsumer_processMessage(t *testing.T) {
 	}
 	err = consumer.processMessage(ctx, msg5)
 	assert.Error(t, err)
+
+	// 6. event_type cast fails
+	msg6 := messagebroker.Message{
+		Values: map[string]interface{}{
+			"event_type": 123,
+		},
+	}
+	err = consumer.processMessage(ctx, msg6)
+	assert.NoError(t, err)
+
+	// 7. unmarshal fails
+	msg7 := messagebroker.Message{
+		Values: map[string]interface{}{
+			"event_type": "ServerStatusChanged",
+			"payload":    `{invalid json`,
+		},
+	}
+	err = consumer.processMessage(ctx, msg7)
+	assert.Error(t, err)
+
+	// 8. missing id or status
+	payload8, _ := json.Marshal(map[string]interface{}{
+		"server_id": "",
+		"status":    "",
+	})
+	msg8 := messagebroker.Message{
+		Values: map[string]interface{}{
+			"event_type": "ServerStatusChanged",
+			"payload":    string(payload8),
+		},
+	}
+	err = consumer.processMessage(ctx, msg8)
+	assert.NoError(t, err)
+
+	// 9. no change needed
+	mockRepo.On("GetByID", ctx, "svr-4").Return(&domain.Server{ServerID: "svr-4", CurrentStatus: domain.ServerStatusOnline}, nil).Once()
+	payload9, _ := json.Marshal(map[string]interface{}{
+		"server_id": "svr-4",
+		"status":    "ONLINE",
+	})
+	msg9 := messagebroker.Message{
+		Values: map[string]interface{}{
+			"event_type": "ServerStatusChanged",
+			"payload":    string(payload9),
+		},
+	}
+	err = consumer.processMessage(ctx, msg9)
+	assert.NoError(t, err)
 }

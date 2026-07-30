@@ -18,11 +18,11 @@ var (
 	ErrIPv4Exists     = errors.New("This IPv4 address already exists.")
 	ErrNameExists     = errors.New("This Server name already exists.")
 
-	ErrInvalidSSHPort             = errors.New("SSH port must be between 1 and 65535.")
-	ErrInvalidSSHUser             = errors.New("SSH user is required for SSH health check.")
-	ErrInvalidSSHKey              = errors.New("SSH private key is required for SSH health check.")
-	ErrInvalidSSHKeyFormat        = errors.New("SSH private key must be a valid format (contains PRIVATE KEY).")
-	ErrInvalidAgentEndpoint       = errors.New("Agent endpoint is required for AGENT_PULL.")
+	ErrInvalidSSHPort             = errors.New("invalid SSH port")
+	ErrInvalidSSHUser             = errors.New("invalid SSH user")
+	ErrInvalidSSHKey              = errors.New("invalid SSH key (required when switching to SSH)")
+	ErrInvalidSSHKeyFormat        = errors.New("invalid SSH key format (must be a valid private key)")
+	ErrInvalidAgentEndpoint       = errors.New("invalid agent endpoint")
 	ErrInvalidAgentEndpointFormat = errors.New("Agent endpoint must be a valid absolute URL.")
 	ErrInvalidStatusFilter        = errors.New("Invalid status filter.")
 )
@@ -198,6 +198,9 @@ func (s *serverService) UpdateServer(ctx context.Context, id string, input Updat
 		}
 		if input.SSHUser == "" {
 			return nil, ErrInvalidSSHUser
+		}
+		if input.SSHKey == "" && server.SSHKey == "" {
+			return nil, ErrInvalidSSHKey
 		}
 		if input.SSHKey != "" && !strings.Contains(input.SSHKey, "PRIVATE KEY") {
 			return nil, ErrInvalidSSHKeyFormat

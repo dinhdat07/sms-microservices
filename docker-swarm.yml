@@ -98,7 +98,7 @@ services:
       - MASTER_KEY_FILE=/run/secrets/master_key
     networks:
       - default
-    image: whaleplay710/sms-management:v1.0.10
+    image: whaleplay710/sms-management:v1.0.11
     deploy:
       replicas: 2
       update_config:
@@ -218,7 +218,13 @@ services:
     environment:
       - REDIS_ADDR=redis:6379
       - SIMULATOR_HOST=simulator
-    entrypoint: ["/bin/sh", "-c", "export DB_URL=$$(cat /run/secrets/db_url) && ./server-seed"]
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until nslookup postgres > /dev/null 2>&1; do echo "Waiting for postgres DNS..."; sleep 2; done
+        export DB_URL=$$(cat /run/secrets/db_url)
+        until ./server-seed; do echo "Retrying seeder..."; sleep 2; done
     secrets:
       - db_url
     deploy:
@@ -285,7 +291,7 @@ services:
       - MASTER_KEY_FILE=/run/secrets/master_key
     networks:
       - default
-    image: whaleplay710/sms-monitoring-worker:v1.0.7
+    image: whaleplay710/sms-monitoring-worker:v1.0.8
     deploy:
       replicas: 2
       update_config:
@@ -396,7 +402,7 @@ services:
     logging: *default-logging
     networks:
       - default
-    image: whaleplay710/sms-frontend:v1.0.8
+    image: whaleplay710/sms-frontend:v1.0.9
     deploy:
       replicas: 2
       labels:
