@@ -40,15 +40,15 @@ func main() {
 	rdb := redis.NewClient(&redis.Options{Addr: redisAddr})
 	agentEndpoint := envStr("AGENT_HANDLER_URL", "http://sms-agent-handler:8080/api/v1/agent/heartbeat")
 	
-	masterKey := envStr("MASTER_KEY", "0123456789abcdef0123456789abcdef")
-	if keyFile := os.Getenv("MASTER_KEY_FILE"); keyFile != "" {
+	agentSigningSecret := envStr("AGENT_SIGNING_SECRET", "super-secret-agent-signing-key")
+	if keyFile := os.Getenv("AGENT_SIGNING_SECRET_FILE"); keyFile != "" {
 		b, err := os.ReadFile(keyFile)
 		if err == nil {
-			masterKey = strings.TrimSpace(string(b))
+			agentSigningSecret = strings.TrimSpace(string(b))
 		}
 	}
 	
-	simpush.StartAgentPushWorker(rdb, agentEndpoint, masterKey)
+	simpush.StartAgentPushWorker(rdb, agentEndpoint, agentSigningSecret)
 
 	// 3. Setup API Server & Auto Flapper
 	srv := simhttp.NewServer(totalIPs, subnet)

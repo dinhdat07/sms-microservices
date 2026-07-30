@@ -13,15 +13,15 @@ import (
 )
 
 var (
-	ErrMasterKeyNotSet = errors.New("MASTER_KEY is not set")
-	ErrInvalidKey      = errors.New("invalid master key length for AES-256")
+	ErrEncryptionKeyNotSet = errors.New("ENCRYPTION_KEY is not set")
+	ErrInvalidKey      = errors.New("invalid encryption key length for AES-256")
 	ErrCipher          = errors.New("encryption/decryption error")
 )
 
-func getMasterKey() ([]byte, error) {
-	keyStr := config.GetEnvDefault("MASTER_KEY", "")
+func getEncryptionKey() ([]byte, error) {
+	keyStr := config.GetEnvDefault("ENCRYPTION_KEY", "")
 	if keyStr == "" {
-		return nil, ErrMasterKeyNotSet
+		return nil, ErrEncryptionKeyNotSet
 	}
 
 	key, err := base64.StdEncoding.DecodeString(keyStr)
@@ -42,7 +42,7 @@ func Encrypt(plaintext string) (string, error) {
 		return "", nil
 	}
 
-	key, err := getMasterKey()
+	key, err := getEncryptionKey()
 	if err != nil {
 		return "", err
 	}
@@ -72,7 +72,7 @@ func Decrypt(ciphertextHex string) (string, error) {
 		return "", nil
 	}
 
-	key, err := getMasterKey()
+	key, err := getEncryptionKey()
 	if err != nil {
 		return "", err
 	}

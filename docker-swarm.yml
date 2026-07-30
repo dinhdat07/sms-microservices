@@ -95,7 +95,8 @@ services:
       - GRPC_PORT=50052
       - DB_URL_FILE=/run/secrets/db_url
       - OUTBOX_STREAM_MAXLEN=1000000
-      - MASTER_KEY_FILE=/run/secrets/master_key
+      - ENCRYPTION_KEY_FILE=/run/secrets/encryption_key
+      - AGENT_SIGNING_SECRET_FILE=/run/secrets/agent_signing_secret
     networks:
       - default
     image: whaleplay710/sms-management:v1.0.11
@@ -123,7 +124,8 @@ services:
         - traefik.http.middlewares.management-health-replace.replacepath.path=/health
     secrets:
       - db_url
-      - master_key
+      - encryption_key
+      - agent_signing_secret
 
   postgres:
     logging: *default-logging
@@ -252,12 +254,12 @@ services:
       SIMULATOR_FLAP_PERCENT: '5'
       AGENT_HANDLER_URL: 'http://sms-agent-handler:8084/api/v1/agent/heartbeat'
       REDIS_ADDR: 'redis:6379'
-      MASTER_KEY_FILE: '/run/secrets/master_key'
+      AGENT_SIGNING_SECRET_FILE: '/run/secrets/agent_signing_secret'
     networks:
       - default
     image: whaleplay710/sms-simulator:v1.0.10
     secrets:
-      - master_key
+      - agent_signing_secret
     deploy:
       endpoint_mode: dnsrr
 
@@ -288,7 +290,7 @@ services:
       - LOG_FORMAT=text
       - DB_URL_FILE=/run/secrets/db_url
       - STREAM_MAXLEN=1000000
-      - MASTER_KEY_FILE=/run/secrets/master_key
+      - ENCRYPTION_KEY_FILE=/run/secrets/encryption_key
     networks:
       - default
     image: whaleplay710/sms-monitoring-worker:v1.0.8
@@ -300,19 +302,19 @@ services:
         order: start-first
     secrets:
       - db_url
-      - master_key
+      - encryption_key
 
   sms-agent-handler:
     logging: *default-logging
     environment:
       - PORT=8084
       - REDIS_URI=redis://redis:6379/0
-      - MASTER_KEY_FILE=/run/secrets/master_key
+      - AGENT_SIGNING_SECRET_FILE=/run/secrets/agent_signing_secret
     networks:
       - default
     image: whaleplay710/sms-agent-handler:v1.0.7
     secrets:
-      - master_key
+      - agent_signing_secret
     deploy:
       replicas: 3
       labels:
@@ -463,5 +465,7 @@ secrets:
     external: true
   user_password:
     external: true
-  master_key:
+  encryption_key:
+    external: true
+  agent_signing_secret:
     external: true

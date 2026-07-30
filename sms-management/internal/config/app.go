@@ -40,6 +40,8 @@ type Config struct {
 	GRPCPort string
 	HTTPPort string
 
+	EncryptionKey      string
+	AgentSigningSecret string
 	DBUrl         string
 	JWTSecret     string
 	Env           string
@@ -119,6 +121,8 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		GRPCPort:      GetEnvDefault("GRPC_PORT", "50051"),
 		HTTPPort:      httpPort,
+		EncryptionKey:      GetEnvDefault("ENCRYPTION_KEY", "0123456789abcdef0123456789abcdef"),
+		AgentSigningSecret: GetEnvDefault("AGENT_SIGNING_SECRET", "super-secret-agent-signing-key"),
 		DBUrl:         GetEnvDefault("DB_URL", ""),
 		JWTSecret:     jwtSecret,
 		Env:           GetEnvDefault("ENV", "development"),
