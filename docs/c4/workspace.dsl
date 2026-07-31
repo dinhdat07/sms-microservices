@@ -40,7 +40,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
                 reportService = component "Report Service" "Core business logic for report generation." "Go Service"
                 esUptimeCalc = component "ES Uptime Calculator" "Calculates uptime by querying observation logs and daily rollups." "Go Component"
                 reportRepo = component "Reporting Repository (PostgreSQL)" "Manages report request status and synced server data." "Go Repository"
-                rollupWorker = component "Rollup Worker" "Cronjob triggering daily aggregation of ES logs into daily_rollup." "Go Cron"
+                rollupWorker = component "Rollup Worker" "Cronjob triggering daily aggregation of ES logs into PostgreSQL." "Go Cron"
             }
             
             notification = container "Notification Service" "Dedicated service for sending emails and alerts." "Go" "Microservice" {
@@ -59,19 +59,19 @@ workspace "SMS Microservices Architecture" "Server Management System" {
                 monitorWorker = component "Worker Pool" "Pulls targets via BLPOP from queue and executes checks." "Go Worker"
                 healthCheckerFactory = component "HealthChecker Factory" "Provides correct checker (ICMP/SSH/AgentPull) based on target config." "Go Component"
                 monitoringService = component "Monitoring Service" "Evaluates state machine and publishes events." "Go Service"
-                observationLogger = component "Observation Logger" "Writes logs to Elasticsearch." "Go Component"
+                observationLogger = component "Observation Logger" "Writes logs to Elasticsearch Data Streams." "Go Component"
                 streamConsumer = component "Stream Consumer Worker" "Consumes ServerCreated/Updated/Deleted events to update Cache." "Go Worker"
                 heartbeatConsumer = component "Heartbeat Consumer Worker" "Consumes heartbeat from Agent Handler to evaluate UP state." "Go Worker"
                 agentSweeper = component "Agent Sweeper" "Cronjob removing timed-out agents and evaluating DOWN state." "Go Cron"
                 cacheRepo = component "Monitoring Cache (Redis)" "Local high-speed access to server targets." "Redis Hash & Set"
                 scheduler = component "Cycle Scheduler" "Elects leader (SET NX) and pushes ping targets into a shared queue." "Go Component"
                 queueRepo = component "Ping Queue (Redis)" "A shared queue storing targets to be pinged in the current cycle." "Redis List"
-                cleanupWorker = component "Cleanup Worker" "Cronjob triggering _delete_by_query to clean up old ES logs." "Go Cron"
+
             }
             
             postgres = container "Primary Database" "Stores Users, Sessions, and Server Metadata." "PostgreSQL 15" "Database"
             redis = container "Event Broker & Cache" "Redis Streams for pub/sub events (with MaxLen protection), token blacklist, and target cache. (Persistent AOF+RDB)" "Redis 7" "Message Broker"
-            es = container "Time-Series DB" "Stores millions of ICMP Observation Logs for fast uptime aggregation." "Elasticsearch 8" "Database"
+            es = container "Time-Series DB" "Stores millions of Observation Logs via Data Streams with automated ILM retention for fast uptime aggregation." "Elasticsearch 8" "Database"
         }
 
         # Context level relationships
@@ -161,7 +161,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         observationLogger -> es "Bulk inserts logs" "HTTP/9200"
         monitoringService -> cacheRepo "Gets and Sets Server State"
         monitoringService -> redis "Publishes to stream sms.events.server_status" "XADD"
-        cleanupWorker -> es "Executes _delete_by_query to prune logs > 30 days" "HTTP"
+
 
         cacheRepo -> redis "Commands" "TCP/6379"
         queueRepo -> redis "Commands" "TCP/6379"
@@ -176,22 +176,25 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         redis -> eventConsumer "Delivers streams sms.events.server & sms.events.server_status" "XREADGROUP"
         eventConsumer -> reportRepo "Syncs reporting_servers table"
         reportWorker -> reportRepo "Updates request status & reads synced servers"
-        rollupWorker -> es "Aggregates raw logs into daily_rollup" "HTTP"
+        rollupWorker -> es "Queries raw logs for aggregation" "HTTP"
+        rollupWorker -> reportRepo "Writes aggregated data to DAILY_UPTIME_STATS"
         reportWorker -> esUptimeCalc "Delegates uptime calculation"
         reportWorker -> redis "Publishes NotificationRequested event" "XADD"
         redis -> notificationConsumer "Delivers NotificationRequested event" "XREADGROUP"
         notificationConsumer -> notificationService "Delegates email sending"
-        esUptimeCalc -> es "Queries Aggregation (sms_observation_logs)" "HTTP/9200"
+        esUptimeCalc -> es "Queries recent raw logs (sms_observation_logs)" "HTTP/9200"
+        esUptimeCalc -> reportRepo "Queries historical rollup data"
         reportRepo -> postgres "Queries" "TCP/5432"
 
         notificationService -> smtpNotifier "Invokes email building"
         smtpNotifier -> smtp "Sends compiled email"
 
         # Component level relationships (Agent)
-        traefik -> agentHandler "Routes /api/v1/agent/*" "HTTP"
-        agentHandler -> agentService "Delegates to"
-        agentService -> redis "Updates Heartbeat in ZSET monitoring:agent:heartbeats" "ZADD"
-        agentService -> redis "Publishes event to stream sms.events.heartbeat" "XADD"
+        traefik -> agentServer "Routes /api/v1/agent/*" "HTTP"
+        agentServer -> agentService "Delegates to"
+        agentService -> agentEventPublisher "Push Validated State"
+        agentEventPublisher -> redis "Updates Heartbeat in ZSET monitoring:agent:heartbeats" "ZADD"
+        agentEventPublisher -> redis "Publishes event to stream sms.events.heartbeat" "XADD"
         
         # Deployment Environment (Docker Swarm)
         deploymentEnvironment "Production" {
@@ -398,7 +401,7 @@ workspace "SMS Microservices Architecture" "Server Management System" {
             traefik -> serverServer "2. Routes request"
             serverServer -> serverService "3. Parse CSV & Validate"
             serverService -> serverRepo "4. BEGIN Transaction (Batch of 100)"
-            serverService -> serverRepo "5. Bulk INSERT SERVERS"
+            serverService -> serverRepo "5. Bulk INSERT SERVERS (OCC with Retry on Conflict)"
             serverRepo -> postgres "6. Execute SQL Batch"
             serverService -> outboxRepo "7. Bulk INSERT OUTBOX_EVENTS"
             outboxRepo -> postgres "8. Execute SQL Batch"
@@ -446,9 +449,9 @@ workspace "SMS Microservices Architecture" "Server Management System" {
         }
 
         dynamic agentHandler "Agent_Push_Heartbeat" "Detailed sequence for Agent pushing telemetry" {
-            targetServers -> traefik "1. POST /api/v1/agent/heartbeat (X-Master-Key)"
+            targetServers -> traefik "1. POST /api/v1/agent/heartbeat (JWT in Authorization header)"
             traefik -> agentServer "2. Routes request"
-            agentServer -> agentService "3. Validate X-Master-Key & Parse Payload"
+            agentServer -> agentService "3. Validate JWT, check IP Binding & Parse Payload"
             agentService -> agentEventPublisher "4. Push Validated State"
             agentEventPublisher -> redis "5. ZADD heartbeat & XADD sms.events.heartbeat"
             agentServer -> traefik "6. Return 200 OK"

@@ -298,7 +298,7 @@ Khi thêm Server, dữ liệu được ghi vào bảng SERVERS và OUTBOX\_EVENT
 
 #### *B. Luồng xử lý hàng loạt (Bulk Import/Export)*
 
-1. *Nhập Hàng Loạt (Import): Phân lô batch 100 dòng để tối ưu I/O DB và tránh Out-of-Memory khi import hàng chục ngàn server.*![][image14]  
+1. *Nhập Hàng Loạt (Import): Phân lô batch 100 dòng để tối ưu I/O DB và tránh Out-of-Memory khi import hàng chục ngàn server. Áp dụng cơ chế Optimistic Concurrency Control (OCC) với vòng lặp Retry để giải quyết Race Condition khi nhiều Admin cùng import. Thay vì dùng Pessimistic Lock gây nghẽn cổ chai, nếu batch lỗi do trùng lặp (Unique Constraint), hệ thống tự động lọc các bản ghi trùng và thử lại (Retry) các bản ghi hợp lệ.*![][image14]  
 2. *Xuất Hàng Loạt (Export): Stream file CSV về client, tải dần dữ liệu tránh sập RAM.*![][image15]
 
 #### *C. Luồng tiêu thụ sự kiện trạng thái (Status Consumer)*
@@ -433,9 +433,9 @@ Sử dụng Distributed Lock (SET NX) trên Redis để đảm bảo khi scale n
 
   #### *D. Tối ưu hoá Dữ liệu & Lưu trữ (Data Rollup & Retention)*
   
-  Hệ thống xử lý khối lượng lớn raw logs sinh ra liên tục. Để tối ưu hoá, hai Cronjob Worker được bổ sung:
-  * **Rollup Worker (Reporting)**: Chạy định kỳ hàng ngày, truy vấn toàn bộ logs của ngày hôm trước, tính toán Uptime tổng hợp (Aggregation) theo từng Server, sau đó lưu kết quả đã nén gọn vào index `sms_daily_rollup`.
-  * **Cleanup Worker (Monitoring)**: Chạy định kỳ hàng ngày, thực thi lệnh `_delete_by_query` xuống Elasticsearch để xoá vĩnh viễn các bản ghi raw (`sms_observation_logs`) cũ hơn 30 ngày, nhằm giải phóng dung lượng đĩa cứng (Data Retention) mà không làm mất dữ liệu tính toán nhờ đã có Rollup.
+  Hệ thống xử lý khối lượng lớn raw logs sinh ra liên tục. Để tối ưu hoá, chúng tôi áp dụng:
+  * **Rollup Worker (Reporting)**: Chạy định kỳ hàng ngày, truy vấn toàn bộ logs của ngày hôm trước, tính toán Uptime tổng hợp (Aggregation) theo từng Server, sau đó lưu kết quả đã nén gọn (Data Rollup) vào PostgreSQL thông qua bảng `DAILY_UPTIME_STATS`.
+  * **Index Lifecycle Management (ILM) & Data Streams**: Toàn bộ raw logs (`sms_observation_logs`) được ghi vào Elasticsearch dưới dạng **Data Streams** (chỉ cho phép Append-Only). Quá trình dọn dẹp dữ liệu quá hạn (Data Retention) được giao phó hoàn toàn cho Elasticsearch thông qua chính sách ILM. Thao tác xóa diễn ra ở cấp độ Drop Index, giải phóng dung lượng đĩa cứng ngay lập tức với chi phí CPU/I/O bằng 0, thay thế hoàn toàn giải pháp `_delete_by_query` truyền thống.
 
 ### 
 
@@ -461,9 +461,20 @@ Sử dụng Distributed Lock (SET NX) trên Redis để đảm bảo khi scale n
 | Column | Type | Constraints | Description |
 | :---- | :---- | :---- | :---- |
 | server\_id | VARCHAR(255) | PK | Khóa chính liên kết với server\_id gốc |
-| name | VARCHAR(255) |  | Tên Server |
-| ipv4 | VARCHAR(45) |  | Địa chỉ IPv4 |
+| name | VARCHAR(255) | UK, Indexed | Tên Server |
+| ipv4 | VARCHAR(45) | UK, Indexed | Địa chỉ IPv4 |
 | status | VARCHAR(50) | Default UNKNOWN | Trạng thái của Server |
+
+###
+
+*Bảng DAILY\_UPTIME\_STATS*
+
+| Column | Type | Constraints | Description |
+| :---- | :---- | :---- | :---- |
+| id | UUID | PK | Khóa chính của bản ghi |
+| date | DATE | UK, Indexed | Ngày thống kê dữ liệu |
+| total\_ping\_count | BIGINT | Not Null | Tổng số lượt ping thực hiện trong ngày |
+| success\_ping\_count | BIGINT | Not Null | Số lượt ping thành công trong ngày |
 
 #### *B. Redis (Cache & Lock)*
 
@@ -483,9 +494,9 @@ Công thức cơ bản: Uptime được tính trực tiếp từ các bản ghi 
   
 Tỷ lệ Uptime = (Tổng số lần Ping thành công / Tổng số lần Ping) × 100
   
-**Cơ chế truy vấn lai (Blended Query):** Để đảm bảo tốc độ phản hồi siêu tốc đối với lượng dữ liệu khổng lồ trong nhiều ngày/tháng, thuật toán thực hiện truy vấn kết hợp (Blended) trên 2 index khác nhau của Elasticsearch:
+**Cơ chế truy vấn lai (Blended Query):** Để đảm bảo tốc độ phản hồi siêu tốc đối với lượng dữ liệu khổng lồ trong nhiều ngày/tháng, thuật toán thực hiện truy vấn kết hợp (Blended) từ hai nguồn dữ liệu khác nhau (PostgreSQL và Elasticsearch):
   
-1. **Dữ liệu Lịch sử (sms_daily_rollup):** Lấy tổng số Ping và Ping thành công từ các bản ghi Rollup đã được tính toán sẵn cho các ngày trong quá khứ. Truy vấn này diễn ra trong tíc tắc vì dữ liệu đã được nén/gom nhóm theo ngày.
+1. **Dữ liệu Lịch sử (PostgreSQL - Bảng DAILY_UPTIME_STATS):** Lấy tổng số Ping và Ping thành công từ các bản ghi Rollup đã được tính toán sẵn cho các ngày trong quá khứ. Truy vấn này diễn ra trong tíc tắc vì dữ liệu đã được nén/gom nhóm theo ngày.
 2. **Dữ liệu Gần nhất (sms_observation_logs):** Với những khoảng thời gian của ngày hiện tại (chưa được chạy Rollup), hệ thống tiếp tục truy vấn Aggregation Range trên raw logs để lấy số liệu tức thời.
   
 Sau đó, hệ thống gộp (Merge) hai kết quả lại để tính ra con số cuối cùng. Điều này mang lại hiệu suất truy vấn O(1) bất kể thời gian báo cáo là 30 ngày hay 1 năm.
@@ -558,7 +569,7 @@ Redis (In-memory \- Key/Value): Đóng vai trò tối ưu hóa ranh giới tốc
 * *Notification:* Event Bus phi trạng thái truyền tải yêu cầu gửi email bất đồng bộ qua Redis Streams.
 * *Agent Handler:* Thu thập tín hiệu Heartbeat liên tục với ZSET (Sorted Set) và phân phối sự kiện tức thì qua Streams để đạt độ trễ siêu thấp.
 
-Elasticsearch (Time-Series / Search Engine): Việc tách hoàn toàn hàng chục triệu bản ghi Log Ping (Observation Logs) ra khỏi DB quan hệ giúp hệ thống tối ưu hóa năng lực truy vấn Aggregation khi cần tính toán tỷ lệ Uptime.
+Elasticsearch (Time-Series / Search Engine): Việc tách hoàn toàn hàng chục triệu bản ghi Log Ping (Observation Logs) ra khỏi DB quan hệ dưới dạng **Data Streams** giúp hệ thống tối ưu hóa năng lực truy vấn Aggregation khi cần tính toán tỷ lệ Uptime, kết hợp với chính sách **ILM** tự động giải phóng dung lượng dữ liệu quá hạn.
 
 ## 5.2. Sự biến đổi của Bounded Context (DDD)
 
@@ -597,6 +608,7 @@ Sự phân tách kiến trúc thành hai nửa Command và Query độc lập tu
 * **Rate Limiting Kép**: Traefik giới hạn ở mức mạng (average 100 req/s), Management giới hạn ở mức ứng dụng (Application-level Limiter bằng Redis).  
 * **Xác thực ủy quyền & Chống CSRF (ForwardAuth)**: Mọi request giao diện đều bị Traefik chặn lại và hỏi ý kiến Identity qua /verify. Kiểm tra chéo CSRF Token giữa Cookie và Header. Traefik tự động đẩy Custom Headers (X-User-Role) xuống các service phía sau.
 * **Xác thực M2M (Machine-to-Machine)**: Đối với các Agent bên ngoài gọi về hệ thống, bảo mật được siết chặt qua cơ chế **Stateless JWT phi trạng thái kết hợp IP Binding** tại dịch vụ `sms-agent-handler`. Token chỉ có hiệu lực với đúng địa chỉ IP đã được cấp phát, từ chối ngay lập tức mọi truy cập trái phép hoặc nỗ lực Header Spoofing.
+* **Chiến lược Phân mảnh Khóa (Split and Conquer)**: Phân tách rõ ràng giữa `ENCRYPTION_KEY` (dùng để mã hóa đối xứng dữ liệu nhạy cảm trong DB như SSH Key) và `AGENT_SIGNING_SECRET` (dùng để ký JWT cho Agent). Điều này giới hạn tầm ảnh hưởng (blast radius) nếu một trong hai khóa bị lộ.
 
 ## 6.2. Hạ tầng triển khai (Docker Swarm)
 

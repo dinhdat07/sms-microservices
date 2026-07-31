@@ -61,6 +61,9 @@ func NewApp() (*App, error) {
 		return nil, fmt.Errorf("elasticsearch connection failed: %w", err)
 	}
 	esLogger := elasticsearch.NewObservationLogger(esClient, esCfg.ServerIndex, config.LoadObservationLoggerConfig())
+	if err := elasticsearch.InitILMAndDataStream(context.Background(), esClient, esCfg.ServerIndex, esCfg.RetentionDays); err != nil {
+		logger.Log.Sugar().Errorf("Failed to initialize ES ILM and Data Stream: %v", err)
+	}
 
 	// Initialize Dependencies
 

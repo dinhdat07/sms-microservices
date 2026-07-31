@@ -92,6 +92,7 @@ services:
       - REDIS_ADDR=redis:6379
       - HTTP_PORT=8001
       - GRPC_PORT=50052
+      - OCC_MAX_RETRIES=3
       - OUTBOX_STREAM_MAXLEN=1000000
       - MASTER_KEY=0123456789abcdef0123456789abcdef
     labels:
@@ -226,6 +227,7 @@ services:
       REDIS_PASSWORD: ""
       REDIS_DB: "0"
       ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_RETENTION_DAYS: 7
       ELASTICSEARCH_SERVER_INDEX: sms_observation_logs
       ICMP_PRIVILEGED: "false"
       MONITORING_FAILURE_THRESHOLD: "1"

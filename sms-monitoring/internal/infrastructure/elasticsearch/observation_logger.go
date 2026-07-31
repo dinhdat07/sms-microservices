@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 type ObservationLog struct {
 	ServerID  string    `json:"server_id"`
 	IsSuccess bool      `json:"is_success"`
-	Timestamp time.Time `json:"timestamp"`
+	Timestamp time.Time `json:"@timestamp"`
 }
 
 type ObservationLogger interface {
@@ -105,7 +106,7 @@ func (l *bufferedLogger) flusher() {
 func (l *bufferedLogger) flush(batch []ObservationLog) {
 	var buf bytes.Buffer
 	for _, obs := range batch {
-		action := fmt.Sprintf(`{"index":{"_index":"%s"}}`+"\n", l.index)
+		action := fmt.Sprintf(`{"create":{"_index":"%s"}}`+"\n", l.index)
 		buf.WriteString(action)
 		doc, err := json.Marshal(obs)
 		if err != nil {
@@ -133,4 +134,77 @@ func (l *bufferedLogger) flush(batch []ObservationLog) {
 		time.Sleep(l.retryDelay)
 	}
 	log.Printf("[ES] bulk flush failed after %d retries", l.retryMax)
+}
+
+func InitILMAndDataStream(ctx context.Context, client *elasticsearch.TypedClient, indexName string, retentionDays int) error {
+	if client == nil {
+		return nil
+	}
+
+	policyName := "sms-logs-policy"
+	templateName := "sms-logs-template"
+
+	// ILM Policy
+	policyBody := fmt.Sprintf(`{
+		"policy": {
+			"phases": {
+				"hot": {
+					"actions": {
+						"rollover": {
+							"max_age": "1d",
+							"max_primary_shard_size": "50gb"
+						}
+					}
+				},
+				"delete": {
+					"min_age": "%dd",
+					"actions": {
+						"delete": {}
+					}
+				}
+			}
+		}
+	}`, retentionDays)
+
+	resPolicy, err := client.Ilm.PutLifecycle(policyName).Raw(strings.NewReader(policyBody)).Do(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to put ILM policy: %w", err)
+	}
+	if !resPolicy.Acknowledged {
+		log.Printf("[ES] ILM policy creation was not acknowledged")
+	}
+
+	// Index Template for Data Stream
+	templateBody := fmt.Sprintf(`{
+		"index_patterns": ["%s*"],
+		"data_stream": { },
+		"template": {
+			"settings": {
+				"index.lifecycle.name": "%s"
+			},
+			"mappings": {
+				"properties": {
+					"@timestamp": {
+						"type": "date"
+					},
+					"server_id": {
+						"type": "keyword"
+					},
+					"is_success": {
+						"type": "boolean"
+					}
+				}
+			}
+		}
+	}`, indexName, policyName)
+
+	resTemplate, err := client.Indices.PutIndexTemplate(templateName).Raw(strings.NewReader(templateBody)).Do(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to put index template: %w", err)
+	}
+	if !resTemplate.Acknowledged {
+		log.Printf("[ES] Index template creation was not acknowledged")
+	}
+
+	return nil
 }

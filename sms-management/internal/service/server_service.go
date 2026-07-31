@@ -71,13 +71,15 @@ type serverService struct {
 	repo               repository.ServerRepository
 	outboxRepo         repository.OutboxRepository
 	agentSigningSecret string
+	occMaxRetries      int
 }
 
-func NewServerService(repo repository.ServerRepository, outboxRepo repository.OutboxRepository, agentSigningSecret string) ServerService {
+func NewServerService(repo repository.ServerRepository, outboxRepo repository.OutboxRepository, agentSigningSecret string, occMaxRetries int) ServerService {
 	return &serverService{
 		repo:               repo,
 		outboxRepo:         outboxRepo,
 		agentSigningSecret: agentSigningSecret,
+		occMaxRetries:      occMaxRetries,
 	}
 }
 

@@ -71,7 +71,7 @@ func New() (*App, error) {
 	// 4. Init Management Services
 	serverRepo := impl.NewGormServerRepository(db)
 	outboxRepo := impl.NewGormOutboxRepository(db)
-	serverSvc := service.NewServerService(serverRepo, outboxRepo, cfg.AgentSigningSecret)
+	serverSvc := service.NewServerService(serverRepo, outboxRepo, cfg.AgentSigningSecret, cfg.OccMaxRetries)
 
 	serverHandler := grpchandler.NewServerManagementServer(serverSvc)
 	restImportExport := resthandler.NewImportExportHandler(serverSvc)

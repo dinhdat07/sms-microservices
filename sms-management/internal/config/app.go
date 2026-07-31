@@ -42,6 +42,7 @@ type Config struct {
 
 	EncryptionKey      string
 	AgentSigningSecret string
+	OccMaxRetries      int
 	DBUrl         string
 	JWTSecret     string
 	Env           string
@@ -118,11 +119,17 @@ func Load() (*Config, error) {
 		outboxMaxLen = 1000000
 	}
 
+	occMaxRetries, err := GetEnvInt("OCC_MAX_RETRIES", 3)
+	if err != nil {
+		occMaxRetries = 3
+	}
+
 	cfg := &Config{
 		GRPCPort:      GetEnvDefault("GRPC_PORT", "50051"),
 		HTTPPort:      httpPort,
 		EncryptionKey:      GetEnvDefault("ENCRYPTION_KEY", "0123456789abcdef0123456789abcdef"),
 		AgentSigningSecret: GetEnvDefault("AGENT_SIGNING_SECRET", "super-secret-agent-signing-key"),
+		OccMaxRetries:      occMaxRetries,
 		DBUrl:         GetEnvDefault("DB_URL", ""),
 		JWTSecret:     jwtSecret,
 		Env:           GetEnvDefault("ENV", "development"),

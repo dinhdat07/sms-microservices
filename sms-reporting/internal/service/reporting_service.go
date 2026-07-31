@@ -41,8 +41,8 @@ func (s *reportingServiceImpl) RequestReport(ctx context.Context, email string, 
 	if err != nil {
 		return domain.ErrInvalidDateFormat
 	}
-	// Make sure end is at the end of the day
-	end = end.Add(24 * time.Hour).Add(-time.Nanosecond)
+	// Make sure end is at the end of the day (subtract 1 second to avoid DB rounding up)
+	end = end.Add(24 * time.Hour).Add(-time.Second)
 
 	correlationID := uuid.New().String()
 
@@ -65,7 +65,7 @@ func (s *reportingServiceImpl) RequestReport(ctx context.Context, email string, 
 func (s *reportingServiceImpl) ExecuteDailyMaintenance(ctx context.Context, startTime time.Time, endTime time.Time) error {
 	// 1. Rollup Data
 	if s.rawProvider != nil {
-		successCount, totalCount, err := s.rawProvider.CalculateRawUptimeStats(ctx, startTime, endTime.Add(-time.Nanosecond))
+		successCount, totalCount, err := s.rawProvider.CalculateRawUptimeStats(ctx, startTime, endTime.Add(-time.Second))
 		if err != nil {
 			return err
 		}
@@ -78,15 +78,6 @@ func (s *reportingServiceImpl) ExecuteDailyMaintenance(ctx context.Context, star
 		}
 
 		if err := s.repo.SaveDailyUptimeStat(ctx, stat); err != nil {
-			return err
-		}
-	}
-
-	// 2. Cleanup Old Data
-	if s.rawProvider != nil {
-		// Clean up data older than 7 days from now
-		olderThan := time.Now().Add(-7 * 24 * time.Hour)
-		if err := s.rawProvider.CleanupOldData(ctx, olderThan); err != nil {
 			return err
 		}
 	}

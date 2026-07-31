@@ -3,8 +3,9 @@ package config
 import "os"
 
 type ElasticsearchConfig struct {
-	URL         string
-	ServerIndex string
+	URL           string
+	ServerIndex   string
+	RetentionDays int
 }
 
 type ObservationLoggerConfig struct {
@@ -26,9 +27,12 @@ func LoadElasticsearchConfig() ElasticsearchConfig {
 		serverIndex = "sms_observation_logs"
 	}
 
+	retentionDays, _ := GetEnvInt("ELASTICSEARCH_RETENTION_DAYS", 7)
+
 	return ElasticsearchConfig{
-		URL:         url,
-		ServerIndex: serverIndex,
+		URL:           url,
+		ServerIndex:   serverIndex,
+		RetentionDays: retentionDays,
 	}
 }
 

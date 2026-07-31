@@ -193,3 +193,40 @@ Tính năng giúp tiết kiệm thời gian khi làm việc với hàng nghìn S
 2. Báo cáo được tạo ngay sau khi thêm máy chủ mới, khi hệ thống chưa thu thập đủ dữ liệu Ping.  
 3. Backend API không kết nối được tới Elasticsearch khi khởi động. Trong trường hợp này, chỉ cần khởi động lại container API.
 
+
+# **3\. HƯỚNG DẪN PHÁT TRIỂN VÀ KIẾN TRÚC MỞ RỘNG (DEVELOPMENT GUIDE)**
+
+Phần này tổng hợp ngắn gọn các triết lý thiết kế và quy ước phát triển (Development Guidelines) của hệ thống Server Management System, tập trung vào 3 khía cạnh: Kiểm soát chất lượng mã nguồn, Quản trị Log trung tâm và Chính sách lưu trữ dữ liệu lớn.
+
+### **3.1. High Code Coverage (Kiểm thử tự động)**
+
+Hệ thống đặt ra tiêu chuẩn khắt khe về **Code Coverage**, đặc biệt là đối với các lớp Business Logic cốt lõi (Service, Worker, Handler). 
+
+* **Tiêu chuẩn:** Coverage cho các file core luôn phải được duy trì ở mức cao. CI Pipeline (.github/workflows/ci.yml) được cấu hình để lọc và đo lường trực tiếp các package internal/service, internal/worker, internal/handler...
+* **Nguyên tắc viết Test:**
+  * **Tách biệt phụ thuộc:** Mọi tương tác với DB (Postgres, Elasticsearch) hay Message Broker (Redis) đều phải được **Mock** hoàn toàn thông qua Interface (ví dụ: ServerRepository, RedisClient, EventPublisher).
+  * **Test Case toàn diện:** Test không chỉ bao phủ trường hợp Happy Path (thành công) mà bắt buộc phải test các kịch bản Edge Case (Timeout, Validation lỗi, Conflict dữ liệu).
+* **Kiểm thử tích hợp (Bruno):** Ngoài Unit Test, toàn bộ API end-to-end phải được pass qua bộ Integration Test tự động của Bruno trước khi merge code vào nhánh chính.
+
+### **3.2. Quản trị Logging tập trung với ELK (Elasticsearch, Logstash, Kibana)**
+
+Với kiến trúc Microservices phân tán, toàn bộ log của các service (Management, Reporting, Monitoring, Identity, v.v.) không được lưu rời rạc mà phải được đẩy về cụm ELK Stack để phân tích.
+
+* **Log Format (JSON):** 
+  * Tất cả các service sử dụng thư viện **Zap Logger** để xuất log dưới dạng chuẩn JSON. 
+  * Điều này đảm bảo Logstash có thể dễ dàng parse và bóc tách các trường (fields) như level, msg, 	race_id, service_name.
+* **Centralized Logging:** 
+  * Logstash đóng vai trò "phễu" thu thập, lọc và chuyển đổi log trước khi index vào Elasticsearch. 
+  * Kibana cung cấp giao diện trực quan cho Admin và Developer để query log, vẽ biểu đồ theo dõi các lỗi hệ thống hay truy vết luồng xử lý (Traceability) xuyên suốt các service thông qua mã 	race_id.
+
+### **3.3. Data Rollup & Retention Policy (Tối ưu lưu trữ dữ liệu chuỗi thời gian)**
+
+Do đặc thù Monitoring, hệ thống phải xử lý lượng lớn dữ liệu Ping/Heartbeat liên tục (sms_observation_logs). Để ngăn chặn tình trạng cạn kiệt lưu trữ (Storage Exhaustion) và đảm bảo hiệu năng báo cáo siêu tốc, hệ thống áp dụng chiến lược kết hợp:
+
+* **3.3.1. Data Rollup & Blended Uptime:**
+  * **Data Rollup:** Hàng ngày vào lúc 00:00, một tiến trình Cronjob (Rollup Worker) sẽ truy vấn tổng hợp toàn bộ raw logs của ngày hôm trước, nén chúng thành **1 dòng dữ liệu duy nhất** (tổng số Ping và Ping thành công) và lưu trữ vĩnh viễn vào PostgreSQL (Bảng DAILY_UPTIME_STATS).
+  * **Tính toán siêu tốc (O(1)) bằng cơ chế Blended Uptime:** Khi cần xuất báo cáo Uptime, hệ thống sẽ thực hiện truy vấn lai. Với dữ liệu lịch sử của ngày đã chốt, truy vấn lấy từ PostgreSQL (đã nén). Chỉ đối với khoảng thời gian chưa kết thúc của ngày hôm nay, hệ thống mới query Elasticsearch. Điều này giúp hệ thống phản hồi kết quả gần như tức thời bất kể dải thời gian báo cáo dài đến đâu.
+* **3.3.2. Retention Policy với Elasticsearch ILM:**
+  * Toàn bộ raw logs ghi vào Elasticsearch được định dạng dưới dạng **Data Streams** và gắn kèm chính sách **ILM (Index Lifecycle Management)**.
+  * Tự động xóa (Delete Phase): Raw logs sau khi đã được Rollup sẽ tự động bị Elasticsearch xóa vĩnh viễn sau **7 ngày** (Thông số được kiểm soát linh hoạt qua biến môi trường ELASTICSEARCH_RETENTION_DAYS).
+  * Cơ chế này giúp cụm Elasticsearch luôn nhẹ bén, tự động dọn rác mà không cần sự can thiệp thủ công từ quản trị viên.

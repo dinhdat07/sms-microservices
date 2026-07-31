@@ -3,11 +3,9 @@ package elasticsearch
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"sms-reporting/internal/domain"
-	"sms-reporting/internal/infrastructure/logger"
 
 	esv8 "github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/count"
@@ -41,7 +39,7 @@ func (c *ESRawUptimeProvider) CalculateRawUptimeStats(ctx context.Context, start
 		Request(&count.Request{
 			Query: &types.Query{
 				Range: map[string]types.RangeQuery{
-					"timestamp": types.DateRangeQuery{
+					"@timestamp": types.DateRangeQuery{
 						Gte: &startStr,
 						Lte: &endStr,
 					},
@@ -66,7 +64,7 @@ func (c *ESRawUptimeProvider) CalculateRawUptimeStats(ctx context.Context, start
 					Must: []types.Query{
 						{
 							Range: map[string]types.RangeQuery{
-								"timestamp": types.DateRangeQuery{
+								"@timestamp": types.DateRangeQuery{
 									Gte: &startStr,
 									Lte: &endStr,
 								},
@@ -89,22 +87,3 @@ func (c *ESRawUptimeProvider) CalculateRawUptimeStats(ctx context.Context, start
 	return successCountReq.Count, totalCountReq.Count, nil
 }
 
-func (c *ESRawUptimeProvider) CleanupOldData(ctx context.Context, olderThan time.Time) error {
-	cleanupQuery := fmt.Sprintf(`{
-		"query": {
-			"range": {
-				"timestamp": {
-					"lt": "%s"
-				}
-			}
-		}
-	}`, olderThan.UTC().Format(time.RFC3339Nano))
-
-	res, err := c.client.DeleteByQuery(c.index).Raw(strings.NewReader(cleanupQuery)).Do(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to execute _delete_by_query: %w", err)
-	}
-
-	logger.Log.Sugar().Infof("Elasticsearch cleanup executed. Deleted docs: %d", res.Deleted)
-	return nil
-}

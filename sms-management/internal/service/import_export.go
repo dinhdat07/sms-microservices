@@ -3,8 +3,8 @@ package service
 import (
 	"bytes"
 	"context"
-	"errors"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -60,7 +60,7 @@ func (s *serverService) ImportServers(ctx context.Context, fileBytes []byte) (*I
 		switch hLower {
 		case "server name", "server_name", "name":
 			nameIdx = i
-		case "ipv4", "ip":
+		case "ipv4", "ip", "ipv4 address", "ip address":
 			ipIdx = i
 		}
 	}
@@ -84,55 +84,76 @@ func (s *serverService) ImportServers(ctx context.Context, fileBytes []byte) (*I
 			ips = append(ips, srv.IPv4)
 		}
 
-		existingServers, err := s.repo.FindByNamesOrIPv4s(ctx, names, ips)
-		if err != nil {
-			return fmt.Errorf("failed to check existing servers: %w", err)
-		}
+		var lastErr error
 
-		existingNameMap := make(map[string]bool)
-		existingIPMap := make(map[string]bool)
-		for _, es := range existingServers {
-			existingNameMap[es.ServerName] = true
-			existingIPMap[es.IPv4] = true
-		}
-
-		var validServers []*domain.Server
-		for _, srv := range batch {
-			if existingNameMap[srv.ServerName] || existingIPMap[srv.IPv4] {
-				result.FailCount++
-				result.FailedServers = append(result.FailedServers, fmt.Sprintf("%s (%s)", srv.ServerName, srv.IPv4))
-			} else {
-				validServers = append(validServers, srv)
-				result.SuccessCount++
-				result.SuccessfulServers = append(result.SuccessfulServers, srv.ServerName)
-
-				// Prevent duplicates within the same batch from bypassing the check
-				existingNameMap[srv.ServerName] = true
-				existingIPMap[srv.IPv4] = true
-			}
-		}
-
-		if len(validServers) > 0 {
-			err := s.repo.ExecuteInTx(ctx, func(txCtx context.Context) error {
-				if err := s.repo.BatchCreate(txCtx, validServers); err != nil {
-					return fmt.Errorf("batch create failed: %w", err)
-				}
-				
-				var events []*domain.OutboxEvent
-				for _, srv := range validServers {
-					payload, _ := json.Marshal(srv)
-					events = append(events, domain.NewOutboxEvent("Server", srv.ServerID, domain.EventServerCreated, payload))
-				}
-				
-				if err := s.outboxRepo.BatchCreate(txCtx, events); err != nil {
-					return fmt.Errorf("failed to create outbox events: %w", err)
-				}
-				return nil
-			})
-			
+		for attempt := 0; attempt < s.occMaxRetries; attempt++ {
+			existingServers, err := s.repo.FindByNamesOrIPv4s(ctx, names, ips)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to check existing servers: %w", err)
 			}
+
+			existingNameMap := make(map[string]bool)
+			existingIPMap := make(map[string]bool)
+			for _, es := range existingServers {
+				existingNameMap[es.ServerName] = true
+				existingIPMap[es.IPv4] = true
+			}
+
+			var validServers []*domain.Server
+			var batchFailed []string
+			var batchSuccessful []string
+
+			for _, srv := range batch {
+				if existingNameMap[srv.ServerName] || existingIPMap[srv.IPv4] {
+					batchFailed = append(batchFailed, fmt.Sprintf("%s (%s)", srv.ServerName, srv.IPv4))
+				} else {
+					validServers = append(validServers, srv)
+					batchSuccessful = append(batchSuccessful, srv.ServerName)
+
+					// prevent duplicates within the same batch
+					existingNameMap[srv.ServerName] = true
+					existingIPMap[srv.IPv4] = true
+				}
+			}
+
+			var txErr error
+			if len(validServers) > 0 {
+				txErr = s.repo.ExecuteInTx(ctx, func(txCtx context.Context) error {
+					if err := s.repo.BatchCreate(txCtx, validServers); err != nil {
+						return fmt.Errorf("batch create failed: %w", err)
+					}
+
+					var events []*domain.OutboxEvent
+					for _, srv := range validServers {
+						payload, _ := json.Marshal(srv)
+						events = append(events, domain.NewOutboxEvent("Server", srv.ServerID, domain.EventServerCreated, payload))
+					}
+
+					if err := s.outboxRepo.BatchCreate(txCtx, events); err != nil {
+						return fmt.Errorf("failed to create outbox events: %w", err)
+					}
+					return nil
+				})
+			}
+
+			if txErr != nil {
+				lastErr = txErr
+				continue // OCC Retry
+			}
+
+			// success
+			result.FailCount += int32(len(batchFailed))
+			result.FailedServers = append(result.FailedServers, batchFailed...)
+
+			result.SuccessCount += int32(len(batchSuccessful))
+			result.SuccessfulServers = append(result.SuccessfulServers, batchSuccessful...)
+
+			lastErr = nil
+			break
+		}
+
+		if lastErr != nil {
+			return fmt.Errorf("batch processing failed after %d attempts: %w", s.occMaxRetries, lastErr)
 		}
 
 		batch = batch[:0] // clear batch
