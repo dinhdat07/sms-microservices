@@ -19,6 +19,12 @@ func StartDummySSHServer(port int) error {
 			}
 			return nil, fmt.Errorf("password rejected for %q", c.User())
 		},
+		PublicKeyCallback: func(c ssh.ConnMetadata, pubKey ssh.PublicKey) (*ssh.Permissions, error) {
+			if c.User() == "sim" {
+				return nil, nil
+			}
+			return nil, fmt.Errorf("unknown user for public key auth: %q", c.User())
+		},
 	}
 
 	privateKey, err := generatePrivateKey()

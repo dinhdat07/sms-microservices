@@ -32,11 +32,17 @@ func (c *SSHChecker) Check(ctx context.Context, config ServerConfig) bool {
 			return false
 		}
 	}
-	if ip == "" || port == "" || user == "" {
+	if ip == "" || port == "" || user == "" || key == "" {
 		return false
 	}
 
-	authMethod := ssh.Password(key)
+	signer, err := ssh.ParsePrivateKey([]byte(key))
+	if err != nil {
+		logger.Log.Sugar().Errorf("[SSHChecker] Failed to parse private key for IP %s: %v", ip, err)
+		return false
+	}
+
+	authMethod := ssh.PublicKeys(signer)
 
 	sshConfig := &ssh.ClientConfig{
 		User:            user,
